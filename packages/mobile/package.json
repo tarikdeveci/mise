@@ -5,10 +5,11 @@
   "main": "index.ts",
   "scripts": {
     "start": "expo start",
-    "android": "expo start --android",
+    "android": "expo start --android --host lan --port 8081",
     "ios": "expo start --ios",
     "typecheck": "tsc --noEmit",
-    "web": "expo start --web --port 8081"
+    "web": "expo start --web --port 8081",
+    "lan": "expo start --host lan --port 8081"
   },
   "dependencies": {
     "expo": "^57.0.16",
@@ -17,6 +18,7 @@
     "react": "19.2.3",
     "react-dom": "19.2.3",
     "react-native": "0.86.2",
+    "react-native-safe-area-context": "~5.7.0",
     "react-native-web": "^0.21.2"
   },
   "devDependencies": {

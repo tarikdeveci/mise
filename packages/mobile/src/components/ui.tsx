@@ -75,7 +75,9 @@ export function BandChip({ band, label }: { band: ConfidenceBand; label?: string
   return (
     <View style={[s.chip, { backgroundColor: st.bg }]}>
       <View style={[s.dot, { backgroundColor: st.dot }]} />
-      <Text style={[type.label, { color: st.fg }]}>{label ?? st.label}</Text>
+      <Text style={[type.label, { color: st.fg }]} numberOfLines={1}>
+        {label ?? st.label}
+      </Text>
     </View>
   );
 }
@@ -214,6 +216,9 @@ const s = StyleSheet.create({
     paddingVertical: 5,
     paddingHorizontal: space.md - 2,
     borderRadius: radius.pill,
+    // Never compress: sharing a row with a flex:1 range bar was truncating the
+    // label to "Worth a", which reads as a rendering bug rather than a state.
+    flexShrink: 0,
   },
   dot: { width: 7, height: 7, borderRadius: radius.pill },
   choice: {

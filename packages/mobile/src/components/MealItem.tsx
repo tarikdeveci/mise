@@ -1,12 +1,12 @@
 import { useState } from 'react';
-import { LayoutAnimation, Platform, Pressable, StyleSheet, Text, UIManager, View } from 'react-native';
+import { LayoutAnimation, Pressable, StyleSheet, Text, View } from 'react-native';
 import type { LoggedItem } from '../api';
 import { color, radius, space, type } from '../theme';
 import { BandChip, ChoiceChip, RangeBar, useReducedMotion } from './ui';
 
-if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
-  UIManager.setLayoutAnimationEnabledExperimental(true);
-}
+// No `setLayoutAnimationEnabledExperimental` opt-in here: that was the
+// old-architecture Android switch, and calling it under the New Architecture
+// only produces a deprecation warning over the UI.
 
 /** Human wording for how the match was made. Shown, not hidden in a log. */
 const METHOD_COPY: Record<string, string> = {
