@@ -329,25 +329,45 @@ The second trade-off is one I am less comfortable with: I spent the time on meas
 
 **Top 3 for accuracy next?**
 
-1. **Split identification from portioning, and give portioning to a segmentation model.**
+1. **Route the portion question to the cheapest method that can answer it.**
 
-   This is the one I would start tomorrow, and I have a measurement that says so. Running one meal photo through the vision path four times at temperature zero returned **identical foods every time** and a **portion that alternated between 470 and 866 kcal**. The VLM is good at *what*, unreliable at *how much* — and it is unreliable in a way no prompt fixes, because a single 2D frame does not contain the volume.
+   I started by assuming the answer was a better vision model. The literature says otherwise, and so does my own measurement, so here is the whole option space with the numbers attached:
 
-   So stop asking it for the quantity. Ask a segmentation model instead:
+   | how the portion is obtained | calorie error | cost to the user | available |
+   |---|---|---|---|
+   | barcode on a packaged item | label accuracy, ~0% | one scan | now — >90% barcode coverage commercially |
+   | a repeat of a meal this user already confirmed | ~0% | one tap | now — this is just the alias loop, extended to mass |
+   | published menu for a chain restaurant | label accuracy | pick from a list | now — 35M+ indexed menu items |
+   | photo **with a reference object in frame** | **18%** | put a card next to the plate | **now, no hardware** |
+   | photo + phone LiDAR depth fusion | 15–20% (8.3% volume error) | hold the phone still | Pro-tier phones only |
+   | photo + depth as a model input | 16.5–18.8% | — | needs a depth sensor |
+   | photo alone, software only | 23–35% | nothing | now |
+   | a trained dietitian, by eye | 41% | — | — |
+
+   Two numbers reframe the whole problem. Nutrition5k's model predicting **calories per gram** scores 9.5% error; the *same model* predicting **total calories** scores 26.1%. Identification is close to solved and portioning is nearly three times harder — which is exactly the split I measured on my own vision path, where four runs of one photo returned identical foods and a portion that swung 84%.
+
+   And a plain credit card in frame takes a 2D photo from 34% to 18%, which is within reach of LiDAR at zero hardware cost. That is the best accuracy-per-effort intervention in the table, and almost nobody asks for it.
+
+   So the next step is not a bigger model. It is a **portion ladder** with the same shape as the resolver already in this codebase — stop at the first rung that answers decisively:
 
    ```
-   Gemini      → what foods are on the plate        (words only, no counts)
-   SAM 3       → segment every instance of each     (prompted with those exact words)
-   reference   → plate rim / fork / tea glass       → pixels to real area
-   depth prior → per-food height or phone depth     → area to volume
-   density     → volume to grams, from the food row
+   barcode present?        → label data            ~0%
+   user has confirmed this
+   exact meal before?      → replay their mass     ~0%
+   chain restaurant item?  → published menu        label accuracy
+   reference object seen?  → area-scaled estimate  ~18%
+   depth available?        → volume from depth     ~15-20%
+   otherwise               → model estimate, with the honest 23-35% interval
    ```
 
-   SAM 3 fits this unusually well. Its promptable concept segmentation takes a noun phrase and returns every instance of it, which is exactly the shape of the handoff, and its architecture already makes the split I measured: a presence head decides *whether a concept is there at all* before localising it, decoupling recognition from localisation. That presence signal is a second, independent opinion on whether an item exists — a phantom item (E3) becomes detectable rather than merely unlikely, which is the same "never trust one model's say-so" principle the resolver already runs on.
+   `estimatePortion` is already an eight-branch ladder; these are more rungs, not a rewrite.
 
-   It is practical, not hypothetical: SAM 3 is available through Roboflow's hosted inference API and runs locally through the same package, and the underlying approach (segmentation + depth + a physical reference) is what the food-portion literature converged on — the MetaFood 3D reconstruction challenge and Nutrition5k's depth work both point there.
+   **Where segmentation fits.** SAM 3 is a rung-4 and rung-5 component, not a replacement for the VLM. Its promptable concept segmentation takes a noun phrase and returns every instance of it, which turns "how many olives" from a guess into a count, and gives the pixel area a reference object converts into real area. Its presence head — deciding whether a concept is there at all before localising it — is a second, independent opinion on existence, which makes a phantom item (E3) detectable rather than merely unlikely. It is callable today through Roboflow's hosted inference or locally through the same package. Valuable, but it earns its place behind barcode, repeat memory and the reference object, all of which are cheaper and more accurate.
 
-   None of it can be tuned without the other half of this item: **a photo test set with weighed ground truth.** Portion error dominates calorie error, it is entirely unmeasured here, and everything above is a hypothesis until there is a number.
+   **Two refinements worth taking early.** Sampling the VLM several times and using the *spread* as the interval converts the instability I measured from a defect into a calibrated uncertainty estimate — self-ensembling VLMs report up to 23% relative accuracy gains and uncertainty that tracks error. And before-and-after photos are the only published way to catch plate waste, which every photo-only app silently counts as eaten.
+
+   None of it can be tuned without the other half of this item: **a photo test set with weighed ground truth.** Everything above is a hypothesis with a citation until there is a number from our own kitchen.
+
 2. **A held-out set written by someone who has not seen the food database.** The current one cannot distinguish a better pipeline from a worse one. This is cheap and it unblocks calibration, which unblocks the auto-log rate.
 3. **Promote user corrections into global aliases** once enough distinct users correct a phrase the same way. The mechanism is already there (`promotionCandidates`); it is deliberately not automatic, because one person's habit is not a fact about the world and letting it become one is how a shared food database quietly poisons itself.
 
