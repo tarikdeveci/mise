@@ -1,0 +1,10 @@
+node_modules/
+dist/
+*.tsbuildinfo
+.env
+.env.local
+.expo/
+eval-runs/
+*.log
+.DS_Store
+.cache/

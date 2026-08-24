@@ -1,0 +1,36 @@
+{
+  "expo": {
+    "name": "mise",
+    "slug": "mise",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "scheme": "mise",
+    "newArchEnabled": true,
+    "splash": {
+      "backgroundColor": "#ffffff",
+      "resizeMode": "contain"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "infoPlist": {
+        "NSCameraUsageDescription": "mise reads your meal photo to suggest what you ate. The photo is sent once for recognition and is not stored.",
+        "NSPhotoLibraryUsageDescription": "Pick a meal photo to log what you ate."
+      }
+    },
+    "android": {
+      "adaptiveIcon": { "backgroundColor": "#0069ad" },
+      "permissions": ["CAMERA", "READ_EXTERNAL_STORAGE"]
+    },
+    "web": { "bundler": "metro" },
+    "plugins": [
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Pick a meal photo to log what you ate.",
+          "cameraPermission": "mise reads your meal photo to suggest what you ate."
+        }
+      ]
+    ]
+  }
+}

@@ -1,0 +1,20 @@
+{
+  "name": "mise",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Meal logging that converts messy input into canonical foods, portions and nutrition, with calibrated confidence.",
+  "workspaces": [
+    "packages/api",
+    "packages/mobile"
+  ],
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "dev": "npm run dev --workspace=@mise/api",
+    "build": "npm run build --workspace=@mise/api",
+    "test": "npm run test --workspace=@mise/api",
+    "eval": "npm run eval --workspace=@mise/api",
+    "mobile": "npm run start --workspace=@mise/mobile"
+  }
+}
