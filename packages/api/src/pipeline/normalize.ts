@@ -190,7 +190,14 @@ const UNIT_ALIASES: Record<string, string> = {
   pot: 'pot', pat: 'pat', drizzle: 'drizzle',
   // household — Turkish
   kasik: 'tbsp', 'yemek kasigi': 'tbsp', 'corba kasigi': 'tbsp',
-  'cay kasigi': 'tsp', tatli: 'tsp',
+  // "tatlı kaşığı" is the dessert spoon, and it must be listed in full. Bare
+  // "tatlı" was here as a shorthand, which meant the phrase cleaner stripped it
+  // as a unit: "tatlı patates" (sweet potato) became "patates", exact-matched
+  // the potato row at score 1.0 on the deterministic rung, and never reached
+  // the verifier that would have caught it. A confident, reproducible, ~2x
+  // energy error on a common food — the exact failure this pipeline exists to
+  // prevent, produced by its cheapest tier.
+  'cay kasigi': 'tsp', 'tatli kasigi': 'tsp',
   dilim: 'slice', adet: 'piece', tane: 'piece',
   kase: 'bowl', tabak: 'plate', bardak: 'glass',
   kutu: 'can', avuc: 'handful', porsiyon: 'portion',

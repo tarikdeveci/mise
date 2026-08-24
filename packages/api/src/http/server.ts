@@ -72,6 +72,13 @@ export async function buildServer(deps: ServerDeps): Promise<FastifyInstance> {
     // Meal photos are large; 12 MB covers a full-resolution phone JPEG in base64.
     bodyLimit: 12 * 1024 * 1024,
     genReqId: () => randomUUID(),
+    // Upstream providers can hang without ever failing. Without a ceiling, one
+    // stuck vision call holds its socket until the process restarts, and the
+    // client's own deadline just abandons a request the server keeps working on.
+    // Sized above the client's photo deadline so the phone gives up first and
+    // gets the better error message.
+    requestTimeout: 60_000,
+    connectionTimeout: 65_000,
   });
 
   await app.register(cors, { origin: true });

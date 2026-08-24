@@ -11,7 +11,41 @@ import { Platform } from 'react-native';
  *  - Retries are bounded and only for transport-level failure. A 400 will not
  *    become a 201 on the third attempt, and a meal log is not worth hammering
  *    a struggling server over.
+ *  - Every request has a deadline, and the deadline differs by route. There is
+ *    no single correct number: a typed meal answers in milliseconds, while a
+ *    photograph of five foods can legitimately spend several seconds per item
+ *    at the verifier rung. One flat timeout is wrong in both directions — long
+ *    enough for the photo path leaves a dead server spinning for a minute on a
+ *    typed one.
  */
+
+/**
+ * Per-route deadlines, in milliseconds.
+ *
+ * These bound the *whole* call including retries, so a request cannot quietly
+ * cost three times its stated budget. `PHOTO` is wide because the work behind
+ * it is genuinely slow, not because the network might be.
+ */
+export const DEADLINE = {
+  /** Typed text: extraction plus deterministic rungs. Server-side p95 is ~2 ms. */
+  TEXT: 15_000,
+  /** A photograph: vision extraction, then a verifier call per unresolved item. */
+  PHOTO: 45_000,
+  /** Reads and lookups. Nothing here is allowed to be slow. */
+  QUICK: 8_000,
+} as const;
+
+/** Thrown when a request passed its deadline, and when the user cancelled. */
+export class TimeoutError extends Error {
+  constructor(readonly cancelled: boolean, ms: number) {
+    super(
+      cancelled
+        ? 'Cancelled.'
+        : `mise did not answer within ${Math.round(ms / 1000)}s. It may still be working — check your history before logging again.`,
+    );
+    this.name = 'TimeoutError';
+  }
+}
 
 /**
  * Android emulators cannot reach the host's localhost; 10.0.2.2 is the bridge.
@@ -143,14 +177,35 @@ function idempotencyKey(): string {
   return `${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
 }
 
-async function request<T>(path: string, init: RequestInit & { retries?: number } = {}): Promise<T> {
-  const { retries = 2, ...rest } = init;
+export interface RequestOptions extends RequestInit {
+  retries?: number;
+  /** Whole-call budget, retries included. Defaults to `DEADLINE.QUICK`. */
+  timeoutMs?: number;
+  /** Lets a screen cancel in flight — a Cancel button, or unmount. */
+  signal?: AbortSignal;
+}
+
+async function request<T>(path: string, init: RequestOptions = {}): Promise<T> {
+  const { retries = 2, timeoutMs = DEADLINE.QUICK, signal: external, ...rest } = init;
+  const deadlineAt = Date.now() + timeoutMs;
   let lastError: unknown;
 
   for (let attempt = 0; attempt <= retries; attempt++) {
+    // The deadline covers the whole call, so a retry never buys itself a fresh
+    // budget. Without this, `retries: 2` silently triples the stated timeout.
+    const remaining = deadlineAt - Date.now();
+    if (remaining <= 0) throw new TimeoutError(false, timeoutMs);
+    if (external?.aborted) throw new TimeoutError(true, timeoutMs);
+
+    const controller = new AbortController();
+    const expire = setTimeout(() => { controller.abort(); }, remaining);
+    const relay = (): void => { controller.abort(); };
+    external?.addEventListener('abort', relay);
+
     try {
       const res = await fetch(`${API_URL}${path}`, {
         ...rest,
+        signal: controller.signal,
         headers: {
           'Content-Type': 'application/json',
           'x-user-id': USER_ID,
@@ -176,11 +231,21 @@ async function request<T>(path: string, init: RequestInit & { retries?: number }
       }
     } catch (err) {
       if (err instanceof ApiError && !String(err.code).startsWith('http_5')) throw err;
+      // An abort is not a transport failure to retry through: either the user
+      // asked us to stop, or the budget is gone. Both are final, and both need
+      // to read differently to the person holding the phone.
+      if (controller.signal.aborted) throw new TimeoutError(external?.aborted === true, timeoutMs);
       lastError = err;
+    } finally {
+      clearTimeout(expire);
+      external?.removeEventListener('abort', relay);
     }
 
     if (attempt < retries) {
-      await new Promise((r) => setTimeout(r, Math.random() * 400 * 2 ** attempt));
+      // Full jitter, but never past the deadline: sleeping through the budget
+      // and then reporting a timeout wastes the user's wait on nothing.
+      const backoff = Math.min(Math.random() * 400 * 2 ** attempt, deadlineAt - Date.now());
+      if (backoff > 0) await new Promise((r) => setTimeout(r, backoff));
     }
   }
 
@@ -202,11 +267,15 @@ export const api = {
       reference?: ReferenceObject;
     },
     key = idempotencyKey(),
+    signal?: AbortSignal,
   ) {
     return request<MealLog>('/v1/meals', {
       method: 'POST',
       headers: { 'Idempotency-Key': key },
       body: JSON.stringify({ locale: 'tr-TR', ...input }),
+      // A photo is slow for a legitimate reason; typed text is not allowed to be.
+      timeoutMs: input.imageBase64 ? DEADLINE.PHOTO : DEADLINE.TEXT,
+      ...(signal ? { signal } : {}),
     });
   },
 

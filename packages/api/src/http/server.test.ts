@@ -1,7 +1,8 @@
-import { describe, it, expect, beforeAll, afterAll } from 'vitest';
+import { describe, it, expect, beforeAll, afterAll, afterEach, vi } from 'vitest';
 import type { FastifyInstance } from 'fastify';
 import { loadFoodDb } from '../data/foodDb.js';
 import { buildServer } from './server.js';
+import type { MealLog } from '../domain/log.js';
 import { createPipeline } from '../pipeline/index.js';
 import { createRuleExtractor } from '../pipeline/extract/rules.js';
 import { createAliasStore, GLOBAL_ALIAS_SEED } from '../pipeline/resolve/aliasStore.js';
@@ -31,6 +32,7 @@ beforeAll(async () => {
 afterAll(async () => { await app.close(); });
 
 interface MealPayload {
+  barcode?: string;
   text?: string;
   locale?: string;
   imageBase64?: string;
@@ -185,5 +187,122 @@ describe('GET /healthz', () => {
     const body = (await app.inject({ method: 'GET', url: '/healthz' })).json();
     expect(body.status).toBe('ok');
     expect(body.foods).toBeGreaterThan(50);
+  });
+});
+
+/**
+ * The barcode path.
+ *
+ * The app presents this as its most accurate entry point, at +/-0%, and it is
+ * the only route through the system with no model anywhere in it: the code
+ * identifies the product and the label states the nutrition. That makes it both
+ * the strongest claim the product makes and, until these tests, the only major
+ * path with nothing asserting it.
+ *
+ * Open Food Facts is stubbed here. The adapter's own validation is covered in
+ * `data/openFoodFacts.test.ts`; what matters at this layer is that a scan
+ * produces a traceable log without consulting a model, and that a barcode
+ * nobody recognises fails as a 404 rather than as a guess.
+ */
+describe('barcode logging', () => {
+  const PRODUCT = {
+    product_name: 'Digestive Biscuits',
+    brands: 'Ulker',
+    serving_quantity: 30,
+    nutriments: { 'energy-kcal_100g': 250, proteins_100g: 6.2, carbohydrates_100g: 62, fat_100g: 20.5 },
+  };
+
+  const stubOff = (payload: unknown, ok = true): void => {
+    vi.stubGlobal('fetch', vi.fn(async () => ({
+      ok, status: ok ? 200 : 404, json: async () => payload,
+    }) as Response));
+  };
+
+  afterEach(() => { vi.unstubAllGlobals(); });
+
+  it('logs a scanned product with the label as its source', async () => {
+    stubOff({ status: 1, product: PRODUCT });
+
+    const res = await post({ barcode: '8690504016830' });
+    expect(res.statusCode).toBe(201);
+
+    const log = res.json() as MealLog;
+    const item = log.items[0];
+
+    expect(item?.foodId).toBe('off:8690504016830');
+    expect(item?.source).toBe('Open Food Facts, barcode 8690504016830');
+    // 30 g serving at 250 kcal/100 g.
+    expect(item?.nutrition?.likely.kcal).toBeCloseTo(75, 0);
+  });
+
+  it('uses the label serving rather than estimating a portion', async () => {
+    stubOff({ status: 1, product: PRODUCT });
+
+    const log = (await post({ barcode: '8690504016830' })).json() as MealLog;
+    const portion = log.items[0]?.portion;
+
+    expect(portion?.method).toBe('barcode_label');
+    expect(portion?.gramsLikely).toBe(30);
+    // Not a collapsed interval, and deliberately so. The printed serving is an
+    // exact number, but "one serving" is still an assumption about what the
+    // person ate, and declared nutrients carry labelling tolerance. This is the
+    // tightest band the ladder ever produces, and it is not zero — the app used
+    // to advertise it as +/-0%, which was the app overclaiming, not the pipeline
+    // being timid.
+    expect(portion?.gramsMin).toBeCloseTo(27.6, 1);
+    expect(portion?.gramsMax).toBeCloseTo(32.4, 1);
+  });
+
+  it('needs no model and no question — it auto-logs', async () => {
+    stubOff({ status: 1, product: PRODUCT });
+
+    const log = (await post({ barcode: '8690504016830' })).json() as MealLog;
+
+    expect(log.status).toBe('confirmed');
+    expect(log.questions).toHaveLength(0);
+    expect(log.items[0]?.resolution.method).toBe('barcode');
+    // Identification is certain; the portion is very good but not perfect, so
+    // overall lands just under 1 rather than at it.
+    expect(log.items[0]?.confidence.overall).toBeGreaterThan(0.95);
+    expect(log.items[0]?.confidence.overall).toBeLessThan(1);
+  });
+
+  it('404s an unknown barcode instead of logging something plausible', async () => {
+    stubOff({ status: 0 });
+
+    const res = await post({ barcode: '0000000000000' });
+
+    expect(res.statusCode).toBe(404);
+    expect((res.json() as { error: { code: string } }).error.code).toBe('barcode_not_found');
+  });
+
+  it('tells the user what to do instead when the scan fails', async () => {
+    stubOff({ status: 0 });
+
+    const body = (await post({ barcode: '0000000000000' })).json() as { error: { message: string } };
+    // A dead end with no exit is a worse failure than the lookup itself.
+    expect(body.error.message).toMatch(/photo|describ/i);
+  });
+
+  it('previews a product without logging it, so the user can confirm first', async () => {
+    stubOff({ status: 1, product: PRODUCT });
+
+    const res = await app.inject({
+      method: 'GET', url: '/v1/barcode/8690504016830', headers: { 'x-user-id': 'u1' },
+    });
+
+    expect(res.statusCode).toBe(200);
+    expect(res.json()).toMatchObject({
+      barcode: '8690504016830',
+      servingGrams: 30,
+      source: 'Open Food Facts, barcode 8690504016830',
+    });
+  });
+
+  it('accepts a body carrying only a barcode — no text, no image', async () => {
+    stubOff({ status: 1, product: PRODUCT });
+    // The request validator requires one of text/image/barcode; this asserts
+    // barcode genuinely counts, which is what makes the scan screen work.
+    expect((await post({ barcode: '8690504016830' })).statusCode).toBe(201);
   });
 });

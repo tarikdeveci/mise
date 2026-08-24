@@ -75,21 +75,37 @@ export function createPipeline(deps: PipelineDeps): Pipeline {
       const { items: expanded, notes } = expandComposites(extraction.items);
       if (notes.length) log.debug({ notes }, 'expanded composite dishes');
 
-      /* 3 — resolve, portion, compute, score. Per item, independently. */
+      /* 3 — resolve, portion, compute, score. Per item, independently.
+
+         Resolution is the only awaited step in this stage and the items genuinely
+         do not depend on each other, so they run concurrently. Serially, a photo
+         of five foods that each reach the verifier rung cost five round-trips
+         end to end — measured at 20-65 s on real meal photographs, which is long
+         enough that the phone shows a minute-long spinner. Concurrently the meal
+         costs roughly its slowest single item.
+
+         `Promise.all` preserves input order, so this changes latency only: the
+         same input still produces byte-identical output, which the determinism
+         test asserts. */
       const fromImage = Boolean(input.imageBase64);
+      const resolutions = await Promise.all(
+        expanded.map((extracted) =>
+          timed('resolve', () =>
+            resolvePhrase(deps, extracted.phrase, {
+              userId: opts.userId,
+              context: input.text ?? extracted.phrase,
+              // A good extractor lifts preparation out of the phrase; the router
+              // needs it back, or boiled egg resolves to raw egg.
+              preparation: extracted.preparation,
+            }),
+          ),
+        ),
+      );
+
       const resolved: LoggedItem[] = [];
 
-      for (const extracted of expanded) {
-        const resolution = await timed('resolve', () =>
-          resolvePhrase(deps, extracted.phrase, {
-            userId: opts.userId,
-            context: input.text ?? extracted.phrase,
-            // A good extractor lifts preparation out of the phrase; the router
-            // needs it back, or boiled egg resolves to raw egg.
-            preparation: extracted.preparation,
-          }),
-        );
-
+      for (const [index, extracted] of expanded.entries()) {
+        const resolution = resolutions[index]!;
         const food = resolution.foodId ? db.byId(resolution.foodId) : undefined;
 
         if (!food) {

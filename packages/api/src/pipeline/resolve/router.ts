@@ -240,11 +240,23 @@ export async function resolvePhrase(
      retrieval score alone cannot settle it, so a model checks the shortlist. */
   const shortlist = fused.slice(0, 5);
   if (reranker && shortlist.length > 0) {
-    const picked = await reranker.choose({
-      phrase: clean,
-      context: opts.context ?? phrase,
-      candidates: shortlist,
-    });
+    // A verifier is an optional accuracy improvement, not a dependency. One
+    // that throws — a network fault, a bad deployment, a third-party
+    // implementation with a bug — must cost us this item's verification, not
+    // the whole meal. The bundled Gemini verifier already fails closed
+    // internally; this guard makes that a property of the rung rather than of
+    // one implementation's good manners.
+    let picked: { foodId: string | null } = { foodId: null };
+    try {
+      picked = await reranker.choose({
+        phrase: clean,
+        context: opts.context ?? phrase,
+        candidates: shortlist,
+      });
+    } catch {
+      metrics.inc('reranker_error_total', { reranker: reranker.id });
+      picked = { foodId: null };
+    }
 
     // Trust boundary: a reranker that returns anything outside the closed
     // candidate set is buggy or compromised. We do not "fix up" the answer —
@@ -256,6 +268,12 @@ export async function resolvePhrase(
     if (picked.foodId !== null) {
       metrics.inc('reranker_illegal_choice_total', { reranker: reranker.id });
     }
+
+    // The verifier ran and endorsed nothing. Stop here rather than continuing
+    // into the permissive rung below: once a check exists, its "no" has to mean
+    // no. That rung's own guard already excludes this case; stating it here too
+    // keeps the guarantee readable at the point it is made.
+    return done('unresolved', null, shortlist, fusedMargin);
   }
 
   /* 6 — no verifier configured. Fall back to the old behaviour rather than
