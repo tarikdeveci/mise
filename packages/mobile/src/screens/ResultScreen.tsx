@@ -22,7 +22,7 @@ interface Props {
 }
 
 export function ResultScreen({ log, onClose, onUpdate }: Props) {
-  const [correcting, setCorrecting] = useState(false);
+  const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [answered, setAnswered] = useState<Set<string>>(new Set());
 
@@ -30,26 +30,48 @@ export function ResultScreen({ log, onClose, onUpdate }: Props) {
   const status = STATUS_COPY[log.status];
   const spread = Math.round(max.kcal - min.kcal);
 
-  const correct = async (itemId: string, foodId: string) => {
-    setCorrecting(true);
-    setError(null);
+  /** Re-log so a correction takes effect end to end, not just on this screen. */
+  const relog = async () => {
+    const refreshed = await api.logMeal({
+      text: log.items.map((i) => i.extracted.phrase).join(', '),
+    });
+    onUpdate(refreshed);
+  };
+
+  const correctFood = async (itemId: string, foodId: string) => {
+    setBusy(true); setError(null);
     try {
       await api.correct(log.id, itemId, foodId);
       setAnswered((prev) => new Set(prev).add(itemId));
-      // Re-log so the correction takes effect end to end. The fix is not a
-      // local edit; it changes how that phrase resolves from now on.
-      const refreshed = await api.logMeal({
-        text: log.items.map((i) => i.extracted.phrase).join(', '),
-      });
-      onUpdate(refreshed);
+      await relog();
     } catch (err) {
       setError(err instanceof ApiError ? err.message : 'Could not save that correction.');
-    } finally {
-      setCorrecting(false);
-    }
+    } finally { setBusy(false); }
+  };
+
+  const correctPortion = async (itemId: string, grams: number) => {
+    const item = log.items.find((i) => i.id === itemId);
+    if (!item?.foodId) return;
+    setBusy(true); setError(null);
+    try {
+      await api.correct(log.id, itemId, item.foodId, grams);
+      setAnswered((prev) => new Set(prev).add(itemId));
+      await relog();
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : 'Could not save that amount.');
+    } finally { setBusy(false); }
   };
 
   const question = log.questions.find((q) => !answered.has(q.itemId));
+
+  /**
+   * Only worth offering when the photo actually had no scale reference. Asking
+   * again after the user already put a card in frame would be nagging, and the
+   * gain has already been taken.
+   */
+  const photoWithoutReference = log.items.some(
+    (i) => i.portion?.fromVision && i.portion.method !== 'reference_scaled',
+  );
 
   return (
     <ScrollView contentContainerStyle={s.content} showsVerticalScrollIndicator={false}>
@@ -60,24 +82,23 @@ export function ResultScreen({ log, onClose, onUpdate }: Props) {
         hitSlop={12}
         style={({ pressed }) => [s.back, pressed && { opacity: 0.55 }]}
       >
-        <Text style={[type.smallStrong, { color: color.primary }]}>‹  Log another</Text>
+        <Text style={[type.smallStrong, { color: color.signal }]}>‹  Log another</Text>
       </Pressable>
 
-      {/* The readout. One committed surface: a number to act on, and the room
-          it actually has. Everything below defers to this. */}
+      {/* The readout. A number to act on, and the room it actually has. */}
       <View style={s.readout}>
         <View style={s.readoutTop}>
-          <Text style={[type.readout, numeric, { color: color.readoutInk }]}>
+          <Text style={[type.readout, numeric, { color: color.ink }]}>
             {Math.round(likely.kcal)}
           </Text>
-          <Text style={[type.title, { color: color.readoutMuted, marginBottom: 9 }]}>kcal</Text>
+          <Text style={[type.title, { color: color.inkMuted, marginBottom: 9 }]}>kcal</Text>
         </View>
 
         <View style={s.gauge}>
           <Gauge min={min.kcal} likely={likely.kcal} max={max.kcal} />
         </View>
 
-        <Text style={[type.small, { color: color.readoutMuted, marginTop: space.md }]}>
+        <Text style={[type.small, { color: color.inkMuted, marginTop: space.md }]}>
           {spread > 0
             ? `Could be anywhere across ${spread} kcal. The width is the honest part.`
             : 'Everything here was stated exactly, so there is no range to show.'}
@@ -96,7 +117,24 @@ export function ResultScreen({ log, onClose, onUpdate }: Props) {
         <Text style={[type.small, { color: color.inkMuted, flex: 1 }]}>{status.detail}</Text>
       </View>
 
-      {/* One question, not a form. Ranked by how many calories the answer moves. */}
+      {/*
+        The reference-object offer, made here rather than before the shot. The
+        user has just seen how wide the range is, so the trade is legible: one
+        card in frame roughly halves it. Asking before they had a reason would
+        have been a chore.
+      */}
+      {photoWithoutReference && (
+        <View style={s.offer}>
+          <Text style={[type.bodyStrong, { color: color.ink }]}>
+            This range is wide because nothing gave it a scale.
+          </Text>
+          <Text style={[type.small, { color: color.inkMuted, marginTop: space.xs }]}>
+            Put a bank card next to the plate and shoot again. Published work puts
+            that at roughly half the calorie error, and it costs you one second.
+          </Text>
+        </View>
+      )}
+
       {question && (
         <View style={s.question}>
           <Text style={[type.bodyStrong, { color: color.ink }]}>{question.question}</Text>
@@ -133,8 +171,9 @@ export function ResultScreen({ log, onClose, onUpdate }: Props) {
             <MealItem
               key={item.id}
               item={item}
-              correcting={correcting}
-              onCorrect={(itemId, foodId) => { void correct(itemId, foodId); }}
+              busy={busy}
+              onCorrectFood={(id, foodId) => { void correctFood(id, foodId); }}
+              onCorrectPortion={(id, grams) => { void correctPortion(id, grams); }}
             />
           ))}
         </View>
@@ -154,11 +193,11 @@ export function ResultScreen({ log, onClose, onUpdate }: Props) {
 function Macro({ label, value }: { label: string; value: number }) {
   return (
     <View style={s.macro}>
-      <Text style={[type.monoStrong, numeric, { color: color.readoutInk }]}>
+      <Text style={[type.monoStrong, numeric, { color: color.ink }]}>
         {value.toFixed(1)}
-        <Text style={[type.label, { color: color.readoutMuted }]}>g</Text>
+        <Text style={[type.label, { color: color.inkFaint }]}>g</Text>
       </Text>
-      <Text style={[type.label, { color: color.readoutMuted }]}>{label}</Text>
+      <Text style={[type.label, { color: color.inkFaint }]}>{label}</Text>
     </View>
   );
 }
@@ -168,7 +207,7 @@ const s = StyleSheet.create({
   back: { paddingVertical: space.sm, marginBottom: space.md, alignSelf: 'flex-start' },
 
   readout: {
-    backgroundColor: color.readout,
+    backgroundColor: color.raised,
     borderRadius: radius.lg,
     padding: space.xl,
     paddingBottom: space.lg,
@@ -180,18 +219,32 @@ const s = StyleSheet.create({
     marginTop: space.xl,
     paddingTop: space.lg,
     borderTopWidth: 1,
-    borderTopColor: color.readoutEdge,
+    borderTopColor: color.line,
   },
   macro: { flex: 1, gap: 3 },
 
   status: { flexDirection: 'row', alignItems: 'center', gap: space.md, marginTop: space.xl },
+  offer: {
+    marginTop: space.lg,
+    padding: space.lg,
+    borderRadius: radius.md,
+    backgroundColor: color.surface,
+    borderWidth: 1,
+    borderColor: color.signalDim,
+  },
   question: {
     marginTop: space.lg,
     padding: space.lg,
     borderRadius: radius.md,
-    backgroundColor: color.primarySoft,
+    backgroundColor: color.surface,
   },
-  error: { marginTop: space.lg, padding: space.md, borderRadius: radius.md, backgroundColor: color.surface },
+  error: {
+    marginTop: space.lg, padding: space.md, borderRadius: radius.md,
+    backgroundColor: color.raised,
+  },
   items: { marginTop: space.xl },
-  empty: { marginTop: space.lg, padding: space.lg, borderRadius: radius.md, backgroundColor: color.surface },
+  empty: {
+    marginTop: space.lg, padding: space.lg, borderRadius: radius.md,
+    backgroundColor: color.surface,
+  },
 });

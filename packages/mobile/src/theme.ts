@@ -3,54 +3,47 @@ import type { TextStyle } from 'react-native';
 /**
  * Design tokens.
  *
- * The product is an instrument, not a wellness app. Its entire claim is that it
- * reports what it actually knows: a range instead of a fake-precise number, the
- * source behind every figure, a question instead of a guess.
+ * The product is a measuring instrument. Its claim is that it reports what it
+ * actually knows: a range instead of a fake-precise number, the rung of the
+ * ladder each figure came from, a question instead of a guess.
  *
- * So the app is built around one committed surface — a dark **readout panel**
- * that holds the number and its range, the way a scale or a meter does — with a
- * calm, light list underneath. Everything defers to that panel. A single
- * saturated surface carrying the identity is the "Committed" strategy applied
- * to exactly one place; the rest stays restrained so the readout keeps its
- * weight.
+ * Earlier passes put that identity in one dark panel floating on a white app,
+ * which meant the app only became itself after you pressed Save. Now the
+ * instrument IS the surface: dark-first, one lit accent, and the readout is the
+ * native register rather than an exception to it.
  *
- * Colours are authored in OKLCH and committed as hex because React Native does
- * not parse oklch(). Every value was contrast-checked against the background it
- * actually sits on, and the ratios are recorded so a later edit has to break
- * them knowingly rather than by accident.
+ * The risk with dark is the "tools look cool dark" reflex, so it is not carried
+ * by the darkness. It is carried by IBM Plex Mono on every measured figure, a
+ * gauge drawn as a scale rather than a progress bar, and a single signal colour
+ * used only where something is live or actionable.
+ *
+ * Every value was contrast-checked against the surface it actually sits on and
+ * the ratio is recorded, so a later edit has to break it knowingly.
  */
 
 export const color = {
-  bg: '#ffffff',
-  surface: '#f3f6f8',
-  surfaceSunk: '#edf1f4',
+  /** The ground. */
+  bg: '#030d17',
+  /** Panels, inputs, list rows. */
+  surface: '#0c1b27',
+  /** The readout, pressed states, anything lifted toward the user. */
+  raised: '#152736',
+  line: '#20313f',
+  lineStrong: '#324859',
 
-  ink: '#121c23',        // 17.27:1 on bg
-  inkMuted: '#505d66',   //  6.78:1 on bg
-  inkFaint: '#69757e',   //  4.72:1 on bg — placeholder-safe
+  ink: '#f3f7fb',       // 18.17:1 on bg · 16.23:1 on surface
+  inkMuted: '#a4b3c1',  //  9.12:1 on bg ·  8.15:1 on surface
+  inkFaint: '#798895',  //  5.37:1 on bg ·  4.80:1 on surface
 
-  primary: '#0069ad',    //  5.79:1 on bg
-  primaryPressed: '#00579d',
-  primarySoft: '#daeefe',
+  /** The lit needle, and the one colour a primary action is allowed. */
+  signal: '#4ebaff',    //  9.12:1 on bg
+  signalDim: '#2a628d',
+  /** Text on a signal-filled surface. 9.28:1 on signal. */
+  onSignal: '#010a14',
 
-  /* The readout: one dark, committed surface. */
-  readout: '#061420',
-  readoutEdge: '#132737',
-  readoutInk: '#f8fafd',    // 17.79:1 on readout
-  readoutMuted: '#a3b4c2',  //  8.74:1 on readout
-  readoutTrack: '#1b3345',
-  /** The lit needle. 8.68:1 on the panel, 6.10:1 on its own track. */
-  signal: '#4ebaff',
-  signalDim: '#306893',
-
-  confirmed: '#1c7b5a',
-  review: '#8a5900',     //  5.98:1 on bg
-  /** Low confidence is not red: asking a question is the system working. */
-  ask: '#0069ad',
-  danger: '#be2f2c',
-
-  border: '#e4e8eb',
-  borderStrong: '#b8bfc4',
+  ok: '#56cb98',        //  9.68:1 on bg — logged, nothing to check
+  warn: '#f1ba4b',      // 11.05:1 on bg — worth a look
+  danger: '#f66d67',    //  6.80:1 on bg
 } as const;
 
 export const space = {
@@ -58,17 +51,10 @@ export const space = {
 } as const;
 
 /**
- * Typeface.
- *
- * The system font was the single loudest generic signal in the first pass:
- * Roboto on Android, SF on iOS, no personality either way. IBM Plex was drawn
- * for engineering and technical documentation, which is exactly this product's
- * register, and the mono cut gives the readout the feel of an instrument
- * display rather than a heading.
- *
- * Two families, paired on a real contrast axis (grotesque + mono) rather than
- * two sans faces that merely differ. React Native does not synthesise weights
- * for custom fonts, so each step names its own family instead of a fontWeight.
+ * Typeface. IBM Plex was drawn for engineering documentation, which is this
+ * product's register, and the mono cut makes a measured figure read as an
+ * instrument display rather than a heading. React Native does not synthesise
+ * weights for custom fonts, so each step names its own family.
  */
 export const font = {
   regular: 'IBMPlexSans_400Regular',
@@ -79,15 +65,9 @@ export const font = {
   monoBold: 'IBMPlexMono_600SemiBold',
 } as const;
 
-/**
- * Fixed scale, steps ~1.3 apart, with family doing the weight work.
- *
- * The first pass ran everything between 12 and 34 px at similar weights, which
- * is why the screen read as a form: no element was allowed to matter more than
- * any other.
- */
+/** Fixed scale, steps ~1.3 apart, with family doing the weight work. */
 export const type = {
-  /** The measured number, in mono. Nothing else comes close, on purpose. */
+  /** The measured total. Nothing else comes close, on purpose. */
   readout: { fontFamily: font.monoBold, fontSize: 58, lineHeight: 62, letterSpacing: -2.6 },
   display: { fontFamily: font.bold, fontSize: 30, lineHeight: 34, letterSpacing: -0.9 },
   title: { fontFamily: font.bold, fontSize: 22, lineHeight: 28, letterSpacing: -0.5 },
@@ -97,20 +77,15 @@ export const type = {
   small: { fontFamily: font.regular, fontSize: 14, lineHeight: 21 },
   smallStrong: { fontFamily: font.semibold, fontSize: 14, lineHeight: 20 },
   label: { fontFamily: font.medium, fontSize: 12, lineHeight: 16, letterSpacing: 0.3 },
-  /** Data: masses, calories, anything read as a measurement. */
+  /** Any figure read as a measurement: masses, calories, macros. */
   mono: { fontFamily: font.monoMedium, fontSize: 14, lineHeight: 20 },
   monoStrong: { fontFamily: font.monoBold, fontSize: 16, lineHeight: 22, letterSpacing: -0.3 },
 } as const;
 
-export const numeric: TextStyle = { fontVariant: ['tabular-nums'] };
+/** Plex Mono is already tabular; kept as an explicit marker of intent. */
+export const numeric: TextStyle = {};
 
-export const radius = {
-  sm: 6,
-  md: 10,
-  /** Cards top out here; the readout panel is the only thing this round. */
-  lg: 16,
-  pill: 999,
-} as const;
+export const radius = { sm: 6, md: 10, lg: 16, pill: 999 } as const;
 
 /** State changes only: 150–260 ms. Users are mid-task, not watching a show. */
 export const motion = { fast: 140, base: 200, slow: 260 } as const;
@@ -118,19 +93,38 @@ export const motion = { fast: 140, base: 200, slow: 260 } as const;
 export type ConfidenceBand = 'high' | 'medium' | 'low' | 'none';
 
 /**
- * Band presentation.
- *
- * The pastel pill is gone. It gave three states the same visual weight and made
- * a settled item shout as loudly as one needing attention. Now colour is
- * carried by a single dot, and only the states that actually want the user's
- * attention get a tinted background.
+ * Band presentation. Colour rides on a single dot; only the state that wants a
+ * decision gets a filled background, so a settled item cannot shout as loudly
+ * as one that needs the user.
  */
 export const bandStyle: Record<
   ConfidenceBand,
   { label: string; dot: string; fg: string; emphasis: boolean }
 > = {
-  high: { label: 'Logged', dot: color.confirmed, fg: color.inkMuted, emphasis: false },
-  medium: { label: 'Worth a look', dot: color.review, fg: color.review, emphasis: false },
-  low: { label: 'Needs you', dot: color.ask, fg: color.primary, emphasis: true },
-  none: { label: 'Empty', dot: color.borderStrong, fg: color.inkFaint, emphasis: false },
+  high: { label: 'Logged', dot: color.ok, fg: color.inkMuted, emphasis: false },
+  medium: { label: 'Worth a look', dot: color.warn, fg: color.warn, emphasis: false },
+  low: { label: 'Needs you', dot: color.signal, fg: color.signal, emphasis: true },
+  none: { label: 'Empty', dot: color.lineStrong, fg: color.inkFaint, emphasis: false },
+};
+
+/**
+ * The portion ladder, surfaced in the UI.
+ *
+ * A number from a scanned label and a number a model guessed off a photo are
+ * different kinds of claim, and the user is entitled to know which one they are
+ * looking at. `error` is the rough calorie error the published work associates
+ * with that route, shown so the figure is judgeable rather than just asserted.
+ */
+export type PortionMethod =
+  | 'stated_mass' | 'stated_volume' | 'barcode_label' | 'user_memory'
+  | 'household_measure' | 'reference_scaled' | 'model_estimate';
+
+export const methodStyle: Record<PortionMethod, { label: string; exact: boolean }> = {
+  stated_mass: { label: 'You weighed it', exact: true },
+  stated_volume: { label: 'You measured it', exact: true },
+  barcode_label: { label: 'From the label', exact: true },
+  user_memory: { label: 'Your usual', exact: true },
+  household_measure: { label: 'From your words', exact: false },
+  reference_scaled: { label: 'Scaled to reference', exact: false },
+  model_estimate: { label: 'Estimated', exact: false },
 };

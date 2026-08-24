@@ -4,11 +4,11 @@
     "slug": "mise",
     "version": "0.1.0",
     "orientation": "portrait",
-    "userInterfaceStyle": "light",
+    "userInterfaceStyle": "dark",
     "scheme": "mise",
     "newArchEnabled": true,
     "splash": {
-      "backgroundColor": "#ffffff",
+      "backgroundColor": "#030d17",
       "resizeMode": "contain"
     },
     "ios": {
@@ -20,7 +20,7 @@
     },
     "android": {
       "adaptiveIcon": {
-        "backgroundColor": "#0069ad"
+        "backgroundColor": "#030d17"
       },
       "permissions": [
         "CAMERA",
@@ -38,7 +38,13 @@
           "cameraPermission": "mise reads your meal photo to suggest what you ate."
         }
       ],
-      "expo-font"
+      "expo-font",
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "mise scans barcodes to read nutrition off the label instead of estimating it."
+        }
+      ]
     ]
   }
 }

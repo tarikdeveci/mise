@@ -40,12 +40,29 @@ export interface NutritionInterval {
   max: Nutrients;
 }
 
+export type PortionMethod =
+  | 'stated_mass' | 'stated_volume' | 'barcode_label' | 'user_memory'
+  | 'household_measure' | 'reference_scaled' | 'model_estimate';
+
 export interface Portion {
   gramsLikely: number;
   gramsMin: number;
   gramsMax: number;
   basis: string;
   assumption: string;
+  fromVision: boolean;
+  /** Which rung of the portion ladder answered. */
+  method: PortionMethod;
+}
+
+export type ReferenceObject = 'card' | 'coin' | 'utensil' | 'phone' | 'none';
+
+export interface ScannedProduct {
+  barcode: string;
+  name: string;
+  source: string;
+  per100g: Nutrients;
+  servingGrams: number | null;
 }
 
 export interface Confidence {
@@ -173,7 +190,19 @@ async function request<T>(path: string, init: RequestInit & { retries?: number }
 }
 
 export const api = {
-  logMeal(input: { text?: string; imageBase64?: string; imageMediaType?: string; locale?: string }, key = idempotencyKey()) {
+  logMeal(
+    input: {
+      text?: string;
+      imageBase64?: string;
+      imageMediaType?: string;
+      locale?: string;
+      /** Scanned package: the one route with no model anywhere in it. */
+      barcode?: string;
+      /** A scale reference the user put in frame, if any. */
+      reference?: ReferenceObject;
+    },
+    key = idempotencyKey(),
+  ) {
     return request<MealLog>('/v1/meals', {
       method: 'POST',
       headers: { 'Idempotency-Key': key },
@@ -181,10 +210,23 @@ export const api = {
     });
   },
 
+  /** Look up a scanned package without logging it, so the user can confirm. */
+  scan(code: string) {
+    return request<ScannedProduct>(`/v1/barcode/${encodeURIComponent(code)}`, {
+      method: 'GET',
+      retries: 1,
+    });
+  },
+
   history(limit = 20) {
     return request<{ meals: MealLog[] }>(`/v1/meals?limit=${limit}`, { method: 'GET' });
   },
 
+  /**
+   * Record a correction. Passing `grams` is what populates the `user_memory`
+   * rung: next time this phrase appears, the portion is replayed rather than
+   * estimated.
+   */
   correct(mealId: string, itemId: string, foodId: string, grams?: number) {
     return request<{ recorded: boolean; hits: number }>(`/v1/meals/${mealId}/corrections`, {
       method: 'POST',

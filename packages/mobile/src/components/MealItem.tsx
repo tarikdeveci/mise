@@ -2,15 +2,12 @@ import { useState } from 'react';
 import { LayoutAnimation, Pressable, StyleSheet, Text, View } from 'react-native';
 import type { LoggedItem } from '../api';
 import { color, numeric, radius, space, type } from '../theme';
-import { BandChip, ChoiceChip, MiniRange, useReducedMotion } from './ui';
+import { BandChip, ChoiceChip, MethodChip, MiniRange, useReducedMotion } from './ui';
 
-// No `setLayoutAnimationEnabledExperimental` opt-in here: that was the
-// old-architecture Android switch, and calling it under the New Architecture
-// only produces a deprecation warning over the UI.
-
-/** Human wording for how the match was made. Shown, not buried in a log. */
-const METHOD_COPY: Record<string, string> = {
-  user_alias: 'You corrected this before, so it was matched instantly',
+/** Human wording for how the food was identified. Shown, not buried in a log. */
+const RESOLUTION_COPY: Record<string, string> = {
+  barcode: 'Read off the scanned label',
+  user_alias: 'You corrected this before, so it matched instantly',
   global_alias: 'A curated default for an ambiguous word',
   lexical: 'Matched by name',
   vector: 'Matched by meaning across languages',
@@ -21,19 +18,20 @@ const METHOD_COPY: Record<string, string> = {
 
 interface Props {
   item: LoggedItem;
-  onCorrect: (itemId: string, foodId: string) => void;
-  correcting?: boolean;
+  onCorrectFood: (itemId: string, foodId: string) => void;
+  onCorrectPortion: (itemId: string, grams: number) => void;
+  busy?: boolean;
 }
 
 /**
  * One logged food.
  *
  * Collapsed it answers "what and how much". Expanded it answers "how do you
- * know" — the matched database row, the exact arithmetic, the portion
- * assumption, and the other candidates that were considered, each one tap away
- * from becoming the answer instead.
+ * know" — which rung of the ladder produced the amount, the matched database
+ * row, the literal arithmetic, and the other candidates that were considered,
+ * each one tap from becoming the answer instead.
  */
-export function MealItem({ item, onCorrect, correcting }: Props) {
+export function MealItem({ item, onCorrectFood, onCorrectPortion, busy }: Props) {
   const [open, setOpen] = useState(false);
   const reduced = useReducedMotion();
 
@@ -80,6 +78,14 @@ export function MealItem({ item, onCorrect, correcting }: Props) {
 
         <View style={s.meta}>
           <BandChip band={unresolved ? 'low' : item.confidence.band} />
+          {item.portion && (
+            <MethodChip
+              method={item.portion.method}
+              min={item.portion.gramsMin}
+              likely={item.portion.gramsLikely}
+              max={item.portion.gramsMax}
+            />
+          )}
           {!unresolved && item.nutrition && (
             <View style={s.miniRange}>
               <MiniRange
@@ -97,7 +103,7 @@ export function MealItem({ item, onCorrect, correcting }: Props) {
           {!unresolved && (
             <>
               <Text style={[type.small, { color: color.ink }]}>
-                {METHOD_COPY[item.resolution.method] ?? item.resolution.method}
+                {RESOLUTION_COPY[item.resolution.method] ?? item.resolution.method}
               </Text>
               {item.portion && item.nutrition && (
                 <Text style={[type.mono, numeric, { color: color.inkMuted, marginTop: space.xs }]}>
@@ -123,13 +129,39 @@ export function MealItem({ item, onCorrect, correcting }: Props) {
                   <ChoiceChip
                     key={c.foodId}
                     label={c.name}
-                    disabled={correcting}
-                    onPress={() => { onCorrect(item.id, c.foodId); }}
+                    disabled={busy}
+                    onPress={() => { onCorrectFood(item.id, c.foodId); }}
                   />
                 ))}
               </View>
+            </>
+          )}
+
+          {/*
+            Correcting the amount is what teaches the `user_memory` rung. Next
+            time this phrase appears the portion is replayed rather than
+            estimated, which is the only rung that improves with use.
+          */}
+          {!unresolved && item.portion && !item.portion.method.startsWith('stated') && (
+            <>
+              <Text style={[type.smallStrong, { color: color.ink, marginTop: space.lg }]}>
+                Set your usual amount
+              </Text>
+              <View style={s.choices}>
+                {[0.5, 1, 1.5, 2].map((factor) => {
+                  const grams = Math.round(item.portion!.gramsLikely * factor);
+                  return (
+                    <ChoiceChip
+                      key={factor}
+                      label={`${grams} g`}
+                      disabled={busy}
+                      onPress={() => { onCorrectPortion(item.id, grams); }}
+                    />
+                  );
+                })}
+              </View>
               <Text style={[type.small, { color: color.inkFaint, marginTop: space.sm }]}>
-                Correcting this teaches mise your wording. Next time it matches instantly.
+                mise remembers it for this wording and stops estimating.
               </Text>
             </>
           )}
@@ -140,21 +172,20 @@ export function MealItem({ item, onCorrect, correcting }: Props) {
 }
 
 const s = StyleSheet.create({
-  wrap: {
-    paddingVertical: space.lg,
-    borderBottomWidth: 1,
-    borderBottomColor: color.border,
-  },
+  wrap: { paddingVertical: space.lg, borderBottomWidth: 1, borderBottomColor: color.line },
   wrapUnresolved: {
-    backgroundColor: color.primarySoft,
+    backgroundColor: color.surface,
     paddingHorizontal: space.lg,
     marginHorizontal: -space.lg,
     borderRadius: radius.md,
     borderBottomWidth: 0,
   },
   head: { flexDirection: 'row', alignItems: 'baseline', gap: space.md },
-  meta: { flexDirection: 'row', alignItems: 'center', gap: space.md, marginTop: space.md },
-  miniRange: { flex: 1 },
-  detail: { marginTop: space.lg, paddingTop: space.md, borderTopWidth: 1, borderTopColor: color.border },
+  meta: {
+    flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap',
+    gap: space.sm, marginTop: space.md,
+  },
+  miniRange: { flex: 1, minWidth: 60 },
+  detail: { marginTop: space.lg, paddingTop: space.md, borderTopWidth: 1, borderTopColor: color.line },
   choices: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm, marginTop: space.sm },
 });
