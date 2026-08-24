@@ -58,35 +58,50 @@ export const space = {
 } as const;
 
 /**
- * Fixed scale. Product UI is viewed at consistent DPI, so a fluid heading that
- * shrinks inside a panel looks worse, not more responsive.
+ * Typeface.
  *
- * The steps are deliberately far apart (~1.3) and weight does as much work as
- * size. The previous scale ran everything between 12 and 34 px at similar
- * weights, which is why the screen read as a form: no element was allowed to be
- * more important than any other.
+ * The system font was the single loudest generic signal in the first pass:
+ * Roboto on Android, SF on iOS, no personality either way. IBM Plex was drawn
+ * for engineering and technical documentation, which is exactly this product's
+ * register, and the mono cut gives the readout the feel of an instrument
+ * display rather than a heading.
+ *
+ * Two families, paired on a real contrast axis (grotesque + mono) rather than
+ * two sans faces that merely differ. React Native does not synthesise weights
+ * for custom fonts, so each step names its own family instead of a fontWeight.
  */
-export const type = {
-  /** The measured number. Nothing else on screen comes close, on purpose. */
-  readout: {
-    fontSize: 60, lineHeight: 62, fontWeight: '800' as const, letterSpacing: -2.2,
-  },
-  display: { fontSize: 30, lineHeight: 34, fontWeight: '800' as const, letterSpacing: -0.9 },
-  title: { fontSize: 22, lineHeight: 27, fontWeight: '700' as const, letterSpacing: -0.5 },
-  heading: { fontSize: 17, lineHeight: 23, fontWeight: '700' as const, letterSpacing: -0.2 },
-  body: { fontSize: 16, lineHeight: 24, fontWeight: '400' as const },
-  bodyStrong: { fontSize: 16, lineHeight: 22, fontWeight: '600' as const, letterSpacing: -0.1 },
-  small: { fontSize: 14, lineHeight: 21, fontWeight: '400' as const },
-  smallStrong: { fontSize: 14, lineHeight: 20, fontWeight: '600' as const },
-  label: { fontSize: 12, lineHeight: 16, fontWeight: '600' as const, letterSpacing: 0.2 },
+export const font = {
+  regular: 'IBMPlexSans_400Regular',
+  medium: 'IBMPlexSans_500Medium',
+  semibold: 'IBMPlexSans_600SemiBold',
+  bold: 'IBMPlexSans_700Bold',
+  monoMedium: 'IBMPlexMono_500Medium',
+  monoBold: 'IBMPlexMono_600SemiBold',
 } as const;
 
 /**
- * Tabular figures for anything numeric.
+ * Fixed scale, steps ~1.3 apart, with family doing the weight work.
  *
- * Proportional digits make a column of calorie counts jitter as values change,
- * which is precisely the impression a measuring instrument must not give.
+ * The first pass ran everything between 12 and 34 px at similar weights, which
+ * is why the screen read as a form: no element was allowed to matter more than
+ * any other.
  */
+export const type = {
+  /** The measured number, in mono. Nothing else comes close, on purpose. */
+  readout: { fontFamily: font.monoBold, fontSize: 58, lineHeight: 62, letterSpacing: -2.6 },
+  display: { fontFamily: font.bold, fontSize: 30, lineHeight: 34, letterSpacing: -0.9 },
+  title: { fontFamily: font.bold, fontSize: 22, lineHeight: 28, letterSpacing: -0.5 },
+  heading: { fontFamily: font.semibold, fontSize: 17, lineHeight: 23, letterSpacing: -0.2 },
+  body: { fontFamily: font.regular, fontSize: 16, lineHeight: 24 },
+  bodyStrong: { fontFamily: font.semibold, fontSize: 16, lineHeight: 22, letterSpacing: -0.1 },
+  small: { fontFamily: font.regular, fontSize: 14, lineHeight: 21 },
+  smallStrong: { fontFamily: font.semibold, fontSize: 14, lineHeight: 20 },
+  label: { fontFamily: font.medium, fontSize: 12, lineHeight: 16, letterSpacing: 0.3 },
+  /** Data: masses, calories, anything read as a measurement. */
+  mono: { fontFamily: font.monoMedium, fontSize: 14, lineHeight: 20 },
+  monoStrong: { fontFamily: font.monoBold, fontSize: 16, lineHeight: 22, letterSpacing: -0.3 },
+} as const;
+
 export const numeric: TextStyle = { fontVariant: ['tabular-nums'] };
 
 export const radius = {

@@ -88,7 +88,7 @@ export function HistoryScreen({ onOpen }: { onOpen: (log: MealLog) => void }) {
               <Text style={[type.bodyStrong, { color: color.ink, flex: 1 }]} numberOfLines={1}>
                 {meal.items.map((i) => i.foodName ?? i.extracted.phrase).join(', ') || 'Empty log'}
               </Text>
-              <Text style={[type.bodyStrong, numeric, { color: color.ink }]}>
+              <Text style={[type.monoStrong, numeric, { color: color.ink }]}>
                 {Math.round(meal.totals.likely.kcal)}
               </Text>
             </View>

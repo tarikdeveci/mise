@@ -65,7 +65,7 @@ export function MealItem({ item, onCorrect, correcting }: Props) {
           {unresolved ? (
             <Text style={[type.bodyStrong, { color: color.inkFaint }]}>—</Text>
           ) : (
-            <Text style={[type.bodyStrong, numeric, { color: color.ink }]}>
+            <Text style={[type.monoStrong, numeric, { color: color.ink }]}>
               {Math.round(kcal)}
               <Text style={[type.label, { color: color.inkFaint }]}> kcal</Text>
             </Text>
@@ -100,7 +100,7 @@ export function MealItem({ item, onCorrect, correcting }: Props) {
                 {METHOD_COPY[item.resolution.method] ?? item.resolution.method}
               </Text>
               {item.portion && item.nutrition && (
-                <Text style={[type.small, numeric, { color: color.inkMuted, marginTop: space.xs }]}>
+                <Text style={[type.mono, numeric, { color: color.inkMuted, marginTop: space.xs }]}>
                   {item.portion.gramsLikely} g → {Math.round(item.nutrition.min.kcal)}–
                   {Math.round(item.nutrition.max.kcal)} kcal
                 </Text>

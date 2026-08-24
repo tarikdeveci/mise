@@ -19,10 +19,17 @@
       }
     },
     "android": {
-      "adaptiveIcon": { "backgroundColor": "#0069ad" },
-      "permissions": ["CAMERA", "READ_EXTERNAL_STORAGE"]
+      "adaptiveIcon": {
+        "backgroundColor": "#0069ad"
+      },
+      "permissions": [
+        "CAMERA",
+        "READ_EXTERNAL_STORAGE"
+      ]
     },
-    "web": { "bundler": "metro" },
+    "web": {
+      "bundler": "metro"
+    },
     "plugins": [
       [
         "expo-image-picker",
@@ -30,7 +37,8 @@
           "photosPermission": "Pick a meal photo to log what you ate.",
           "cameraPermission": "mise reads your meal photo to suggest what you ate."
         }
-      ]
+      ],
+      "expo-font"
     ]
   }
 }

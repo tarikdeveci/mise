@@ -154,7 +154,7 @@ export function ResultScreen({ log, onClose, onUpdate }: Props) {
 function Macro({ label, value }: { label: string; value: number }) {
   return (
     <View style={s.macro}>
-      <Text style={[type.bodyStrong, numeric, { color: color.readoutInk }]}>
+      <Text style={[type.monoStrong, numeric, { color: color.readoutInk }]}>
         {value.toFixed(1)}
         <Text style={[type.label, { color: color.readoutMuted }]}>g</Text>
       </Text>
@@ -164,7 +164,7 @@ function Macro({ label, value }: { label: string; value: number }) {
 }
 
 const s = StyleSheet.create({
-  content: { padding: space.xl, paddingTop: space.md, paddingBottom: space.xxxl },
+  content: { padding: space.xl, paddingTop: space.lg, paddingBottom: space.xxxl },
   back: { paddingVertical: space.sm, marginBottom: space.md, alignSelf: 'flex-start' },
 
   readout: {
