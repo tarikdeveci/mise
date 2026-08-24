@@ -9,7 +9,9 @@ import { expandComposites } from './composite.js';
 import { dispositionFor, scoreConfidence } from './confidence.js';
 import type { Extractor } from './extract/types.js';
 import { computeNutrition, sumIntervals, verifyTraceable } from './nutrition.js';
-import { estimatePortion } from './portion.js';
+import { estimatePortion } from './portion/index.js';
+import type { BarcodeFacts } from './portion/types.js';
+import type { CanonicalFood } from '../domain/food.js';
 import type { AliasStore } from './resolve/aliasStore.js';
 import { MIN_RESOLVABLE_SCORE, type LexicalIndex } from './resolve/lexical.js';
 import { resolvePhrase, type Reranker } from './resolve/router.js';
@@ -35,6 +37,12 @@ export interface PipelineDeps {
 export interface ProcessOptions {
   userId: string;
   traceId?: string;
+  /**
+   * A scanned package. When present the model is skipped entirely: the label
+   * identifies the product and states the serving, so there is nothing left to
+   * infer. This is the whole point of putting barcode at the top of the ladder.
+   */
+  barcode?: { food: CanonicalFood; facts: BarcodeFacts };
 }
 
 export interface Pipeline {
@@ -49,6 +57,11 @@ export function createPipeline(deps: PipelineDeps): Pipeline {
       const traceId = opts.traceId ?? randomUUID();
       const started = performance.now();
       const log = logger.child({ traceId, extractor: extractor.id });
+
+      /* 0 — a scanned label answers both questions outright. */
+      if (opts.barcode) {
+        return barcodeLog(opts.barcode, input, opts, extractor, deps, started, traceId);
+      }
 
       /* 1 — extraction. The only stage a model authors anything. */
       const extraction = await timed('extract', () => extractor.extract(input));
@@ -94,7 +107,18 @@ export function createPipeline(deps: PipelineDeps): Pipeline {
           continue;
         }
 
-        const portion = estimatePortion(db, { food, item: extracted, fromImage });
+        const portion = estimatePortion({
+          db,
+          food,
+          item: extracted,
+          userId: opts.userId,
+          aliases: deps.aliases,
+          fromImage,
+          // A scale reference the user said was in frame. The single best
+          // accuracy-per-effort lever available on a plain 2D photo.
+          reference: input.reference ?? 'none',
+          ...(opts.barcode ? { barcode: opts.barcode } : {}),
+        });
         const nutrition = computeNutrition(food, portion);
 
         // The traceability assertion runs in production, not only in tests.
@@ -171,6 +195,85 @@ export function createPipeline(deps: PipelineDeps): Pipeline {
   };
 }
 
+/**
+ * A meal built from a scanned label.
+ *
+ * Deliberately its own short path rather than a special case threaded through
+ * the main one: there is no extraction, no retrieval and no ambiguity to
+ * resolve, and pretending otherwise would obscure that this is the one route
+ * with no inference anywhere in it.
+ */
+function barcodeLog(
+  scanned: { food: CanonicalFood; facts: BarcodeFacts },
+  input: MealInput,
+  opts: ProcessOptions,
+  extractor: Extractor,
+  deps: PipelineDeps,
+  started: number,
+  traceId: string,
+): MealLog {
+  const { food, facts } = scanned;
+  const quantity = input.text ? undefined : 1;
+
+  const extracted = {
+    phrase: facts.name,
+    ...(quantity !== undefined ? { quantity } : {}),
+    preparation: 'unknown' as const,
+    confidence: 1,
+  };
+
+  const portion = estimatePortion({
+    db: deps.db,
+    food,
+    item: extracted,
+    userId: opts.userId,
+    aliases: deps.aliases,
+    fromImage: false,
+    reference: 'none',
+    barcode: facts,
+  });
+
+  const nutrition = computeNutrition(food, portion);
+  const resolution = {
+    method: 'barcode' as const,
+    foodId: food.id,
+    candidates: [{ foodId: food.id, name: food.name, score: 1, via: 'alias' as const }],
+    margin: 1,
+  };
+
+  const item: LoggedItem = {
+    id: randomUUID(),
+    extracted,
+    resolution,
+    foodId: food.id,
+    foodName: food.name,
+    source: food.source,
+    portion,
+    nutrition,
+    confidence: scoreConfidence({ extracted, resolution, portion }),
+  };
+
+  const latencyMs = Math.round(performance.now() - started);
+  metrics.inc('meal_log_total', { outcome: 'barcode' });
+
+  return {
+    id: randomUUID(),
+    status: dispositionFor([item.confidence.band]),
+    items: [item],
+    totals: sumIntervals([nutrition]),
+    questions: [],
+    provenance: {
+      pipelineVersion: PIPELINE_VERSION,
+      promptVersion: 'none',
+      extractorId: 'barcode',
+      model: 'none',
+      traceId,
+      latencyMs,
+    },
+    createdAt: new Date().toISOString(),
+  };
+}
+
 function emptyLog(
   traceId: string,
   extractor: Extractor,
@@ -231,6 +334,7 @@ function mergeByFood(items: LoggedItem[], db: FoodDb): LoggedItem[] {
       // If either half was read off a photo, the merged total inherits that
       // uncertainty — averaging it away would launder the weaker estimate.
       fromVision: existing.portion.fromVision || item.portion.fromVision,
+      method: existing.portion.method,
     };
 
     byFood.set(item.foodId, {

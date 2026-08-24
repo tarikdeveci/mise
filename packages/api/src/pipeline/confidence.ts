@@ -32,6 +32,7 @@ export const BANDS = { high: 0.8, medium: 0.55 } as const;
 
 /** How much we trust each resolution rung, before the margin adjustment. */
 const METHOD_CEILING: Record<Resolution['method'], number> = {
+  barcode: 1.0,         // the package says so; nothing was inferred
   user_alias: 1.0,      // this exact user corrected this exact phrase
   global_alias: 0.95,   // a curated decision we can point at
   lexical: 0.92,

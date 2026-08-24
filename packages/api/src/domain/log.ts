@@ -3,6 +3,10 @@ import { NutrientsPer100g } from './food.js';
 
 /* ────────────────────────────── input ────────────────────────────── */
 
+/** A scale reference visible in the photo. */
+export const ReferenceObject = z.enum(['card', 'coin', 'utensil', 'phone', 'none']);
+export type ReferenceObject = z.infer<typeof ReferenceObject>;
+
 export const MealInput = z
   .object({
     /** Free text as typed or dictated: "2 dilim ekmek, yanında peynir ve çay". */
@@ -14,9 +18,22 @@ export const MealInput = z
     locale: z.string().default('tr-TR'),
     /** Local wall-clock time of the meal, used only for meal-slot heuristics. */
     eatenAt: z.string().datetime().optional(),
+    /**
+     * A scanned product barcode. The top rung of the portion ladder: a label
+     * is not an estimate, so this skips the whole estimation problem.
+     */
+    barcode: z.string().regex(/^\d{8,14}$/).optional(),
+    /**
+     * A scale reference the user put in frame. Published work puts a plain
+     * credit card at 34% -> 18% calorie error on a 2D photo, which is the best
+     * accuracy-per-effort intervention available and needs no hardware.
+     */
+    reference: ReferenceObject.optional(),
   })
-  .refine((v) => Boolean(v.text?.trim()) || Boolean(v.imageBase64), {
-    message: 'Provide at least one of `text` or `imageBase64`.',
+  // A barcode is a first-class way to log a meal, not a modifier on the other
+  // two: it is the only input that needs no model at all.
+  .refine((v) => Boolean(v.text?.trim()) || Boolean(v.imageBase64) || Boolean(v.barcode), {
+    message: 'Provide at least one of `text`, `imageBase64` or `barcode`.',
   });
 export type MealInput = z.infer<typeof MealInput>;
 
@@ -59,6 +76,7 @@ export type ExtractionResult = z.infer<typeof ExtractionResult>;
 
 /** How a phrase became a canonical food. Recorded per item, shown in the UI. */
 export const ResolutionMethod = z.enum([
+  'barcode',      // scanned label — no retrieval and no model in the path at all
   'user_alias',   // this user corrected this phrase before — deterministic replay
   'global_alias', // curated alias table hit
   'lexical',      // trigram/token match, decisive margin
@@ -96,6 +114,24 @@ export type Resolution = z.infer<typeof Resolution>;
 /* ───────────────────────────── portion ───────────────────────────── */
 
 /**
+ * How the portion was obtained, in ladder order.
+ *
+ * Shown in the UI: a number reached by scanning a label is a different kind of
+ * claim from one a model guessed off a photo, and the user is entitled to know
+ * which they are looking at.
+ */
+export const PortionMethod = z.enum([
+  'stated_mass',        // the user measured it
+  'stated_volume',      // stated volume through the food's density
+  'barcode_label',      // the package says
+  'user_memory',        // this person confirmed this exact portion before
+  'household_measure',  // their words against our measure table
+  'reference_scaled',   // a scale reference was in frame
+  'model_estimate',     // last resort
+]);
+export type PortionMethod = z.infer<typeof PortionMethod>;
+
+/**
  * Portion as a DISTRIBUTION, not a point.
  *
  * Nutrition5k found trained dietitians average ~41% error estimating portions
@@ -121,6 +157,8 @@ export const PortionEstimate = z.object({
    * tracked explicitly instead of being inferred from `basis`.
    */
   fromVision: z.boolean().default(false),
+  /** Which rung of the portion ladder answered. */
+  method: PortionMethod.default('model_estimate'),
 });
 export type PortionEstimate = z.infer<typeof PortionEstimate>;
 

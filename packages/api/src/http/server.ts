@@ -15,6 +15,7 @@ import { createAliasStore, GLOBAL_ALIAS_SEED, type AliasStore } from '../pipelin
 import { buildLexicalIndex } from '../pipeline/resolve/lexical.js';
 import { buildVectorIndex, type VectorIndex } from '../pipeline/resolve/vector.js';
 import { createIdempotencyStore, IdempotencyConflict } from './idempotency.js';
+import { lookupBarcode, BarcodeNotFound } from '../data/openFoodFacts.js';
 
 /**
  * HTTP surface.
@@ -118,6 +119,15 @@ export async function buildServer(deps: ServerDeps): Promise<FastifyInstance> {
         },
       });
     }
+    if (err instanceof BarcodeNotFound) {
+      return reply.status(404).send({
+        error: {
+          code: 'barcode_not_found',
+          message: `${err.why}. Try describing it or taking a photo instead.`,
+          traceId,
+        },
+      });
+    }
     if ((err as { statusCode?: number }).statusCode === 413) {
       return reply.status(413).send({
         error: { code: 'payload_too_large', message: 'Image exceeds the 12 MB limit.', traceId },
@@ -161,6 +171,25 @@ export async function buildServer(deps: ServerDeps): Promise<FastifyInstance> {
 
   app.get('/metrics', async () => metrics.snapshot());
 
+  /**
+   * Look up a scanned package without logging it.
+   *
+   * Separate from meal creation so the app can show what it found and let the
+   * user confirm the product and the amount before anything is written. A
+   * barcode is exact, but "exact about the wrong shelf item" is still wrong.
+   */
+  app.get('/v1/barcode/:code', async (req) => {
+    const { code } = req.params as { code: string };
+    const { food, facts } = await lookupBarcode(code);
+    return {
+      barcode: facts.code,
+      name: facts.name,
+      source: food.source,
+      per100g: food.per100g,
+      servingGrams: facts.servingGrams ?? null,
+    };
+  });
+
   app.post('/v1/meals', async (req, reply) => {
     const body = CreateMealBody.parse(req.body);
     const userId = userIdOf(req.headers as Record<string, unknown>);
@@ -190,7 +219,16 @@ export async function buildServer(deps: ServerDeps): Promise<FastifyInstance> {
       }
     }
 
-    const log = await deps.pipeline.process(body, { userId, traceId: String(req.id) });
+    // A scanned label is looked up here rather than inside the pipeline: it is
+    // network I/O with its own failure modes, and the pipeline stays a pure
+    // transformation over data it was handed.
+    const scanned = body.barcode ? await lookupBarcode(body.barcode) : undefined;
+
+    const log = await deps.pipeline.process(body, {
+      userId,
+      traceId: String(req.id),
+      ...(scanned ? { barcode: scanned } : {}),
+    });
     meals.put(log, userId);
 
     if (typeof key === 'string' && key.length > 0) idempotency.put(key, req.body, log);

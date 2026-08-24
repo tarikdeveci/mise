@@ -227,11 +227,13 @@ export function detectSize(phrase: string): string | undefined {
   return undefined;
 }
 
-export function isMassUnit(unit: string | undefined): boolean {
+// Type predicates, not plain booleans: a caller that has checked the unit
+// should not then have to re-assert that it is defined.
+export function isMassUnit(unit: string | undefined): unit is string {
   return unit === 'g' || unit === 'kg' || unit === 'oz' || unit === 'lb';
 }
 
-export function isVolumeUnit(unit: string | undefined): boolean {
+export function isVolumeUnit(unit: string | undefined): unit is string {
   return unit === 'ml' || unit === 'l';
 }
 
