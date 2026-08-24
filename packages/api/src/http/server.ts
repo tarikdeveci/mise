@@ -13,6 +13,7 @@ import {
 import { withRuleFallback } from '../pipeline/extract/fallback.js';
 import { createAliasStore, GLOBAL_ALIAS_SEED, type AliasStore } from '../pipeline/resolve/aliasStore.js';
 import { buildLexicalIndex } from '../pipeline/resolve/lexical.js';
+import { createGeminiReranker } from '../pipeline/resolve/reranker.js';
 import { buildVectorIndex, type VectorIndex } from '../pipeline/resolve/vector.js';
 import { createIdempotencyStore, IdempotencyConflict } from './idempotency.js';
 import { lookupBarcode, BarcodeNotFound } from '../data/openFoodFacts.js';
@@ -360,7 +361,14 @@ export async function createApp(): Promise<FastifyInstance> {
   // is already the safety net, so wrapping it in itself would be noise.
   const primary = await createExtractor(requested);
   const extractor = requested === 'rules' ? primary : withRuleFallback(primary);
-  const pipeline = createPipeline({ db, lexical, vector, aliases, extractor });
+  // The verifier for rung 5. Undefined without a key, and the router falls
+  // back to accepting a plausible-but-unverified match rather than refusing
+  // everything.
+  const reranker = createGeminiReranker();
+  const pipeline = createPipeline({
+    db, lexical, vector, aliases, extractor,
+    ...(reranker ? { reranker } : {}),
+  });
 
   logger.info(
     { extractor: extractor.id, model: extractor.model, vector: vector.available, foods: db.all.length },

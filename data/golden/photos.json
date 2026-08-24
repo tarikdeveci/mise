@@ -1,0 +1,98 @@
+{
+  "about": {
+    "what": "Qualitative photo cases. Real meal photographs, labelled by eye.",
+    "why_not_weighed": "These have no weighed ground truth, so they cannot measure calorie accuracy — a person estimating portions from an image averages ~41% error (Nutrition5k), which is larger than the thing we would be trying to measure. They are scored on what CAN be judged from a photograph: did it name the right foods, did it admit the ones it does not know, and did it invent anything.",
+    "scoring": {
+      "identified": "foods the system named correctly, by our own database's vocabulary",
+      "admitted": "foods it correctly declined to guess at (not in the database)",
+      "invented": "foods reported that are not in the picture — must be 0",
+      "invisible": "calories no photograph can show: oil, sauce, dressing, sugar. Recorded per case so the systematic undercount is visible rather than silently absorbed."
+    }
+  },
+  "cases": [
+    {
+      "id": "P1",
+      "file": "p1-ramen.jpg",
+      "describe": "Bowl of soy-glazed ramen noodles, spring onion and sesame seeds on top, chopsticks lifting a strand.",
+      "shouldIdentify": [
+        "noodles or pasta"
+      ],
+      "notInDatabase": [
+        "ramen noodles",
+        "soy sauce",
+        "sesame oil",
+        "sesame seeds",
+        "spring onion"
+      ],
+      "invisible": "The glaze is soy, sugar and sesame oil. A tablespoon of sesame oil alone is ~120 kcal and nothing in the frame shows it.",
+      "probes": "A single-food bowl where the food is easy and the sauce carrying much of the energy is undetectable. Also tests whether a near-miss (pasta for ramen) is reported honestly or dressed up as a match."
+    },
+    {
+      "id": "P2",
+      "file": "p2-hamsi.jpg",
+      "describe": "Plate of flour-coated fried anchovies (hamsi tava) with lemon wedges, parsley and sliced red onion.",
+      "shouldIdentify": [
+        "onion"
+      ],
+      "notInDatabase": [
+        "anchovy",
+        "fried fish",
+        "lemon",
+        "parsley"
+      ],
+      "invisible": "Deep-fried in oil. The coating absorbs a large and unknowable fraction.",
+      "probes": "Almost nothing here is in a 68-row database. The correct behaviour is to say so, not to reach for the nearest fish-shaped row. This is the ignorance test."
+    },
+    {
+      "id": "P3",
+      "file": "p3-chicken-bowl.jpg",
+      "describe": "Bowl with sliced blackened chicken breast, dressed romaine, sweet potato fries, lemon slice; a glass of iced cola beside it.",
+      "shouldIdentify": [
+        "chicken breast",
+        "salad greens",
+        "cola"
+      ],
+      "notInDatabase": [
+        "sweet potato fries",
+        "caesar dressing",
+        "lemon"
+      ],
+      "invisible": "The dressing. Creamy dressing on that much lettuce is 100-200 kcal and reads visually as almost nothing.",
+      "probes": "Multi-item, and the two highest-energy components (fries, dressing) are the two least likely to be handled. Tests whether a partial answer is presented as partial."
+    },
+    {
+      "id": "P4",
+      "file": "p4-stuffed-shells.jpg",
+      "describe": "Pan of jumbo pasta shells stuffed with spinach and ricotta, in tomato sauce, topped with grated cheese.",
+      "shouldIdentify": [
+        "pasta"
+      ],
+      "notInDatabase": [
+        "ricotta",
+        "spinach",
+        "tomato sauce",
+        "parmesan",
+        "stuffed shells"
+      ],
+      "invisible": "Nothing hidden by cooking here, but the filling is most of the energy and it is a composite the database has no template for.",
+      "probes": "A dish that is one thing to a person and five rows to a database. Tests composite handling, and whether the pan is read as a serving."
+    },
+    {
+      "id": "P5",
+      "file": "p5-steak.jpg",
+      "describe": "Plate with sliced medium-rare steak under chimichurri, roasted carrot sticks, steamed broccoli.",
+      "shouldIdentify": [
+        "beef"
+      ],
+      "notInDatabase": [
+        "steak cut",
+        "chimichurri",
+        "broccoli",
+        "roasted carrots"
+      ],
+      "invisible": "Chimichurri is mostly oil. Two spoonfuls is ~200 kcal sitting in plain sight and looking like herbs.",
+      "probes": "The clearest case of energy hiding as garnish. Also tests whether ground beef is offered for steak, and whether that substitution is disclosed.",
+      "labelNote": "Labelled as sweet potato fries on first pass; the model read them as roasted carrot sticks and was right. Recorded because a labeller being wrong about a photograph is the reason these cases are not scored on calories."
+    }
+  ]
+}

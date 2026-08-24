@@ -38,6 +38,18 @@ const SPREAD = {
 
 const DEFAULT_DENSITY_G_PER_ML = 1.0;
 
+/**
+ * More than this of one food, in one sitting, is a parsing accident.
+ *
+ * Real case: a photo of stuffed pasta shells produced "17 pieces". Pasta has no
+ * `piece` measure, so the count fell through to the default (a 140 g cup) and
+ * the ladder cheerfully returned 2.4 kg of pasta and 3,478 kcal. A plate of
+ * food is not two and a half kilos, and the arithmetic was internally
+ * consistent the whole way — which is exactly why it needs a bound rather than
+ * better reasoning.
+ */
+const IMPLAUSIBLE_ITEM_GRAMS = 1200;
+
 function interval(
   grams: number,
   spread: number,
@@ -125,8 +137,18 @@ function gramsFromWords(
 
   const fallback = ctx.db.defaultMeasure(food);
   if (reading.quantity !== undefined && fallback) {
+    // "17 pieces" against a food measured in cups is not 17 cups. When the user
+    // named a unit and this food does not define it, the count describes
+    // something we cannot convert, so the count is dropped rather than applied
+    // to an unrelated measure.
+    const unitStatedButUnknown = reading.unit !== undefined && !ctx.db.measureFor(food, reading.unit);
+    if (unitStatedButUnknown) return null;
+
+    const grams = reading.quantity * fallback.grams;
+    if (grams > IMPLAUSIBLE_ITEM_GRAMS) return null;
+
     return {
-      grams: reading.quantity * fallback.grams,
+      grams,
       assumption: `${reading.quantity} x ${fallback.unit} = ${fallback.grams} g each`,
       ownSpread: fallback.spread,
     };
@@ -328,7 +350,22 @@ export const PORTION_LADDER: PortionStrategy[] = [
 export function runLadder(ctx: PortionContext): PortionEstimate {
   for (const rung of PORTION_LADDER) {
     const estimate = rung.estimate(ctx);
-    if (estimate) return estimate;
+    if (!estimate) continue;
+
+    // A stated mass is the user's own claim and is left alone; anything we
+    // derived is bounded, because a derivation that lands at two kilos of one
+    // food is a parsing accident dressed as arithmetic.
+    if (estimate.method !== 'stated_mass' && estimate.gramsLikely > IMPLAUSIBLE_ITEM_GRAMS) {
+      const fallback = ctx.db.defaultMeasure(ctx.food);
+      const grams = fallback?.grams ?? 100;
+      return interval(
+        grams, SPREAD.vague, 'vague_quantifier', 'model_estimate',
+        `the stated amount worked out to ${Math.round(estimate.gramsLikely)} g, which is not a ` +
+        `plausible serving, so one ${fallback?.unit ?? 'portion'} was assumed instead`,
+        ctx.fromImage,
+      );
+    }
+    return estimate;
   }
   // modelEstimate never returns null, so this is unreachable; keeping the
   // exhaustive return means adding a rung can never silently break the contract.

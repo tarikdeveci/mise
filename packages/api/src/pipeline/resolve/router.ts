@@ -33,6 +33,21 @@ import type { VectorIndex } from './vector.js';
 /** Above this margin between #1 and #2, the winner is not seriously contested. */
 const DECISIVE_MARGIN = 0.18;
 
+/**
+ * Above this absolute score the winner is close enough to a literal match to
+ * take on its own.
+ *
+ * Below it, a decisive margin proves only that the runner-up was worse — not
+ * that the winner is right. Real meal photos made that concrete: "sesame seeds"
+ * beat everything else to tahini (sesame paste) uncontested and became the only
+ * item logged for a bowl of noodles, and "spinach and cheese filling" resolved
+ * to börek, a pastry. Both had a clear margin over nothing in particular.
+ *
+ * So a merely-plausible winner is verified rather than accepted, which is what
+ * the reranker rung was always for.
+ */
+const SELF_EVIDENT_SCORE = 0.72;
+
 export interface Reranker {
   readonly id: string;
   /**
@@ -208,7 +223,7 @@ export async function resolvePhrase(
   const lexMargin = marginOf(lexCandidates);
   const lexTop = lexCandidates[0];
 
-  if (lexTop && lexTop.score >= MIN_RESOLVABLE_SCORE && lexMargin >= DECISIVE_MARGIN) {
+  if (lexTop && lexTop.score >= SELF_EVIDENT_SCORE && lexMargin >= DECISIVE_MARGIN) {
     return done('lexical', lexTop.foodId, lexCandidates, lexMargin);
   }
 
@@ -217,13 +232,14 @@ export async function resolvePhrase(
   const fusedMargin = marginOf(fused);
   const fusedTop = fused[0];
 
-  if (fusedTop && fusedTop.score >= MIN_RESOLVABLE_SCORE && fusedMargin >= DECISIVE_MARGIN) {
+  if (fusedTop && fusedTop.score >= SELF_EVIDENT_SCORE && fusedMargin >= DECISIVE_MARGIN) {
     return done(fusedTop.via === 'vector' ? 'vector' : 'lexical', fusedTop.foodId, fused, fusedMargin);
   }
 
-  /* 5 — genuinely contested. Now, and only now, a model is worth its cost. */
+  /* 5 — plausible but not self-evident, or genuinely contested. Either way the
+     retrieval score alone cannot settle it, so a model checks the shortlist. */
   const shortlist = fused.slice(0, 5);
-  if (reranker && shortlist.length > 1) {
+  if (reranker && shortlist.length > 0) {
     const picked = await reranker.choose({
       phrase: clean,
       context: opts.context ?? phrase,
@@ -242,6 +258,14 @@ export async function resolvePhrase(
     }
   }
 
-  /* 6 — abstain. An honest question beats a confident wrong answer. */
+  /* 6 — no verifier configured. Fall back to the old behaviour rather than
+     refusing everything: a plausible match the user can correct in one tap is
+     more useful than a blank, and the confidence score already reflects that
+     it was not self-evident. */
+  if (!reranker && fusedTop && fusedTop.score >= MIN_RESOLVABLE_SCORE && fusedMargin >= DECISIVE_MARGIN) {
+    return done(fusedTop.via === 'vector' ? 'vector' : 'lexical', fusedTop.foodId, fused, fusedMargin);
+  }
+
+  /* 7 — abstain. An honest question beats a confident wrong answer. */
   return done('unresolved', null, fused.slice(0, 5), fusedMargin);
 }

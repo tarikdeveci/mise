@@ -11,7 +11,8 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "eval": "tsx --env-file-if-exists=.env src/eval/cli.ts",
-    "typecheck": "tsc -p tsconfig.json --noEmit"
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "eval:photos": "tsx --env-file-if-exists=.env src/eval/photos.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.68.0",
