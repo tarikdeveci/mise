@@ -90,9 +90,9 @@ export function LogScreen({ onLogged }: Props) {
       keyboardVerticalOffset={80}
     >
       <ScrollView contentContainerStyle={s.content} keyboardShouldPersistTaps="handled">
-        <Text style={[type.heading, { color: color.ink }]}>What did you eat?</Text>
+        <Text style={[type.title, { color: color.ink }]}>What did you eat?</Text>
         <Text style={[type.small, { color: color.inkMuted, marginTop: space.xs }]}>
-          Type it however you say it. Turkish or English, exact grams or a rough guess.
+          However you say it. Turkish or English, exact grams or a rough guess.
         </Text>
 
         <TextInput
@@ -106,6 +106,9 @@ export function LogScreen({ onLogged }: Props) {
           editable={!busy}
         />
 
+        <Text style={[type.label, { color: color.inkFaint, marginTop: space.lg }]}>
+          Or try one of these
+        </Text>
         <View style={s.examples}>
           {EXAMPLES.map((ex) => (
             <Pressable
@@ -166,8 +169,8 @@ export function LogScreen({ onLogged }: Props) {
           style={{ marginTop: space.xl }}
         />
 
-        <Text style={[type.small, { color: color.inkFaint, marginTop: space.md, textAlign: 'center' }]}>
-          mise shows a calorie range, not a single number, and tells you where every figure came from.
+        <Text style={[type.small, { color: color.inkFaint, marginTop: space.lg, textAlign: 'center' }]}>
+          You get a range, not a single number, and a source for every figure.
         </Text>
       </ScrollView>
     </KeyboardAvoidingView>
@@ -179,16 +182,20 @@ const s = StyleSheet.create({
   content: { padding: space.xl, paddingBottom: space.xxxl },
   input: {
     marginTop: space.lg,
-    minHeight: 108,
+    minHeight: 124,
     padding: space.lg,
     borderRadius: radius.md,
-    borderWidth: 1,
+    // A 2 px border and a sunk fill make the one thing the user must touch read
+    // as the primary surface, rather than as one more hairline-boxed form field.
+    borderWidth: 2,
     borderColor: color.borderStrong,
     backgroundColor: color.bg,
     color: color.ink,
     textAlignVertical: 'top',
   },
-  examples: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm, marginTop: space.md },
+  examples: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm, marginTop: space.sm },
+  // Filled, borderless, muted: a suggestion to tap, not a control competing
+  // with the input above it for the same attention.
   example: {
     paddingVertical: space.sm,
     paddingHorizontal: space.md,
@@ -210,6 +217,8 @@ const s = StyleSheet.create({
     marginTop: space.lg,
     padding: space.md,
     borderRadius: radius.md,
-    backgroundColor: color.reviewSoft,
+    backgroundColor: color.surface,
+    borderWidth: 1,
+    borderColor: color.borderStrong,
   },
 });

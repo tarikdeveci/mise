@@ -2,13 +2,17 @@ import { useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { api, ApiError, type MealLog } from '../api';
 import { MealItem } from '../components/MealItem';
-import { BandChip, Button, RangeBar } from '../components/ui';
-import { color, radius, space, type } from '../theme';
+import { BandChip, Button, Gauge } from '../components/ui';
+import { color, numeric, radius, space, type } from '../theme';
 
 const STATUS_COPY: Record<MealLog['status'], { title: string; detail: string }> = {
   confirmed: { title: 'Logged', detail: 'Everything matched clearly. Nothing to check.' },
-  needs_review: { title: 'Logged, with a caveat', detail: 'One or two items are worth a glance.' },
-  needs_input: { title: 'One question first', detail: 'Answering moves the total more than anything else here.' },
+  needs_review: { title: 'Worth a look', detail: 'One or two items are worth a glance.' },
+  needs_input: { title: 'Needs you', detail: 'Answering moves the total more than anything else here.' },
+};
+
+const BAND_FOR: Record<MealLog['status'], 'high' | 'medium' | 'low'> = {
+  confirmed: 'high', needs_review: 'medium', needs_input: 'low',
 };
 
 interface Props {
@@ -32,16 +36,12 @@ export function ResultScreen({ log, onClose, onUpdate }: Props) {
     try {
       await api.correct(log.id, itemId, foodId);
       setAnswered((prev) => new Set(prev).add(itemId));
-      // Re-log the same text so the correction takes effect end to end. This is
-      // the loop the user should be able to feel: the fix is not a local edit,
-      // it changes how the phrase resolves from now on.
-      const phrase = log.items.find((i) => i.id === itemId)?.extracted.phrase;
-      if (phrase) {
-        const refreshed = await api.logMeal({
-          text: log.items.map((i) => i.extracted.phrase).join(', '),
-        });
-        onUpdate(refreshed);
-      }
+      // Re-log so the correction takes effect end to end. The fix is not a
+      // local edit; it changes how that phrase resolves from now on.
+      const refreshed = await api.logMeal({
+        text: log.items.map((i) => i.extracted.phrase).join(', '),
+      });
+      onUpdate(refreshed);
     } catch (err) {
       setError(err instanceof ApiError ? err.message : 'Could not save that correction.');
     } finally {
@@ -49,64 +49,65 @@ export function ResultScreen({ log, onClose, onUpdate }: Props) {
     }
   };
 
+  const question = log.questions.find((q) => !answered.has(q.itemId));
+
   return (
-    <ScrollView contentContainerStyle={s.content}>
+    <ScrollView contentContainerStyle={s.content} showsVerticalScrollIndicator={false}>
       <Pressable
         onPress={onClose}
         accessibilityRole="button"
         accessibilityLabel="Back to logging"
-        style={({ pressed }) => [s.back, pressed && { opacity: 0.6 }]}
+        hitSlop={12}
+        style={({ pressed }) => [s.back, pressed && { opacity: 0.55 }]}
       >
         <Text style={[type.smallStrong, { color: color.primary }]}>‹  Log another</Text>
       </Pressable>
 
-      {/* The headline. A number to act on, and the room it actually has. */}
-      <View style={s.headline}>
-        <View style={s.headlineTop}>
-          <Text style={[type.display, { color: color.ink }]}>{Math.round(likely.kcal)}</Text>
-          <Text style={[type.heading, { color: color.inkMuted, marginBottom: 5 }]}>kcal</Text>
+      {/* The readout. One committed surface: a number to act on, and the room
+          it actually has. Everything below defers to this. */}
+      <View style={s.readout}>
+        <View style={s.readoutTop}>
+          <Text style={[type.readout, numeric, { color: color.readoutInk }]}>
+            {Math.round(likely.kcal)}
+          </Text>
+          <Text style={[type.title, { color: color.readoutMuted, marginBottom: 9 }]}>kcal</Text>
         </View>
 
-        <View style={s.band}>
-          <RangeBar min={min.kcal} likely={likely.kcal} max={max.kcal} />
+        <View style={s.gauge}>
+          <Gauge min={min.kcal} likely={likely.kcal} max={max.kcal} />
         </View>
 
-        <Text style={[type.small, { color: color.inkMuted, marginTop: space.sm }]}>
+        <Text style={[type.small, { color: color.readoutMuted, marginTop: space.md }]}>
           {spread > 0
-            ? `Could be anywhere in a ${spread} kcal range. The width is the honest part.`
+            ? `Could be anywhere across ${spread} kcal. The width is the honest part.`
             : 'Everything here was stated exactly, so there is no range to show.'}
         </Text>
-      </View>
 
-      <View style={s.macros}>
-        <Macro label="Protein" value={likely.proteinG} />
-        <Macro label="Carbs" value={likely.carbG} />
-        <Macro label="Fat" value={likely.fatG} />
-        <Macro label="Fibre" value={likely.fiberG} />
+        <View style={s.macros}>
+          <Macro label="Protein" value={likely.proteinG} />
+          <Macro label="Carbs" value={likely.carbG} />
+          <Macro label="Fat" value={likely.fatG} />
+          <Macro label="Fibre" value={likely.fiberG} />
+        </View>
       </View>
 
       <View style={s.status}>
-        <BandChip
-          band={log.status === 'confirmed' ? 'high' : log.status === 'needs_review' ? 'medium' : 'low'}
-          label={status.title}
-        />
+        <BandChip band={BAND_FOR[log.status]} label={status.title} />
         <Text style={[type.small, { color: color.inkMuted, flex: 1 }]}>{status.detail}</Text>
       </View>
 
       {/* One question, not a form. Ranked by how many calories the answer moves. */}
-      {log.questions
-        .filter((q) => !answered.has(q.itemId))
-        .slice(0, 1)
-        .map((q) => (
-          <View key={q.itemId} style={s.question}>
-            <Text style={[type.bodyStrong, { color: color.ink }]}>{q.question}</Text>
-            {q.expectedKcalSwing > 1 && (
-              <Text style={[type.small, { color: color.inkMuted, marginTop: space.xs }]}>
-                Worth asking: the answer moves this meal by up to {Math.round(q.expectedKcalSwing)} kcal.
-              </Text>
-            )}
-          </View>
-        ))}
+      {question && (
+        <View style={s.question}>
+          <Text style={[type.bodyStrong, { color: color.ink }]}>{question.question}</Text>
+          {question.expectedKcalSwing > 1 && (
+            <Text style={[type.small, { color: color.inkMuted, marginTop: space.xs }]}>
+              Worth asking: the answer moves this meal by up to{' '}
+              {Math.round(question.expectedKcalSwing)} kcal.
+            </Text>
+          )}
+        </View>
+      )}
 
       {error && (
         <View style={s.error} accessibilityLiveRegion="polite">
@@ -114,20 +115,20 @@ export function ResultScreen({ log, onClose, onUpdate }: Props) {
         </View>
       )}
 
-      <Text style={[type.label, { color: color.inkMuted, marginTop: space.xl }]}>
-        {log.items.length} {log.items.length === 1 ? 'ITEM' : 'ITEMS'}
-      </Text>
-
       {log.items.length === 0 ? (
         <View style={s.empty}>
-          <Text style={[type.bodyStrong, { color: color.ink }]}>Nothing logged</Text>
-          <Text style={[type.small, { color: color.inkMuted, marginTop: space.xs }]}>
+          <Text style={[type.heading, { color: color.ink }]}>Nothing logged</Text>
+          <Text style={[type.small, { color: color.inkMuted, marginTop: space.sm }]}>
             mise did not find food in that. It leaves the log empty rather than
             inventing a meal to look useful.
           </Text>
         </View>
       ) : (
         <View style={s.items}>
+          <Text style={[type.small, { color: color.inkFaint, marginBottom: space.xs }]}>
+            {log.items.length} {log.items.length === 1 ? 'item' : 'items'} · tap any of them to
+            see where the number came from
+          </Text>
           {log.items.map((item) => (
             <MealItem
               key={item.id}
@@ -139,19 +140,13 @@ export function ResultScreen({ log, onClose, onUpdate }: Props) {
         </View>
       )}
 
-      <View style={s.provenance}>
-        <Text style={[type.label, { color: color.inkMuted }]}>HOW THIS WAS PRODUCED</Text>
-        <Text style={[type.small, { color: color.inkFaint, marginTop: space.xs }]}>
-          {log.provenance.extractorId} · {log.provenance.model}
-        </Text>
-        <Text style={[type.small, { color: color.inkFaint }]}>
-          pipeline {log.provenance.pipelineVersion} · prompt {log.provenance.promptVersion} ·{' '}
-          {log.provenance.latencyMs} ms
-        </Text>
-        <Text style={[type.small, { color: color.inkFaint }]}>trace {log.provenance.traceId}</Text>
-      </View>
-
       <Button label="Log another meal" variant="secondary" onPress={onClose} style={{ marginTop: space.xl }} />
+
+      <Text style={[type.label, { color: color.inkFaint, marginTop: space.xl, lineHeight: 18 }]}>
+        {log.provenance.extractorId} · {log.provenance.model} · pipeline{' '}
+        {log.provenance.pipelineVersion} · {log.provenance.latencyMs} ms{'\n'}
+        trace {log.provenance.traceId}
+      </Text>
     </ScrollView>
   );
 }
@@ -159,46 +154,44 @@ export function ResultScreen({ log, onClose, onUpdate }: Props) {
 function Macro({ label, value }: { label: string; value: number }) {
   return (
     <View style={s.macro}>
-      <Text style={[type.bodyStrong, { color: color.ink }]}>{value.toFixed(1)}<Text style={type.label}>g</Text></Text>
-      <Text style={[type.label, { color: color.inkMuted }]}>{label}</Text>
+      <Text style={[type.bodyStrong, numeric, { color: color.readoutInk }]}>
+        {value.toFixed(1)}
+        <Text style={[type.label, { color: color.readoutMuted }]}>g</Text>
+      </Text>
+      <Text style={[type.label, { color: color.readoutMuted }]}>{label}</Text>
     </View>
   );
 }
 
 const s = StyleSheet.create({
-  content: { padding: space.xl, paddingBottom: space.xxxl },
-  back: { paddingVertical: space.sm, marginBottom: space.md },
-  headline: { marginTop: space.sm },
-  headlineTop: { flexDirection: 'row', alignItems: 'flex-end', gap: space.sm },
-  band: { marginTop: space.md },
+  content: { padding: space.xl, paddingTop: space.md, paddingBottom: space.xxxl },
+  back: { paddingVertical: space.sm, marginBottom: space.md, alignSelf: 'flex-start' },
+
+  readout: {
+    backgroundColor: color.readout,
+    borderRadius: radius.lg,
+    padding: space.xl,
+    paddingBottom: space.lg,
+  },
+  readoutTop: { flexDirection: 'row', alignItems: 'flex-end', gap: space.sm },
+  gauge: { marginTop: space.lg },
   macros: {
     flexDirection: 'row',
     marginTop: space.xl,
-    paddingVertical: space.lg,
+    paddingTop: space.lg,
     borderTopWidth: 1,
-    borderBottomWidth: 1,
-    borderColor: color.border,
+    borderTopColor: color.readoutEdge,
   },
-  macro: { flex: 1, gap: 2 },
-  status: { flexDirection: 'row', alignItems: 'center', gap: space.md, marginTop: space.lg },
+  macro: { flex: 1, gap: 3 },
+
+  status: { flexDirection: 'row', alignItems: 'center', gap: space.md, marginTop: space.xl },
   question: {
     marginTop: space.lg,
     padding: space.lg,
     borderRadius: radius.md,
-    backgroundColor: color.askSoft,
+    backgroundColor: color.primarySoft,
   },
-  error: { marginTop: space.lg, padding: space.md, borderRadius: radius.md, backgroundColor: color.reviewSoft },
-  items: { marginTop: space.sm },
-  empty: {
-    marginTop: space.md,
-    padding: space.lg,
-    borderRadius: radius.md,
-    backgroundColor: color.surface,
-  },
-  provenance: {
-    marginTop: space.xxl,
-    paddingTop: space.lg,
-    borderTopWidth: 1,
-    borderTopColor: color.border,
-  },
+  error: { marginTop: space.lg, padding: space.md, borderRadius: radius.md, backgroundColor: color.surface },
+  items: { marginTop: space.xl },
+  empty: { marginTop: space.lg, padding: space.lg, borderRadius: radius.md, backgroundColor: color.surface },
 });

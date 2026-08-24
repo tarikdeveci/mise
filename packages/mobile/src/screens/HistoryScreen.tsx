@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { api, ApiError, type MealLog } from '../api';
-import { BandChip, RangeBar, Skeleton } from '../components/ui';
-import { color, radius, space, type } from '../theme';
+import { BandChip, MiniRange, Skeleton } from '../components/ui';
+import { color, numeric, radius, space, type } from '../theme';
 
 const BAND_FOR: Record<MealLog['status'], 'high' | 'medium' | 'low'> = {
   confirmed: 'high',
@@ -88,7 +88,7 @@ export function HistoryScreen({ onOpen }: { onOpen: (log: MealLog) => void }) {
               <Text style={[type.bodyStrong, { color: color.ink, flex: 1 }]} numberOfLines={1}>
                 {meal.items.map((i) => i.foodName ?? i.extracted.phrase).join(', ') || 'Empty log'}
               </Text>
-              <Text style={[type.bodyStrong, { color: color.ink }]}>
+              <Text style={[type.bodyStrong, numeric, { color: color.ink }]}>
                 {Math.round(meal.totals.likely.kcal)}
               </Text>
             </View>
@@ -102,8 +102,7 @@ export function HistoryScreen({ onOpen }: { onOpen: (log: MealLog) => void }) {
 
             {meal.totals.max.kcal > meal.totals.min.kcal && (
               <View style={s.rowRange}>
-                <RangeBar
-                  compact
+                <MiniRange
                   min={meal.totals.min.kcal}
                   likely={meal.totals.likely.kcal}
                   max={meal.totals.max.kcal}
@@ -138,5 +137,5 @@ const s = StyleSheet.create({
   rowMeta: { flexDirection: 'row', alignItems: 'center', gap: space.md },
   rowRange: { marginTop: space.xs },
   empty: { paddingVertical: space.xxl },
-  error: { padding: space.md, borderRadius: radius.md, backgroundColor: color.reviewSoft },
+  error: { padding: space.md, borderRadius: radius.md, backgroundColor: color.surface },
 });
