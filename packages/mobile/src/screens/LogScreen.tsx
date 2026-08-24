@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   Image, KeyboardAvoidingView, Platform, Pressable, ScrollView,
   StyleSheet, Text, TextInput, View,
@@ -25,6 +25,18 @@ export function LogScreen({ onLogged }: Props) {
   const [photo, setPhoto] = useState<{ uri: string; base64: string; mime: string } | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // `null` while unknown: the camera is neither offered nor denied until the
+  // server has said whether it can actually read a photo. Offering an
+  // affordance that silently does nothing is worse than not offering it.
+  const [vision, setVision] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    let alive = true;
+    void api.health()
+      .then((h) => { if (alive) setVision(h.visionAvailable); })
+      .catch(() => { if (alive) setVision(null); });
+    return () => { alive = false; };
+  }, []);
 
   const canSubmit = (text.trim().length > 0 || photo !== null) && !busy;
 
@@ -136,20 +148,28 @@ export function LogScreen({ onLogged }: Props) {
               <Text style={[type.smallStrong, { color: color.ink }]}>Remove photo</Text>
             </Pressable>
           </View>
+        ) : vision === false ? (
+          <View style={s.notice}>
+            <Text style={[type.smallStrong, { color: color.ink }]}>Photos are off right now</Text>
+            <Text style={[type.small, { color: color.inkMuted, marginTop: 2 }]}>
+              This server is running the text-only extractor. Start the API with a
+              vision provider key to log from a photo.
+            </Text>
+          </View>
         ) : (
           <View style={s.photoButtons}>
             <Button
               label="Take a photo"
               variant="secondary"
               onPress={() => { void pickPhoto('camera'); }}
-              disabled={busy}
+              disabled={busy || vision === null}
               style={s.flex}
             />
             <Button
               label="Choose photo"
               variant="secondary"
               onPress={() => { void pickPhoto('library'); }}
-              disabled={busy}
+              disabled={busy || vision === null}
               style={s.flex}
             />
           </View>
@@ -203,6 +223,12 @@ const s = StyleSheet.create({
     backgroundColor: color.surface,
   },
   photoButtons: { flexDirection: 'row', gap: space.md, marginTop: space.lg },
+  notice: {
+    marginTop: space.lg,
+    padding: space.lg,
+    borderRadius: radius.md,
+    backgroundColor: color.surface,
+  },
   photoWrap: { marginTop: space.lg, gap: space.md },
   photo: { width: '100%', height: 200, borderRadius: radius.md, backgroundColor: color.surfaceSunk },
   removePhoto: {

@@ -878,7 +878,10 @@
     "id": "fdc:170070",
     "name": "Salad, mixed greens, undressed",
     "names": { "tr": "Yeşil salata (sossuz)" },
-    "aliases": ["salad", "green salad", "salata", "mixed greens", "yeşillik"],
+    "aliases": [
+      "salad", "green salad", "salata", "mixed greens", "yeşillik",
+      "lettuce", "lettuce leaf", "marul", "kıvırcık", "greens", "leafy greens", "rocket", "roka"
+    ],
     "group": "vegetable",
     "state": "raw",
     "per100g": { "kcal": 17, "proteinG": 1.4, "carbG": 3.3, "fatG": 0.2, "fiberG": 1.8 },

@@ -11,11 +11,17 @@ import type { Extractor } from './extract/types.js';
 import { computeNutrition, sumIntervals, verifyTraceable } from './nutrition.js';
 import { estimatePortion } from './portion.js';
 import type { AliasStore } from './resolve/aliasStore.js';
-import type { LexicalIndex } from './resolve/lexical.js';
+import { MIN_RESOLVABLE_SCORE, type LexicalIndex } from './resolve/lexical.js';
 import { resolvePhrase, type Reranker } from './resolve/router.js';
 import type { VectorIndex } from './resolve/vector.js';
 
-export const PIPELINE_VERSION = 'v1.3.0';
+export const PIPELINE_VERSION = 'v1.4.0';
+
+/**
+ * Below this retrieval score a candidate is string noise, not a suggestion.
+ * Matches the resolver's own bar so the two cannot drift apart.
+ */
+const PLAUSIBLE_CANDIDATE = MIN_RESOLVABLE_SCORE;
 
 export interface PipelineDeps {
   db: FoodDb;
@@ -222,6 +228,9 @@ function mergeByFood(items: LoggedItem[], db: FoodDb): LoggedItem[] {
       gramsMax: Number((existing.portion.gramsMax + item.portion.gramsMax).toFixed(1)),
       basis: existing.portion.basis,
       assumption: `${existing.portion.assumption}; plus ${item.portion.assumption}`,
+      // If either half was read off a photo, the merged total inherits that
+      // uncertainty — averaging it away would launder the weaker estimate.
+      fromVision: existing.portion.fromVision || item.portion.fromVision,
     };
 
     byFood.set(item.foodId, {
@@ -252,7 +261,26 @@ function buildQuestions(items: LoggedItem[], db: FoodDb): ClarificationQuestion[
     if (item.confidence.band === 'high') continue;
 
     if (item.confidence.weakest === 'resolution' || !item.foodId) {
-      const options = item.resolution.candidates.slice(0, 4).map((c) => ({
+      // Only offer candidates that are actually plausible. Retrieval always
+      // returns *something*, so a food the database has never heard of came
+      // back as "did you mean avocado?" for a lettuce leaf — which is worse
+      // than admitting ignorance, because it invites a wrong answer and then
+      // records it as a correction.
+      const plausible = item.resolution.candidates.filter((c) => c.score >= PLAUSIBLE_CANDIDATE);
+
+      if (plausible.length === 0) {
+        questions.push({
+          itemId: item.id,
+          question: `mise does not know “${item.extracted.phrase}” yet.`,
+          options: [],
+          // Unknown foods are usually salad leaves and garnishes; the honest
+          // ranking is low, not zero, so it never outranks a real ambiguity.
+          expectedKcalSwing: 5,
+        });
+        continue;
+      }
+
+      const options = plausible.slice(0, 4).map((c) => ({
         label: db.byId(c.foodId)?.name ?? c.name,
         foodId: c.foodId,
         grams: null,

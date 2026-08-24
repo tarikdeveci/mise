@@ -115,6 +115,12 @@ export const PortionEstimate = z.object({
   ]),
   /** Human-readable assumption, shown in the UI: "assumed 1 medium ≈ 180 g". */
   assumption: z.string(),
+  /**
+   * True when the quantity came from a model looking at a photo rather than
+   * from something the user wrote. Measured to be far less stable, so it is
+   * tracked explicitly instead of being inferred from `basis`.
+   */
+  fromVision: z.boolean().default(false),
 });
 export type PortionEstimate = z.infer<typeof PortionEstimate>;
 

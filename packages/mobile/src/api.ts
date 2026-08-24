@@ -201,7 +201,10 @@ export const api = {
   },
 
   health() {
-    return request<{ status: string; extractor: string; foods: number; vectorRetrieval: boolean }>(
+    return request<{
+      status: string; extractor: string; foods: number;
+      vectorRetrieval: boolean; visionAvailable: boolean;
+    }>(
       '/healthz',
       { method: 'GET', retries: 0 },
     );

@@ -21,6 +21,7 @@ beforeAll(async () => {
     aliases,
     vector,
     extractorId: 'rules-v1',
+    supportsVision: false,
     pipeline: createPipeline({
       db, lexical: buildLexicalIndex(db), vector, aliases, extractor: createRuleExtractor(),
     }),
@@ -33,6 +34,7 @@ interface MealPayload {
   text?: string;
   locale?: string;
   imageBase64?: string;
+  imageMediaType?: string;
 }
 
 // Fastify's `inject` is heavily overloaded; an `unknown` payload makes overload
@@ -66,6 +68,23 @@ describe('POST /v1/meals', () => {
     const { min, likely, max } = body.totals;
     expect(min.kcal).toBeLessThan(likely.kcal);
     expect(likely.kcal).toBeLessThan(max.kcal);
+  });
+});
+
+describe('photos when the extractor is text-only', () => {
+  it('refuses loudly instead of returning a confirmed, empty, zero-calorie log', async () => {
+    // The old behaviour was the worst possible answer: status "confirmed",
+    // 0 kcal, no items — the system reporting certainty it never had, because
+    // it had not looked at the photo at all.
+    const res = await post({ imageBase64: 'iVBORw0KGgo=', locale: 'tr-TR' });
+    expect(res.statusCode).toBe(422);
+    expect(res.json().error.code).toBe('vision_unavailable');
+    expect(res.json().error.message).toMatch(/cannot read photos/i);
+  });
+
+  it('advertises the limitation on /healthz so the app can hide the camera', async () => {
+    const body = (await app.inject({ method: 'GET', url: '/healthz' })).json();
+    expect(body.visionAvailable).toBe(false);
   });
 });
 

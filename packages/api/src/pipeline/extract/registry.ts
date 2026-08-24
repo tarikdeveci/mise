@@ -42,3 +42,23 @@ export function availableExtractors(): ExtractorId[] {
   if (process.env.ANTHROPIC_API_KEY) out.push('anthropic');
   return out;
 }
+
+/**
+ * Best extractor for the credentials present, in preference order.
+ *
+ * Defaulting to the rule tier whenever `EXTRACTOR` was unset meant a server
+ * started with a perfectly good vision key still could not read a photo — and
+ * the app went on offering a camera button that did nothing. The rule tier is
+ * the fallback, not the default; it is only the default when it is the only
+ * thing that works.
+ *
+ * Vision-capable providers rank first because photos are the input the rule
+ * tier cannot handle at all. Between them, order is a placeholder for what the
+ * bake-off measures: run `npm run eval -- --compare` and reorder by result.
+ */
+const PREFERENCE: ExtractorId[] = ['gemini', 'openai', 'anthropic', 'rules'];
+
+export function bestAvailableExtractor(): ExtractorId {
+  const available = new Set(availableExtractors());
+  return PREFERENCE.find((id) => available.has(id)) ?? 'rules';
+}

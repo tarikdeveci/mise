@@ -7,7 +7,9 @@ import { MealInput, type MealLog } from '../domain/log.js';
 import { logger } from '../obs/logger.js';
 import { metrics } from '../obs/metrics.js';
 import { createPipeline, PIPELINE_VERSION, type Pipeline } from '../pipeline/index.js';
-import { createExtractor, availableExtractors, isExtractorId } from '../pipeline/extract/registry.js';
+import {
+  createExtractor, availableExtractors, bestAvailableExtractor, isExtractorId,
+} from '../pipeline/extract/registry.js';
 import { withRuleFallback } from '../pipeline/extract/fallback.js';
 import { createAliasStore, GLOBAL_ALIAS_SEED, type AliasStore } from '../pipeline/resolve/aliasStore.js';
 import { buildLexicalIndex } from '../pipeline/resolve/lexical.js';
@@ -58,6 +60,8 @@ export interface ServerDeps {
   aliases: AliasStore;
   vector: VectorIndex;
   extractorId: string;
+  /** Whether the configured extractor can actually read an image. */
+  supportsVision: boolean;
 }
 
 export async function buildServer(deps: ServerDeps): Promise<FastifyInstance> {
@@ -147,6 +151,9 @@ export async function buildServer(deps: ServerDeps): Promise<FastifyInstance> {
     status: 'ok',
     pipelineVersion: PIPELINE_VERSION,
     extractor: deps.extractorId,
+    // The app reads this to decide whether to offer the camera at all. An
+    // affordance that silently does nothing is worse than one that is absent.
+    visionAvailable: deps.supportsVision,
     vectorRetrieval: deps.vector.available,
     foods: deps.db.all.length,
     extractorsAvailable: availableExtractors(),
@@ -158,6 +165,22 @@ export async function buildServer(deps: ServerDeps): Promise<FastifyInstance> {
     const body = CreateMealBody.parse(req.body);
     const userId = userIdOf(req.headers as Record<string, unknown>);
     const key = req.headers['idempotency-key'];
+
+    // Refuse a photo we cannot read, loudly. Previously this path returned an
+    // empty log with status "confirmed" and 0 kcal — the system reporting
+    // certainty it did not have, which is the exact failure this product
+    // exists to avoid.
+    if (body.imageBase64 && !deps.supportsVision) {
+      return reply.status(422).send({
+        error: {
+          code: 'vision_unavailable',
+          message:
+            'This server is running the text-only extractor, so it cannot read photos. ' +
+            'Describe the meal instead, or start the API with a vision provider key.',
+          traceId: String(req.id),
+        },
+      });
+    }
 
     if (typeof key === 'string' && key.length > 0) {
       const cached = idempotency.get(key, req.body);
@@ -283,7 +306,10 @@ export async function buildServer(deps: ServerDeps): Promise<FastifyInstance> {
 
 /** Wires every dependency and returns a ready-to-listen server. */
 export async function createApp(): Promise<FastifyInstance> {
-  const requested = process.env.EXTRACTOR ?? 'rules';
+  // Pick the best extractor the credentials allow unless one was named. The
+  // old `?? 'rules'` default meant a server holding a working vision key still
+  // could not read a photo.
+  const requested = process.env.EXTRACTOR ?? bestAvailableExtractor();
   if (!isExtractorId(requested)) {
     throw new Error(`EXTRACTOR="${requested}" is not one of: rules, gemini, openai, anthropic`);
   }
@@ -303,5 +329,9 @@ export async function createApp(): Promise<FastifyInstance> {
     'pipeline ready',
   );
 
-  return buildServer({ db, pipeline, aliases, vector, extractorId: extractor.id });
+  return buildServer({
+    db, pipeline, aliases, vector,
+    extractorId: extractor.id,
+    supportsVision: extractor.supportsVision,
+  });
 }

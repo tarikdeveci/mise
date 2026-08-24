@@ -33,10 +33,32 @@ const SPREAD = {
   visualDefault: 0.45,
 } as const;
 
+/**
+ * Minimum interval half-width for a quantity a model read off a photo.
+ *
+ * Measured, not guessed. Running one breakfast photo through the vision path
+ * four times at temperature 0 returned the same seven foods every time — the
+ * resolver is deterministic — but the cheese quantity alternated between two
+ * readings, moving the meal between 470 and 866 kcal. An 84% swing.
+ *
+ * A count the model inferred from pixels is therefore nothing like a count the
+ * user typed, and treating both as a plain household measure was overclaiming.
+ * The floor keeps photo-derived portions honest until a proper photo test set
+ * exists to calibrate it; see README for the ensemble approach that should
+ * replace this.
+ */
+const VISION_QUANTITY_SPREAD_FLOOR = 0.4;
+
 /** Density fallback when a food has none: assume water-like. */
 const DEFAULT_DENSITY_G_PER_ML = 1.0;
 
-function interval(grams: number, spread: number, basis: PortionEstimate['basis'], assumption: string): PortionEstimate {
+function interval(
+  grams: number,
+  spread: number,
+  basis: PortionEstimate['basis'],
+  assumption: string,
+  fromVision = false,
+): PortionEstimate {
   const clamped = Math.max(0.1, grams);
   return {
     gramsLikely: Number(clamped.toFixed(1)),
@@ -44,6 +66,7 @@ function interval(grams: number, spread: number, basis: PortionEstimate['basis']
     gramsMax: Number((clamped * (1 + spread)).toFixed(1)),
     basis,
     assumption,
+    fromVision,
   };
 }
 
@@ -55,6 +78,15 @@ export interface PortionInput {
 }
 
 export function estimatePortion(db: FoodDb, { food, item, fromImage }: PortionInput): PortionEstimate {
+  /**
+   * A quantity the extractor produced while looking at a photo carries far
+   * more uncertainty than the same number typed by a person, so every
+   * non-explicit branch below widens through here. An explicitly stated mass
+   * is exempt: if the user wrote "180 g", the photo did not supply it.
+   */
+  const widen = (spread: number): number =>
+    fromImage ? Math.max(spread, VISION_QUANTITY_SPREAD_FLOOR) : spread;
+
   // The extractor may give us a structured quantity/unit; if it did not, fall
   // back to parsing the phrase itself. Both paths are deterministic.
   const parsed = parseQuantity(item.phrase);
@@ -75,7 +107,7 @@ export function estimatePortion(db: FoodDb, { food, item, fromImage }: PortionIn
     const note = food.densityGPerMl
       ? `${ml} ml x ${density} g/ml`
       : `${ml} ml, assumed ${density} g/ml (no density on record)`;
-    return interval(ml * density, SPREAD.explicitVolume, 'explicit_volume', note);
+    return interval(ml * density, widen(SPREAD.explicitVolume), 'explicit_volume', note, fromImage);
   }
 
   /* 3 — a household measure the food defines: "2 slices", "1 kase". */
@@ -85,9 +117,10 @@ export function estimatePortion(db: FoodDb, { food, item, fromImage }: PortionIn
       const n = quantity ?? 1;
       return interval(
         n * measure.grams,
-        measure.spread,
+        widen(measure.spread),
         'household_measure',
         `${n} x ${measure.unit} = ${measure.grams} g each`,
+        fromImage,
       );
     }
   }
@@ -100,9 +133,10 @@ export function estimatePortion(db: FoodDb, { food, item, fromImage }: PortionIn
       const n = quantity ?? 1;
       return interval(
         n * measure.grams,
-        measure.spread,
+        widen(measure.spread),
         'household_measure',
         `${size} = ${measure.grams} g`,
+        fromImage,
       );
     }
   }
@@ -113,9 +147,10 @@ export function estimatePortion(db: FoodDb, { food, item, fromImage }: PortionIn
   if (quantity !== undefined && fallback) {
     return interval(
       quantity * fallback.grams,
-      fallback.spread,
+      widen(fallback.spread),
       'household_measure',
       `${quantity} x ${fallback.unit} = ${fallback.grams} g each`,
+      fromImage,
     );
   }
 
@@ -136,6 +171,7 @@ export function estimatePortion(db: FoodDb, { food, item, fromImage }: PortionIn
       fromImage ? SPREAD.visualDefault : Math.max(fallback.spread, 0.3),
       fromImage ? 'visual_default' : 'household_measure',
       `no amount given, assumed one ${fallback.unit} (${fallback.grams} g)`,
+      fromImage,
     );
   }
 

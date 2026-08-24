@@ -41,17 +41,38 @@ const METHOD_CEILING: Record<Resolution['method'], number> = {
   unresolved: 0.0,
 };
 
+/**
+ * Ceiling for a portion a model read off a photo.
+ *
+ * Measured, not tuned. The same breakfast photo run four times at temperature
+ * zero returned identical foods every time — the resolver is deterministic —
+ * but the cheese quantity alternated between two readings, moving the meal
+ * between 470 and 866 kcal.
+ *
+ * The value follows from that observation: the estimate is bimodal, so on any
+ * given run it is roughly a coin flip which branch we landed on, and 0.5 is
+ * what that is worth. It is deliberately not reverse-engineered to land in a
+ * particular band — though it does put a photo portion in `needs a glance`
+ * rather than `nothing to check`, which is the only defensible answer for a
+ * number that unstable.
+ *
+ * Text portions are untouched. The eval shows that path is already
+ * under-confident, so penalising it would cost coverage and buy nothing.
+ */
+const VISION_PORTION_CEILING = 0.5;
+
 /** Portion confidence follows directly from how the number was obtained. */
 function portionConfidence(portion: PortionEstimate): number {
+  const cap = (v: number): number => (portion.fromVision ? Math.min(v, VISION_PORTION_CEILING) : v);
   switch (portion.basis) {
-    case 'explicit_mass': return 0.98;
-    case 'explicit_volume': return 0.92;
+    case 'explicit_mass': return cap(0.98);
+    case 'explicit_volume': return cap(0.92);
     case 'household_measure': {
       // Width of the interval IS the uncertainty; derive rather than restate.
       const relWidth = (portion.gramsMax - portion.gramsMin) / (2 * portion.gramsLikely);
-      return Math.max(0.4, 1 - relWidth);
+      return cap(Math.max(0.4, 1 - relWidth));
     }
-    case 'vague_quantifier': return 0.45;
+    case 'vague_quantifier': return cap(0.45);
     case 'visual_default': return 0.35;
   }
 }
