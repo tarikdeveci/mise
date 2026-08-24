@@ -81,7 +81,7 @@ export async function lookupBarcode(code: string): Promise<BarcodeLookup> {
       }
       return r.json() as Promise<unknown>;
     },
-    { label: 'openfoodfacts.lookup', attempts: 2 },
+    { label: 'openfoodfacts.lookup', attempts: 2, timeoutMs: 8_000 },
   );
 
   metrics.observe('barcode_lookup_ms', Date.now() - started);

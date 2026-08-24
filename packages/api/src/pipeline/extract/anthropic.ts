@@ -78,7 +78,7 @@ export function createAnthropicExtractor(): Extractor {
             // heuristically and nothing to "clean up" if it drifts.
             tool_choice: { type: 'tool', name: TOOL_NAME },
           }),
-        { label: 'anthropic.extract' },
+        { label: 'anthropic.extract', timeoutMs: 30_000 },
       );
 
       const inputTokens = response.usage.input_tokens;

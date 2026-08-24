@@ -68,7 +68,7 @@ export function createOpenAiExtractor(): Extractor {
             },
             temperature: 0,
           }),
-        { label: 'openai.extract' },
+        { label: 'openai.extract', timeoutMs: 30_000 },
       );
 
       const inputTokens = response.usage?.prompt_tokens ?? 0;

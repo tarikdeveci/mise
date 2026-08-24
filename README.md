@@ -12,6 +12,8 @@ Every calorie figure this system displays is `per100g × grams ÷ 100` over a ro
 
 The second commitment is the portion interval. Nutrition5k measured trained dietitians at ~41% average error estimating portions from images, so a single-figure calorie count is precision the evidence does not support. mise carries min/likely/max through the whole pipeline and shows the range in the UI. On the current test set the true total falls inside the displayed range 100% of the time.
 
+The amount question gets the same treatment as the identity question: a second ladder that routes it to the cheapest method able to answer *exactly* — a stated mass, a scanned label, a portion this person confirmed before, a card left in frame for scale — and only falls through to a model estimate when nothing else can answer. The rung that answered is shown next to every item with its own tolerance, so the width of the range is explained rather than merely displayed.
+
 ---
 
 ## Run it
@@ -32,6 +34,12 @@ Run the accuracy evaluation:
 
 ```bash
 npm run eval
+```
+
+Run the photo cases (needs a vision key; see the model line at the end of this section):
+
+```bash
+npm run eval:photos
 ```
 
 Start the app (Expo Go on a phone, or press `w` for the browser):
@@ -74,6 +82,20 @@ GOOGLE_API_KEY=... EXTRACTOR=gemini npm run dev
 
 **Read that 100% as a warning, not a result.** See [Where this is weak](#where-this-is-weak) before believing any of it. The eval tool prints the same warning itself.
 
+`npm test` — 118 unit and integration tests, no key and no network required.
+
+`npm run eval:photos` on five real meal photographs, Gemini vision:
+
+| | |
+|---|---|
+| items extracted across 5 photos | 23 |
+| **invented** (a food reported that is not in the picture) | **0** |
+| correctly declined (real food, not in a 68-row database) | 17 |
+| photos that asked the user something rather than guessing | 5 of 5 |
+| latency per photo | 12-16 s, with one outlier at 623 s (see below) |
+
+Those are the figures a photograph can settle. Calorie accuracy is not among them, and the reason is in [Where this is weak](#where-this-is-weak).
+
 ---
 
 ## The problem, as I understand it
@@ -110,7 +132,8 @@ MealInput (text and/or photo)
    │
    ├─ 4  resolve        the router — see below
    │
-   ├─ 5  portion        returns an INTERVAL, width set by how the number was got
+   ├─ 5  portion        the ladder — see below. Returns an INTERVAL, and the
+   │                    width is set by which rung answered
    │
    ├─ 6  compute        arithmetic over the database row. No judgement, no model.
    │
@@ -131,15 +154,44 @@ This is the central design decision. Most food phrases are easy, and paying a mo
 | 2. global alias | ~0 ms | a curated default for a known-ambiguous bare term |
 | 3. lexical | ~1 ms | decisive string match (IDF-weighted tokens + trigram Dice) |
 | 4. lexical + vector | ~15 ms | decisive after multilingual embedding retrieval |
-| 5. LLM rerank | ~800 ms | genuinely contested — a model earns its cost here |
+| 5. LLM verify | ~800 ms | plausible but not self-evident, or genuinely contested |
 | 6. unresolved | — | ask the user one targeted question |
 
 The escalation signal is the **margin** between the top two candidates, not the top score. A 0.9 top score with a 0.02 gap means two foods look equally likely, which is exactly when a model is worth paying for and when the user is worth interrupting.
+
+Margin alone turned out not to be enough, and real photographs are what showed it. Retrieval always returns *something*, so a decisive margin proves only that the runner-up was worse — not that the winner is right. `"sesame seeds"` beat everything else to **tahini** uncontested and became the only item logged for a large bowl of noodles; `"spinach and cheese filling"` resolved to **börek**, a pastry. Both had a clear margin over nothing in particular.
+
+So rung 4 now needs an absolute score as well as a margin (`SELF_EVIDENT_SCORE = 0.72`). Below that a winner is *verified* rather than accepted, which is what rung 5 was always for: the model is asked one narrow question — is this candidate genuinely the same food — and is allowed to answer "none of these". A verifier that cannot be reached fails **closed**: it sends the item to the user rather than becoming an approver.
 
 Two properties fall out of this that matter more than the latency saving:
 
 - **Determinism.** Rungs 1–4 are pure functions, and the model tier runs at `temperature: 0`. Re-scanning the same meal cannot return a different number. This is a documented, reproducible failure of shipped competitors and it is simply not a failure we need to have.
 - **Bounded hallucination.** Rung 5 receives a *closed* candidate list. The reranker's schema constrains it to an ID from that list or an abstention; a reply outside the set is dropped and the item falls through to asking the user. It is not "the model usually behaves", it is "the model has no other move available".
+
+
+### The portion ladder
+
+Identity and amount are two different questions, and the amount is the one that dominates the error. So it gets the same treatment: a ladder that routes the question to the cheapest method able to answer it *exactly*, rather than sending everything to a model that estimates.
+
+| rung | typical band | when it fires |
+|---|---|---|
+| 1. stated mass | ±2% | "180 g tavuk". Arithmetic, nothing to estimate |
+| 2. stated volume | ±5% | "1,5 litre süt", through the food's own density |
+| 3. barcode label | ±8% | a scanned package states its serving |
+| 4. user memory | ±10% | this person confirmed their portion of this before |
+| 5. reference scaled | ±18% | a photo with a card or coin in frame for scale |
+| 6. household measure | ±5-50% | "2 dilim", "bir kase" — the food's *own* measure spread, because a slice of bread varies far less than a bowl of soup |
+| 7. model estimate | ±40% | a photo, no reference, no stated amount. The hard case |
+
+Every rung returns `null` rather than guessing, so falling through is a real decision and not an accident.
+
+The evidence behind the ordering is why it is shaped this way rather than "ask a better model":
+
+- Nutrition5k reports **9.5% error predicting kcal per gram against 26.1% predicting total calories** from the same image. The model is far better at *what this is* than at *how much of it there is*. Splitting the questions lets each one be answered by whatever is actually good at it.
+- A plain credit card in frame takes 2D photo calorie error from **34% to 18%** — close to LiDAR depth fusion, at no hardware cost. That is the single best accuracy-per-effort lever available, and it is a UI affordance, not a model upgrade. The app offers it after a photo is attached.
+- Trained dietitians average **~41% portion error** from images. A single-figure calorie count from a photograph is precision the evidence does not support, which is why the output is an interval whose width is set by the rung that answered.
+
+The rung is shown in the app next to every item, with its tolerance. Someone who wants a tighter number can see exactly which action would buy it.
 
 ---
 
@@ -205,6 +257,8 @@ Labels are `(foodId, grams)` pairs only. **Expected calories are computed from t
 
 Every case also records what it *probes* and which error codes it is designed to catch, so a failure explains itself.
 
+**Five photo cases** in `data/golden/photos.json`, scored separately and on different terms. They record what each picture is, which foods the database *should* be able to name, which ones it honestly cannot, and — the field that matters most — the **invisible calories**: the frying oil, the creamy dressing, the chimichurri that is mostly oil and looks like herbs. Naming those per case makes the systematic undercount visible instead of silently absorbed. `npm run eval:photos` prints them next to what the system actually returned, and asks you to read the two against the picture yourself.
+
 ### Metrics, and why each one is there
 
 - **Food match accuracy** — did we hit the right canonical row.
@@ -242,13 +296,21 @@ The rule tier runs with no key, no network and no variance, so the whole regress
 
 ### What the eval actually caught
 
-Four real bugs, all of which would have shipped silently:
+Every one of these would have shipped silently. They are listed because the point of an eval is not the score it prints, it is the defects it surfaces:
 
 1. **`"180g"` parsed as one token.** The unit was invisible, so the quantity multiplied a household measure: 180 × 120 g = 21.6 kg of chicken, reported as 35,640 kcal.
 2. **`\b` is ASCII-only in JavaScript.** `\büzerine\b` never matched real Turkish text, so "ekmek üzerine tereyağı" stayed one fragment and the butter was silently dropped.
 3. **The Turkish hedge `"az"` matched inside `"bey-az"`.** Substring matching turned "2 dilim beyaz ekmek" into an unquantified amount and halved it to one slice. This one was caught by the HTTP integration test, not the eval — the golden set happened not to contain a quantified "beyaz ekmek", which is a good argument for having both.
 4. **A Fastify 400 was reported as a 500.** Clients were told the server was broken and to retry, when the request was what needed fixing — and real incidents were hidden in the same bucket.
 5. **The router threw away the extractor's `preparation` field.** This is the one I would not have found without the bake-off, and it is the most interesting bug here. A well-behaved extractor *lifts* preparation out of the phrase into its own field, so the router received `"yumurta"` where the user wrote `"haşlanmış yumurta"` — and the alias fast-path resolved it to raw egg. Boiled egg → raw egg, fried chicken → grilled breast, raw rice → cooked rice (365 vs 130 kcal/100g, a 64% error). The rule tier hid it completely, because it leaves the preparation word in the phrase for the lexical matcher to find. **The bug only appeared when a model did its job properly.** Fixing it took Gemini from 91.3% to 100% and changed no rule-tier number at all.
+
+6. **A decisive margin was being read as a correct match.** Found by running real photographs, and described under [the resolution router](#the-resolution-router): `"sesame seeds"` → tahini was the *only* item logged for a bowl of noodles. Fixed by requiring an absolute score as well as a margin, and sending everything below it to the verifier.
+
+7. **2,380 g of pasta, and the arithmetic was correct the whole way.** A photo of stuffed shells produced "17 pieces". Pasta has no `piece` measure, so the count fell through to the default 140 g cup: 17 × 140 = 2.4 kg, 3,478 kcal, internally consistent at every step. The fix is not better reasoning, it is a bound — a count whose stated unit is undefined for that food is refused, and any single item over 1.2 kg is rejected outright. That meal went from 3,478 to 543 kcal.
+
+8. **`"tatlı"` was listed as a unit, and it ate the word "sweet".** The worst defect in this codebase, and the one nothing was watching for. `tatlı` was shorthand for `tatlı kaşığı`, the dessert spoon — so the phrase cleaner stripped it as a measure word, and **"tatlı patates" (sweet potato) reached the router as "patates"**. That exact-matched the potato row at score 1.0 on the *deterministic* rung: a confident, reproducible, roughly 2× energy error on a common Turkish ingredient. Every defence in the system was in place and none of them fired, because the error happened in the cheapest tier before any of them ran. The fix is one line — list the dessert spoon in full, as the other Turkish spoon measures already were — and the regression test pins the score so a database edit cannot promote it back into the fast path.
+
+9. **The app claimed `±0%` where the pipeline said `±8%`.** The scan screen advertised "Nothing estimated" for a barcode, while the barcode rung had always carried an 8% spread. The pipeline was right — a printed serving is an exact number, but "I ate one serving" is not a measurement, and declared nutrients carry labelling tolerance. Found by writing the first test that ever covered the barcode route. Rounding in our own favour on the one screen that sells this product on honesty was the worst available place to do it.
 
 Turkish is agglutinative, so "çay", "çayın", "çaydan" are one food to a person and three strings to a matcher. A light stemmer (one suffix maximum, never below a 3-letter stem) fixed a class of silent misses. Over-stemming would collapse genuinely different foods, which is worse than missing an inflection, hence the conservatism.
 
@@ -258,7 +320,10 @@ Turkish is agglutinative, so "çay", "çayın", "çaydan" are one food to a pers
 
 - **Idempotency.** `POST /v1/meals` accepts an `Idempotency-Key` and stores a hash of the body with it. Replays return the original log; the same key with a *different* body returns 409 rather than silently serving a stale result, because that is a client bug and hiding it helps nobody. Phones lose connectivity mid-request and users tap Save twice; without this, "the network dropped" and "the meal was logged twice" are the same observable event.
 - **Retries with full jitter**, both client and server side. Jitter is not a detail here: meal traffic is extremely peaky, three sharp spikes a day at the same clock times for everyone, so a synchronised retry storm is the realistic failure mode. The client retries transport failures only — a 400 will not become a 201 on the third attempt.
-- **Graceful degradation.** If the embedding model cannot load, the router runs lexical-only. If a provider is down, the endpoint can fall back to the rule tier: text logging keeps working and the user sees "worth a look" instead of an error.
+- **A ceiling on every outbound call** (30 s extraction, 10 s verification, 8 s barcode). Retrying does nothing against a request that never returns, and one measured for real took 623 s. A hang is classified as retryable, so the second attempt is a fresh connection rather than a longer wait on a dead one.
+- **Deadlines, per route and per whole call.** A typed meal answers in milliseconds; a photo of five foods can legitimately spend tens of seconds at the verifier rung. One flat timeout is wrong in both directions, so the client carries a deadline per route (text 15 s, photo 45 s, reads 8 s) that covers the *whole* call including retries — otherwise `retries: 2` silently triples the stated budget. The server's own `requestTimeout` sits above the client's, so the phone gives up first and gets the better error message, and a hung upstream cannot hold a socket until restart.
+- **A cancellable wait.** While a request is in flight the app offers Cancel. A long wait and an inescapable wait are different problems, and only one of them is defensible.
+- **Graceful degradation.** If the embedding model cannot load, the router runs lexical-only. If a provider is down, the endpoint can fall back to the rule tier: text logging keeps working and the user sees "worth a look" instead of an error. If the verifier is unreachable it fails **closed** — the item goes to the user rather than being accepted unchecked — and a verifier that throws costs that item its verification, not the whole meal.
 - **Typed error envelope.** Every failure returns `{ error: { code, message, traceId } }`. Stack traces and provider errors stay in the log; the message is safe to display.
 
 ## Observability
@@ -289,6 +354,7 @@ I have not used EatBetter's app, so I am not going to invent claims about its in
 | **Being wrong** | Full edit form or a search screen | One question, chosen by how many calories the answer moves, answered by tapping a chip | Log "yogurt" in both and count the taps to fix it |
 | **Being corrected** | The correction applies to that entry | The correction becomes a per-user alias: the same phrase resolves instantly and deterministically next time, with no model call | Correct "tavuk" → thigh, log "tavuk" again. A test asserts this |
 | **Turkish** | Usually a translation layer over an English database | Turkish is a first-class input path: measure words, agglutinative stemming, diacritic folding, Turkish food rows, curated Turkish defaults | Log "çayın yanında 2 küp şeker" |
+| **Packaged food** | Barcode scanning is common, and usually presented as exact | Same scan, but the tolerance is stated: a printed serving is a fact, "I ate one serving" is not, so it reads ±8% rather than ±0% | Scan the same item in both and compare what each claims about its own certainty |
 | **Published accuracy** | Category-leading apps generally publish none | `npm run eval` — test set, metrics, error taxonomy, and a warning when the benchmark is saturated | Run it |
 
 **How I would measure the improvement in production**, beyond the offline eval: correction rate per logged item and its decay over a user's first 30 days (the alias loop should bend this down, and it is the cleanest evidence that the system learns); time-to-log for repeat meals; abandonment rate on the review screen; and the share of logs auto-accepted without a correction within 24 hours.
@@ -310,13 +376,25 @@ The most important section here.
 - 46 cases is small, and the text-only strata are the easy half of the problem.
 - With zero failures there is nothing to calibrate against, so the band thresholds **cannot** be fitted on this data. I deliberately did not tune them to make the auto-log rate look better; doing so would be fitting noise. The eval prints this warning itself.
 
-**There is no photo evaluation at all.** This is the biggest gap. The hard modality — portion estimation from an image — has no measurement here. The Gemini adapter is now exercised for real against all 46 cases, so the provider path, schema enforcement, retries and cost accounting are proven; but every one of those cases is text. Any claim I make about photo accuracy would be unsupported.
+**The photo cases are qualitative, and that is a real limit.** `npm run eval:photos` runs five real meal photographs and reports what can actually be judged from a picture: which foods were named, which were correctly declined, and whether anything was invented. What it deliberately does *not* report is calorie accuracy, because these have no weighed ground truth. A person estimating portions by eye averages ~41% error, which is larger than the quantity a score would be measuring — and I proved the point on my own labels: I wrote down "sweet potato fries" for P5, the model read roasted carrots, and the model was right. A MAPE against labels like mine would have been a number that looked rigorous and meant nothing.
+
+So photo *portion* accuracy remains unmeasured here. Measuring it needs a weighed set — Nutrition5k is the obvious candidate — and that is the first thing I would build with more time, not another model.
 
 **The confidence is measurably wrong in one direction.** ECE is 0.209 and every populated bin is under-confident: the pipeline is right far more often than it claims, which is why only 39% of logs auto-accept. That is a real cost to users, and it is unfixable with the data I have.
 
 **The food database is 68 curated rows**, not the full FDC. It covers the ambiguity pairs the tests need and common Turkish foods. Real coverage is a data problem, not an architecture one — `CanonicalFood` is the shape an FDC import would produce — but 68 rows is a demo, not a product.
 
-**Deliberately out of scope**, and named rather than hidden: authentication beyond a device header, persistence beyond in-memory stores, barcode scanning, offline sync, and daily targets or charts. The brief's focus was accuracy; these would have taken time away from it.
+Running real photographs is what made that concrete rather than theoretical. **P5 logs 0 kcal**: steak under chimichurri with roasted carrots and broccoli, and nothing on that plate exists in the database. The system behaves correctly — it names nothing it cannot cite and asks the user — but "honest and useless" is still useless. On real meals the bottleneck is no longer the pipeline, it is coverage.
+
+**The verifier trades one kind of error for another, and I have not found the right point on that curve.** It correctly rejects sesame-seeds → tahini and steak → ground beef, which were the failures that motivated building it. It still accepts sweet potato fries → french fries, despite that pair being named in its instructions as an example to reject.
+
+And it now over-rejects in the other direction: on P4, a pan of stuffed pasta shells, it declined `"jumbo pasta shells"` → pasta and the meal came out at **66 kcal** — the grated cheese, and nothing else. Strictly the refusal is defensible (a stuffed shell is not plain pasta) and the user is asked rather than misled, but a stricter verifier declining real matches is a real cost, not a free win. Measuring where that line should sit needs the labelled photo set this submission does not have.
+
+**Photo latency was 20-65 s per meal. It is now 12-16 s — except when it is 623 s.** Resolving items concurrently instead of serially did most of the work, since they were never dependent on each other. Then re-running the cases surfaced something the averages had been hiding: one photo spent **623 seconds** in a single provider call while its four neighbours took 12-16. Nothing in the system had a ceiling on an outbound call, and retrying is no defence against a request that never comes back — attempt two hangs exactly as well as attempt one.
+
+Every outbound call now has a per-attempt timeout (30 s extraction, 10 s verification, 8 s barcode), a hang is classified as retryable, and the client carries its own per-route deadline plus a cancel control. That is a bound, not a speed-up: batching the verifier's shortlists into one request instead of one call per unresolved item is the real remaining win, and it is not done.
+
+**Deliberately out of scope**, and named rather than hidden: authentication beyond a device header, persistence beyond in-memory stores, offline sync, and daily targets or charts. The brief's focus was accuracy; these would have taken time away from it.
 
 ---
 
@@ -348,25 +426,21 @@ The second trade-off is one I am less comfortable with: I spent the time on meas
 
    And a plain credit card in frame takes a 2D photo from 34% to 18%, which is within reach of LiDAR at zero hardware cost. That is the best accuracy-per-effort intervention in the table, and almost nobody asks for it.
 
-   So the next step is not a bigger model. It is a **portion ladder** with the same shape as the resolver already in this codebase — stop at the first rung that answers decisively:
+   So the answer was not a bigger model, it was a **ladder with the same shape as the resolver**. That is now built and shipped — [the portion ladder](#the-portion-ladder) — with the barcode, user-memory, reference-object and household-measure rungs live, and each one surfaced in the app with its own tolerance so the user can see which action would buy a tighter number.
+
+   What is **not** built, in the order I would add it:
 
    ```
-   barcode present?        → label data            ~0%
-   user has confirmed this
-   exact meal before?      → replay their mass     ~0%
-   chain restaurant item?  → published menu        label accuracy
-   reference object seen?  → area-scaled estimate  ~18%
-   depth available?        → volume from depth     ~15-20%
-   otherwise               → model estimate, with the honest 23-35% interval
+   chain restaurant menus  → published nutrition   label accuracy   (data deal)
+   phone LiDAR depth       → volume from depth     ~15-20%          (Pro-tier only)
+   promptable segmentation → counts and areas      feeds rung 5     (SAM 3)
    ```
 
-   `estimatePortion` is already an eight-branch ladder; these are more rungs, not a rewrite.
-
-   **Where segmentation fits.** SAM 3 is a rung-4 and rung-5 component, not a replacement for the VLM. Its promptable concept segmentation takes a noun phrase and returns every instance of it, which turns "how many olives" from a guess into a count, and gives the pixel area a reference object converts into real area. Its presence head — deciding whether a concept is there at all before localising it — is a second, independent opinion on existence, which makes a phantom item (E3) detectable rather than merely unlikely. It is callable today through Roboflow's hosted inference or locally through the same package. Valuable, but it earns its place behind barcode, repeat memory and the reference object, all of which are cheaper and more accurate.
+   **Where segmentation fits.** SAM 3 is a component of the reference-scaled rung, not a replacement for the VLM. Its promptable concept segmentation takes a noun phrase and returns every instance of it, which turns "how many olives" from a guess into a count, and gives the pixel area a reference object converts into real area. Its presence head — deciding whether a concept is there at all before localising it — is a second, independent opinion on existence, which makes a phantom item (E3) detectable rather than merely unlikely. It is callable today through Roboflow's hosted inference or locally through the same package. Valuable, but it earns its place behind barcode, repeat memory and the reference object, all of which are cheaper and more accurate.
 
    **Two refinements worth taking early.** Sampling the VLM several times and using the *spread* as the interval converts the instability I measured from a defect into a calibrated uncertainty estimate — self-ensembling VLMs report up to 23% relative accuracy gains and uncertainty that tracks error. And before-and-after photos are the only published way to catch plate waste, which every photo-only app silently counts as eaten.
 
-   None of it can be tuned without the other half of this item: **a photo test set with weighed ground truth.** Everything above is a hypothesis with a citation until there is a number from our own kitchen.
+   None of the remaining rungs can be tuned without the other half of this item: **a photo test set with weighed ground truth.** The five photo cases here can prove the system does not invent food; they cannot prove a portion method is better than the one it replaced. Until there is a weighed set, every row in that table is a hypothesis with a citation attached.
 
 2. **A held-out set written by someone who has not seen the food database.** The current one cannot distinguish a better pipeline from a worse one. This is cheap and it unblocks calibration, which unblocks the auto-log rate.
 3. **Promote user corrections into global aliases** once enough distinct users correct a phrase the same way. The mechanism is already there (`promotionCandidates`); it is deliberately not automatic, because one person's habit is not a fact about the world and letting it become one is how a shared food database quietly poisons itself.
@@ -397,20 +471,25 @@ Web search for the literature cited throughout: Nutrition5k (portion error), the
 data/
   foods/seed.json           68 canonical foods, USDA FDC + Turkish reference
   golden/cases.json         46 labelled cases, three strata
+  golden/photos.json        5 photo cases + the invisible calories in each
+  golden/photos/            the photographs themselves
 packages/api/src/
   domain/                   types, Zod schemas, error taxonomy
+  data/
+    foodDb.ts               the canonical rows, loaded and integrity-checked
+    openFoodFacts.ts        barcode lookup — the one untrusted external input
   pipeline/
     normalize.ts            folding, stemming, units, quantities
     extract/                prompt (shared) + rules | gemini | openai | anthropic
-    resolve/                router, lexical, vector, alias store
-    portion.ts              interval estimation
+    resolve/                router, lexical, vector, alias store, reranker
+    portion/                the ladder: seven strategies, each able to decline
     nutrition.ts            arithmetic + the E11 traceability assertion
     confidence.ts           per-stage scoring, banding, disposition
-  eval/                     harness, taxonomy classifier, report, CLI
+  eval/                     harness, taxonomy classifier, report, CLI, photos
   http/                     Fastify server, idempotency
   obs/                      logger, metrics
 packages/mobile/src/
-  screens/                  Log, Result, History
-  components/               RangeBar and the rest
+  screens/                  Log, Scan, Result, History
+  components/               the gauge, method chips, and the rest
   theme.ts                  tokens, contrast ratios recorded
 ```

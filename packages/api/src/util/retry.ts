@@ -8,6 +8,38 @@ export interface RetryOptions {
   label: string;
   /** Return false to fail fast — a 400 will not become a 200 on the third try. */
   isRetryable?: (err: unknown) => boolean;
+  /**
+   * Per-attempt ceiling. Retrying is useless against a call that never returns,
+   * and every provider SDK here will wait indefinitely by default.
+   */
+  timeoutMs?: number;
+}
+
+/** Raised when an attempt passed its ceiling. Retryable: a hang is transient. */
+export class CallTimeout extends Error {
+  readonly status = 408;
+  constructor(label: string, ms: number) {
+    super(`${label} did not return within ${ms} ms`);
+    this.name = 'CallTimeout';
+  }
+}
+
+/**
+ * Bound one attempt.
+ *
+ * `Promise.race` does not cancel the loser, so the underlying request may still
+ * be in flight when this resolves. That is acceptable here — the caller is
+ * freed, and the orphan is bounded by the process — and it is the only option
+ * that works uniformly across SDKs that do not all accept an AbortSignal.
+ */
+function withTimeout<T>(fn: () => Promise<T>, label: string, ms: number): Promise<T> {
+  return new Promise<T>((resolve, reject) => {
+    const timer = setTimeout(() => { reject(new CallTimeout(label, ms)); }, ms);
+    fn().then(
+      (v) => { clearTimeout(timer); resolve(v); },
+      (e: unknown) => { clearTimeout(timer); reject(e as Error); },
+    );
+  });
 }
 
 /** HTTP statuses worth another attempt. */
@@ -41,7 +73,9 @@ export async function withRetry<T>(fn: () => Promise<T>, opts: RetryOptions): Pr
 
   for (let attempt = 1; attempt <= attempts; attempt++) {
     try {
-      const result = await fn();
+      const result = opts.timeoutMs === undefined
+        ? await fn()
+        : await withTimeout(fn, opts.label, opts.timeoutMs);
       if (attempt > 1) metrics.inc('retry_success_total', { label: opts.label });
       return result;
     } catch (err) {

@@ -70,7 +70,11 @@ export function createGeminiExtractor(): Extractor {
               temperature: 0,
             },
           }),
-        { label: 'gemini.extract' },
+        // Vision extraction is the slowest legitimate call in the system, so
+        // the ceiling is generous — but it is a ceiling. Without one, a single
+        // hung request stalls the meal indefinitely: a photo case was measured
+        // taking 623 s against 12-16 s for its neighbours.
+        { label: 'gemini.extract', timeoutMs: 30_000 },
       );
 
       const meta = response.usageMetadata;

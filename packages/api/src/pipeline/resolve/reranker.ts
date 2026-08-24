@@ -104,7 +104,10 @@ export function createGeminiReranker(): Reranker | undefined {
               temperature: 0,
             },
           }),
-          { label: 'gemini.rerank', attempts: 2 },
+          // One short question about a five-item list. If it has not answered
+          // in 10 s it is not going to, and the honest fallback — ask the user —
+          // is already the failure path.
+          { label: 'gemini.rerank', attempts: 2, timeoutMs: 10_000 },
         );
 
         const text = response.text;
