@@ -1,5 +1,5 @@
 import type { FoodDb } from '../../data/foodDb.js';
-import type { FoodCandidate, Resolution } from '../../domain/log.js';
+import type { ExtractedItem, FoodCandidate, Resolution } from '../../domain/log.js';
 import { metrics } from '../../obs/metrics.js';
 import { foodPhraseOnly, normalizeText } from '../normalize.js';
 import type { AliasStore } from './aliasStore.js';
@@ -58,6 +58,12 @@ export interface ResolveOptions {
   userId: string;
   /** The full original input, given to the reranker as disambiguating context. */
   context?: string;
+  /**
+   * Preparation as reported by the extractor. Boiled and fried versions of one
+   * food differ by up to 3x in energy, so this is not a nicety — dropping it is
+   * one of the largest single-item errors the system can make.
+   */
+  preparation?: ExtractedItem['preparation'];
 }
 
 /** Fuse two independent retrievers. Agreement is evidence; it should not dilute. */
@@ -89,6 +95,70 @@ function fuse(lexical: FoodCandidate[], vector: FoodCandidate[]): FoodCandidate[
 const marginOf = (c: FoodCandidate[]): number =>
   Number(((c[0]?.score ?? 0) - (c[1]?.score ?? 0)).toFixed(4));
 
+/** Specific states that a generic "cooked" is compatible with. */
+const COOKED_STATES = new Set(['cooked', 'boiled', 'fried', 'grilled', 'baked']);
+
+/**
+ * Re-scores candidates using the preparation the extractor reported.
+ *
+ * This exists because of a bug the eval caught, and the bug is worth recording:
+ * a good extractor *lifts* preparation out of the phrase into its own field,
+ * leaving "yumurta" where the text said "haşlanmış yumurta". The router used to
+ * receive only the phrase, so that signal was extracted and then thrown away —
+ * and boiled egg resolved to raw egg, fried chicken to grilled breast, and raw
+ * rice to cooked rice (365 vs 130 kcal/100g, a 64% error).
+ *
+ * The rule tier never showed it, because it leaves the preparation word in the
+ * phrase for the lexical matcher to find. The failure only appeared when a
+ * model did its job properly, which is exactly the class of bug that a
+ * multi-extractor bake-off is for.
+ */
+/**
+ * True when a food's cooking state is explicitly incompatible with the stated
+ * preparation. Used to stop the alias fast-path short-circuiting an explicit
+ * statement; `n/a` and generic "cooked" never conflict.
+ */
+function stateConflicts(
+  db: FoodDb,
+  foodId: string,
+  preparation: ExtractedItem['preparation'] | undefined,
+): boolean {
+  if (!preparation || preparation === 'unknown') return false;
+  const food = db.byId(foodId);
+  if (!food || food.state === 'n/a' || food.state === preparation) return false;
+  if (preparation === 'cooked' && COOKED_STATES.has(food.state)) return false;
+  if (food.state === 'cooked' && COOKED_STATES.has(preparation)) return false;
+  return true;
+}
+
+function applyPreparation(
+  db: FoodDb,
+  candidates: FoodCandidate[],
+  preparation: ExtractedItem['preparation'],
+): FoodCandidate[] {
+  if (preparation === 'unknown' || candidates.length === 0) return candidates;
+
+  return candidates
+    .map((c) => {
+      const food = db.byId(c.foodId);
+      // `n/a` means the food has no meaningful cooking state (olive oil, tea).
+      // Neither evidence for nor against — leave it alone.
+      if (!food || food.state === 'n/a') return c;
+
+      if (food.state === preparation) {
+        return { ...c, score: Number(Math.min(1, c.score * 1.4).toFixed(4)) };
+      }
+      // "cooked" is a generic: it should not push a row down just for being
+      // more specific about *how* it was cooked.
+      if (preparation === 'cooked' && COOKED_STATES.has(food.state)) return c;
+      if (food.state === 'cooked' && COOKED_STATES.has(preparation)) return c;
+
+      // A different, explicit state is genuine evidence against this row.
+      return { ...c, score: Number((c.score * 0.5).toFixed(4)) };
+    })
+    .sort((a, b) => b.score - a.score);
+}
+
 export async function resolvePhrase(
   deps: ResolveDeps,
   phrase: string,
@@ -115,23 +185,26 @@ export async function resolvePhrase(
     ], 1);
   }
 
-  /* 2 — curated default for a known-ambiguous bare term. */
-  if (userHit?.scope === 'global') {
+  /* 2 — curated default for a known-ambiguous bare term.
+     Skipped when the stated preparation contradicts it: the default for bare
+     "yumurta" is the raw row, but "haşlanmış yumurta" is not that food, and an
+     alias shortcut must not outrank an explicit statement by the user. */
+  if (userHit?.scope === 'global' && !stateConflicts(db, userHit.foodId, opts.preparation)) {
     return done('global_alias', userHit.foodId, [
       { foodId: userHit.foodId, name: db.byId(userHit.foodId)?.name ?? userHit.foodId, score: 1, via: 'alias' },
     ], 1);
   }
 
-  /* 3 — exact surface form in the food database. */
+  /* 3 — exact surface form in the food database, same caveat. */
   const exact = db.byAlias(normalizeText(clean));
-  if (exact) {
+  if (exact && !stateConflicts(db, exact.id, opts.preparation)) {
     return done('lexical', exact.id, [
       { foodId: exact.id, name: exact.name, score: 1, via: 'alias' },
     ], 1);
   }
 
   /* 4 — retrieval. Lexical always; vector only if it is actually loaded. */
-  const lexCandidates = lexical.search(clean);
+  const lexCandidates = applyPreparation(db, lexical.search(clean), opts.preparation ?? 'unknown');
   const lexMargin = marginOf(lexCandidates);
   const lexTop = lexCandidates[0];
 
@@ -140,7 +213,7 @@ export async function resolvePhrase(
   }
 
   const vecCandidates = vector.available ? await vector.search(clean) : [];
-  const fused = fuse(lexCandidates, vecCandidates);
+  const fused = applyPreparation(db, fuse(lexCandidates, vecCandidates), opts.preparation ?? 'unknown');
   const fusedMargin = marginOf(fused);
   const fusedTop = fused[0];
 

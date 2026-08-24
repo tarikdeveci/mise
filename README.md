@@ -56,7 +56,7 @@ GOOGLE_API_KEY=... EXTRACTOR=gemini npm run dev
 
 ## Current numbers
 
-`npm run eval` on 46 labelled cases, rule extractor, vector retrieval on:
+`npm run eval` on 46 labelled cases, rule extractor, vector retrieval on (see the [bake-off](#model-choice-is-an-eval-output-not-an-opinion) for the model tier):
 
 | | |
 |---|---|
@@ -168,7 +168,18 @@ npm run eval -- --extractor=gemini
 
 Gemini is the default vision path because published 2026 multimodal benchmarks give it the widest lead of any current family on vision, at roughly half the token price of the Opus/GPT tier, and vision is the bottleneck stage here. That is a starting hypothesis with an expiry date. The bake-off table is what should settle it, and it will settle it differently every time a model ships.
 
-**Not yet measured.** I have not run the provider bake-off — it needs API keys I did not want to bake into a submission, and more importantly it needs a photo test set that does not exist yet. The harness is built and the command works; the table is empty because running it on a text-only, saturated set would produce a number that means nothing.
+Run on all 46 cases (`gemini-3.1-pro-preview`), both at pipeline v1.3.0:
+
+| extractor | pass | food match | auto-logged | ECE | p95 |
+|---|---|---|---|---|---|
+| rules-v1 | 100% | 100% | 39.1% | 0.209 | **2 ms** |
+| gemini | 100% | 100% | **97.8%** | 0.115 | 10,303 ms |
+
+They tie on accuracy, which is the saturation problem again, not a real tie. The interesting difference is elsewhere: **the model auto-logs 97.8% of meals against the rule tier's 39.1%, at 5,000× the latency.** That is the actual trade — the rule tier is right just as often but far less willing to say so, so it interrupts users two and a half times more.
+
+That points at the deployment I would actually ship: rules on the hot path, model on the phrases rules are unsure about. The architecture already supports it; what is missing is a test set that can prove the routing threshold is right.
+
+**Still not measured: photos.** Every number above is text.
 
 ### Embeddings
 
@@ -237,6 +248,7 @@ Four real bugs, all of which would have shipped silently:
 2. **`\b` is ASCII-only in JavaScript.** `\büzerine\b` never matched real Turkish text, so "ekmek üzerine tereyağı" stayed one fragment and the butter was silently dropped.
 3. **The Turkish hedge `"az"` matched inside `"bey-az"`.** Substring matching turned "2 dilim beyaz ekmek" into an unquantified amount and halved it to one slice. This one was caught by the HTTP integration test, not the eval — the golden set happened not to contain a quantified "beyaz ekmek", which is a good argument for having both.
 4. **A Fastify 400 was reported as a 500.** Clients were told the server was broken and to retry, when the request was what needed fixing — and real incidents were hidden in the same bucket.
+5. **The router threw away the extractor's `preparation` field.** This is the one I would not have found without the bake-off, and it is the most interesting bug here. A well-behaved extractor *lifts* preparation out of the phrase into its own field, so the router received `"yumurta"` where the user wrote `"haşlanmış yumurta"` — and the alias fast-path resolved it to raw egg. Boiled egg → raw egg, fried chicken → grilled breast, raw rice → cooked rice (365 vs 130 kcal/100g, a 64% error). The rule tier hid it completely, because it leaves the preparation word in the phrase for the lexical matcher to find. **The bug only appeared when a model did its job properly.** Fixing it took Gemini from 91.3% to 100% and changed no rule-tier number at all.
 
 Turkish is agglutinative, so "çay", "çayın", "çaydan" are one food to a person and three strings to a matcher. A light stemmer (one suffix maximum, never below a 3-letter stem) fixed a class of silent misses. Over-stemming would collapse genuinely different foods, which is worse than missing an inflection, hence the conservatism.
 
@@ -298,7 +310,7 @@ The most important section here.
 - 46 cases is small, and the text-only strata are the easy half of the problem.
 - With zero failures there is nothing to calibrate against, so the band thresholds **cannot** be fitted on this data. I deliberately did not tune them to make the auto-log rate look better; doing so would be fitting noise. The eval prints this warning itself.
 
-**There is no photo evaluation at all.** This is the biggest gap. The hard modality — portion estimation from an image — has no measurement here. The vision adapters are written and the schema is enforced, but every number above comes from text. Any claim I make about photo accuracy would be unsupported.
+**There is no photo evaluation at all.** This is the biggest gap. The hard modality — portion estimation from an image — has no measurement here. The Gemini adapter is now exercised for real against all 46 cases, so the provider path, schema enforcement, retries and cost accounting are proven; but every one of those cases is text. Any claim I make about photo accuracy would be unsupported.
 
 **The confidence is measurably wrong in one direction.** ECE is 0.209 and every populated bin is under-confident: the pipeline is right far more often than it claims, which is why only 39% of logs auto-accept. That is a real cost to users, and it is unfixable with the data I have.
 

@@ -19,7 +19,7 @@ import { ExtractorError, type Extractor } from './types.js';
  *
  * Model id is configurable because it changes faster than this code does.
  */
-const DEFAULT_MODEL = process.env.GEMINI_MODEL ?? 'gemini-3-pro-preview';
+const DEFAULT_MODEL = process.env.GEMINI_MODEL ?? 'gemini-3.1-pro-preview';
 
 /** USD per million tokens. Override when the published rate changes. */
 const PRICING = {

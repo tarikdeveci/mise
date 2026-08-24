@@ -15,7 +15,7 @@ import type { LexicalIndex } from './resolve/lexical.js';
 import { resolvePhrase, type Reranker } from './resolve/router.js';
 import type { VectorIndex } from './resolve/vector.js';
 
-export const PIPELINE_VERSION = 'v1.2.0';
+export const PIPELINE_VERSION = 'v1.3.0';
 
 export interface PipelineDeps {
   db: FoodDb;
@@ -65,6 +65,9 @@ export function createPipeline(deps: PipelineDeps): Pipeline {
           resolvePhrase(deps, extracted.phrase, {
             userId: opts.userId,
             context: input.text ?? extracted.phrase,
+            // A good extractor lifts preparation out of the phrase; the router
+            // needs it back, or boiled egg resolves to raw egg.
+            preparation: extracted.preparation,
           }),
         );
 
