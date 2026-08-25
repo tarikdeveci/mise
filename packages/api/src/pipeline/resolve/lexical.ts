@@ -1,4 +1,3 @@
-import type { FoodDb } from '../../data/foodDb.js';
 import type { FoodCandidate } from '../../domain/log.js';
 import { normalizeText, stemPhrase } from '../normalize.js';
 
@@ -46,7 +45,19 @@ export interface LexicalIndex {
   search(phrase: string, limit?: number): FoodCandidate[];
 }
 
-export function buildLexicalIndex(db: FoodDb): LexicalIndex {
+/**
+ * The minimum a collection must expose to be searchable.
+ *
+ * Structural rather than `FoodDb` so the same scorer can index the curated seed
+ * and the 7,793-row USDA corpus. One retriever, two tiers — a second
+ * implementation would be a second set of scoring bugs.
+ */
+export interface Indexable {
+  surfaces: ReadonlyArray<{ foodId: string; text: string; tokens: string[] }>;
+  byId(id: string): { name: string } | undefined;
+}
+
+export function buildLexicalIndex(db: Indexable): LexicalIndex {
   // IDF over surface forms: a token that appears in many food names carries
   // little discriminative power, so matching it should not look decisive.
   const docFreq = new Map<string, number>();

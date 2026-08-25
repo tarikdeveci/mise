@@ -3,6 +3,7 @@ import { resolve, dirname, extname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { z } from 'zod';
 import { loadFoodDb } from '../data/foodDb.js';
+import { loadFoodCorpus } from '../data/corpus.js';
 import { logger } from '../obs/logger.js';
 import { createPipeline, PIPELINE_VERSION } from '../pipeline/index.js';
 import { createAliasStore, GLOBAL_ALIAS_SEED } from '../pipeline/resolve/aliasStore.js';
@@ -91,6 +92,13 @@ async function main(): Promise<void> {
 
   const db = loadFoodDb();
   const reranker = createGeminiReranker();
+  // The second tier matters more here than anywhere: photographs are where the
+  // curated set runs out of foods. Gated on the verifier, same as in the server.
+  const corpusData = loadFoodCorpus(new Set(db.all.map((f) => f.id)));
+  const corpus = corpusData.available
+    ? buildLexicalIndex({ surfaces: corpusData.surfaces, byId: (id) => corpusData.get(id) })
+    : undefined;
+
   const pipeline = createPipeline({
     db,
     lexical: buildLexicalIndex(db),
@@ -98,6 +106,7 @@ async function main(): Promise<void> {
     aliases: createAliasStore(GLOBAL_ALIAS_SEED),
     extractor: withRuleFallback(primary),
     ...(reranker ? { reranker } : {}),
+    ...(corpus && reranker ? { corpus, corpusFood: (id: string) => corpusData.get(id) } : {}),
   });
 
   console.log(

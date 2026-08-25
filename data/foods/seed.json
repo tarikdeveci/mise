@@ -445,7 +445,7 @@
     "source": "USDA FDC 169096"
   },
   {
-    "id": "fdc:170178",
+    "id": "fdc:171705",
     "name": "Avocado, raw",
     "names": { "tr": "Avokado" },
     "aliases": ["avocado", "avokado"],
@@ -456,7 +456,7 @@
       { "unit": "piece", "grams": 150, "spread": 0.3 },
       { "unit": "half", "grams": 75, "spread": 0.3 }
     ],
-    "source": "USDA FDC 170178"
+    "source": "USDA FDC 171705"
   },
   {
     "id": "fdc:170567",

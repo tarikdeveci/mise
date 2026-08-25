@@ -32,6 +32,10 @@ export interface PipelineDeps {
   aliases: AliasStore;
   extractor: Extractor;
   reranker?: Reranker;
+  /** Retrieval over USDA's full reference set; see `data/corpus.ts`. */
+  corpus?: LexicalIndex;
+  /** Materialises a corpus row into a food. Required if `corpus` is set. */
+  corpusFood?: (id: string) => CanonicalFood | undefined;
 }
 
 export interface ProcessOptions {
@@ -106,7 +110,12 @@ export function createPipeline(deps: PipelineDeps): Pipeline {
 
       for (const [index, extracted] of expanded.entries()) {
         const resolution = resolutions[index]!;
-        const food = resolution.foodId ? db.byId(resolution.foodId) : undefined;
+        // A corpus match is not in `db`, so the lookup has to consult both.
+        // The order matters: curated always wins, and the corpus loader already
+        // drops anything the seed covers, so the two cannot disagree.
+        const food = resolution.foodId
+          ? db.byId(resolution.foodId) ?? deps.corpusFood?.(resolution.foodId)
+          : undefined;
 
         if (!food) {
           resolved.push({

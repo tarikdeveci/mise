@@ -39,6 +39,12 @@ const METHOD_CEILING: Record<Resolution['method'], number> = {
   vector: 0.88,
   composite: 0.85,
   llm_rerank: 0.75,     // capped: we only got here because it was contested
+  // Lower than any curated rung, and deliberately below the `high` band so a
+  // corpus match can never auto-log. The row is a real USDA citation, but
+  // nobody checked that it is the right row for this phrase — a verifier said
+  // it was plausible, and the food has no curated aliases, no Turkish, and no
+  // household measures. That is a genuinely weaker claim and should read as one.
+  corpus: 0.6,
   unresolved: 0.0,
 };
 

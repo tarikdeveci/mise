@@ -3,6 +3,7 @@ import Fastify, { type FastifyInstance } from 'fastify';
 import cors from '@fastify/cors';
 import { z } from 'zod';
 import { loadFoodDb, type FoodDb } from '../data/foodDb.js';
+import { loadFoodCorpus } from '../data/corpus.js';
 import { MealInput, type MealLog } from '../domain/log.js';
 import { logger } from '../obs/logger.js';
 import { metrics } from '../obs/metrics.js';
@@ -362,6 +363,13 @@ export async function createApp(): Promise<FastifyInstance> {
 
   const db = loadFoodDb();
   const lexical = buildLexicalIndex(db);
+  // The second tier. Loaded once at boot: 7,793 rows index in well under a
+  // second and the alternative is a stall on the first unknown food.
+  const corpusData = loadFoodCorpus(new Set(db.all.map((f) => f.id)));
+  const corpus = corpusData.available ? buildLexicalIndex({
+    surfaces: corpusData.surfaces,
+    byId: (id) => corpusData.get(id),
+  }) : undefined;
   const vector = await buildVectorIndex(db);
   const aliases = createAliasStore(GLOBAL_ALIAS_SEED);
   // Model-backed extractors get the rule tier as a safety net; the rule tier
@@ -375,10 +383,16 @@ export async function createApp(): Promise<FastifyInstance> {
   const pipeline = createPipeline({
     db, lexical, vector, aliases, extractor,
     ...(reranker ? { reranker } : {}),
+    // Both or neither: the corpus rung is gated on the verifier, and a corpus
+    // match cannot be materialised into a food without the loader.
+    ...(corpus && reranker ? { corpus, corpusFood: (id: string) => corpusData.get(id) } : {}),
   });
 
   logger.info(
-    { extractor: extractor.id, model: extractor.model, vector: vector.available, foods: db.all.length },
+    {
+      extractor: extractor.id, model: extractor.model, vector: vector.available,
+      foods: db.all.length, corpus: corpus && reranker ? corpusData.size : 0,
+    },
     'pipeline ready',
   );
 

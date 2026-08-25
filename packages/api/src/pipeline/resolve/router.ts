@@ -17,8 +17,9 @@ import type { VectorIndex } from './vector.js';
  *   2. global alias    ~0 ms   a curated default for a known-ambiguous term
  *   3. lexical         ~1 ms   decisive string match
  *   4. lexical+vector  ~15 ms  decisive after multilingual retrieval
- *   5. LLM rerank      ~800 ms genuinely ambiguous — a model earns its cost
- *   6. unresolved      —       ask the user one targeted question
+ *   5. LLM verify      ~800 ms plausible but not self-evident — a model checks
+ *   6. corpus          ~800 ms not curated at all: USDA's full 7,793, verified
+ *   7. unresolved      —       ask the user one targeted question
  *
  * Two properties fall out of this that matter more than the latency:
  *
@@ -67,6 +68,12 @@ export interface ResolveDeps {
   vector: VectorIndex;
   aliases: AliasStore;
   reranker?: Reranker;
+  /**
+   * Retrieval over the full USDA corpus, reached only when the curated tier
+   * has nothing. Optional: without it the resolver simply says it does not know
+   * the food, which is the behaviour this system had before.
+   */
+  corpus?: LexicalIndex;
 }
 
 export interface ResolveOptions {
@@ -289,11 +296,10 @@ export async function resolvePhrase(
       metrics.inc('reranker_illegal_choice_total', { reranker: reranker.id });
     }
 
-    // The verifier ran and endorsed nothing. Stop here rather than continuing
-    // into the permissive rung below: once a check exists, its "no" has to mean
-    // no. That rung's own guard already excludes this case; stating it here too
-    // keeps the guarantee readable at the point it is made.
-    return done('unresolved', null, shortlist, fusedMargin);
+    // The verifier ran and endorsed nothing from the curated tier. Fall through
+    // to the corpus rung below rather than returning here: once a check exists,
+    // its "no" has to mean no, and rung 6's own guard already excludes this
+    // case, so there is nothing left between here and the tail.
   }
 
   /* 6 — no verifier configured. Fall back to the old behaviour rather than
@@ -304,6 +310,71 @@ export async function resolvePhrase(
     return done(fusedTop.via === 'vector' ? 'vector' : 'lexical', fusedTop.foodId, fused, fusedMargin);
   }
 
-  /* 7 — abstain. An honest question beats a confident wrong answer. */
+  /* 7 — the curated set has nothing. Most "I don't know that food" answers are
+     really "nobody curated that food yet", so try USDA's full reference set.
+
+     Reached from both paths above, deliberately: the commonest shape of an
+     unknown food is not a contested shortlist, it is an EMPTY one. Wiring this
+     only into the contested branch meant "quinoa" — no curated candidates at
+     all — never got here, which is exactly backwards. */
+  const wider = await resolveFromCorpus(deps, clean, opts, done);
+  if (wider) return wider;
+
+  /* 8 — abstain. An honest question beats a confident wrong answer. */
   return done('unresolved', null, fused.slice(0, 5), fusedMargin);
+}
+
+/**
+ * The corpus rung: USDA's full reference set, 7,793 rows.
+ *
+ * Everything the curated tier gives up on lands here, and the coverage gain is
+ * large — of the foods real meal photographs produced and the seed could not
+ * name, roughly three quarters have a real row in this corpus.
+ *
+ * It is gated on the verifier and that is not a formality. Retrieval over 7,793
+ * loosely-worded descriptions produces confident nonsense: measured on this
+ * corpus, a plain matcher answers "iced tea" with beef sandwich steaks and
+ * "grapes" with grapeseed oil. The curated tier is protected from that by being
+ * eighty-odd rows somebody read. This tier has no such protection, so a model
+ * that can say "none of these" is the only thing standing between a wide
+ * corpus and a wrong number.
+ *
+ * Consequently: **no verifier, no corpus.** Falling back to a retrieval score
+ * here would be strictly worse than admitting we do not know the food.
+ */
+async function resolveFromCorpus(
+  deps: ResolveDeps,
+  clean: string,
+  opts: ResolveOptions,
+  done: (m: Resolution['method'], id: string | null, c: FoodCandidate[], margin: number) => Resolution,
+): Promise<Resolution | null> {
+  const { corpus, reranker } = deps;
+  if (!corpus || !reranker) return null;
+
+  const hits = corpus.search(clean).filter((c) => c.score >= MIN_RESOLVABLE_SCORE);
+  if (hits.length === 0) return null;
+
+  const shortlist = hits.slice(0, 5);
+  let picked: { foodId: string | null } = { foodId: null };
+  try {
+    picked = await reranker.choose({
+      phrase: clean,
+      context: opts.context ?? clean,
+      candidates: shortlist,
+    });
+  } catch {
+    metrics.inc('reranker_error_total', { reranker: reranker.id });
+    return null;
+  }
+
+  const legal = picked.foodId !== null && shortlist.some((c) => c.foodId === picked.foodId);
+  if (!legal) {
+    if (picked.foodId !== null) {
+      metrics.inc('reranker_illegal_choice_total', { reranker: reranker.id });
+    }
+    return null;
+  }
+
+  metrics.inc('corpus_resolution_total');
+  return done('corpus', picked.foodId, shortlist, marginOf(shortlist));
 }

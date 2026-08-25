@@ -4,10 +4,11 @@
     "why_not_weighed": "These have no weighed ground truth, so they cannot measure calorie accuracy — a person estimating portions from an image averages ~41% error (Nutrition5k), which is larger than the thing we would be trying to measure. They are scored on what CAN be judged from a photograph: did it name the right foods, did it admit the ones it does not know, and did it invent anything.",
     "scoring": {
       "identified": "foods the system named correctly, by our own database's vocabulary",
-      "admitted": "foods it correctly declined to guess at (not in the database)",
+      "admitted": "foods it correctly declined to guess at (in neither the curated set nor the USDA corpus)",
       "invented": "foods reported that are not in the picture — must be 0",
       "invisible": "calories no photograph can show: oil, sauce, dressing, sugar. Recorded per case so the systematic undercount is visible rather than silently absorbed."
-    }
+    },
+    "tiers": "Two tiers back these cases: 87 curated rows with Turkish aliases and household measures, and USDA SR Legacy behind them at 7,793 rows, reachable only through the verifier. A \"declined\" item now means genuinely nothing citable exists, not merely that nobody curated it."
   },
   "cases": [
     {
@@ -15,14 +16,12 @@
       "file": "p1-ramen.jpg",
       "describe": "Bowl of soy-glazed ramen noodles, spring onion and sesame seeds on top, chopsticks lifting a strand.",
       "shouldIdentify": [
-        "noodles or pasta"
+        "noodles",
+        "spring onion",
+        "sesame seeds"
       ],
       "notInDatabase": [
-        "ramen noodles",
-        "soy sauce",
-        "sesame oil",
-        "sesame seeds",
-        "spring onion"
+        "the glaze — soy, sugar and sesame oil, unidentifiable as one sauce"
       ],
       "invisible": "The glaze is soy, sugar and sesame oil. A tablespoon of sesame oil alone is ~120 kcal and nothing in the frame shows it.",
       "probes": "A single-food bowl where the food is easy and the sauce carrying much of the energy is undetectable. Also tests whether a near-miss (pasta for ramen) is reported honestly or dressed up as a match."
@@ -32,13 +31,14 @@
       "file": "p2-hamsi.jpg",
       "describe": "Plate of flour-coated fried anchovies (hamsi tava) with lemon wedges, parsley and sliced red onion.",
       "shouldIdentify": [
-        "onion"
+        "onion",
+        "lemon",
+        "parsley",
+        "frying oil"
       ],
       "notInDatabase": [
         "anchovy",
-        "fried fish",
-        "lemon",
-        "parsley"
+        "the flour coating"
       ],
       "invisible": "Deep-fried in oil. The coating absorbs a large and unknowable fraction.",
       "probes": "Almost nothing here is in a 68-row database. The correct behaviour is to say so, not to reach for the nearest fish-shaped row. This is the ignorance test."
@@ -50,13 +50,12 @@
       "shouldIdentify": [
         "chicken breast",
         "salad greens",
-        "cola"
-      ],
-      "notInDatabase": [
+        "cola",
         "sweet potato fries",
         "caesar dressing",
         "lemon"
       ],
+      "notInDatabase": [],
       "invisible": "The dressing. Creamy dressing on that much lettuce is 100-200 kcal and reads visually as almost nothing.",
       "probes": "Multi-item, and the two highest-energy components (fries, dressing) are the two least likely to be handled. Tests whether a partial answer is presented as partial."
     },
@@ -65,14 +64,14 @@
       "file": "p4-stuffed-shells.jpg",
       "describe": "Pan of jumbo pasta shells stuffed with spinach and ricotta, in tomato sauce, topped with grated cheese.",
       "shouldIdentify": [
-        "pasta"
+        "pasta",
+        "spinach",
+        "ricotta",
+        "tomato sauce",
+        "parmesan"
       ],
       "notInDatabase": [
-        "ricotta",
-        "spinach",
-        "tomato sauce",
-        "parmesan",
-        "stuffed shells"
+        "stuffed shells as a single dish"
       ],
       "invisible": "Nothing hidden by cooking here, but the filling is most of the energy and it is a composite the database has no template for.",
       "probes": "A dish that is one thing to a person and five rows to a database. Tests composite handling, and whether the pan is read as a serving."
@@ -82,13 +81,12 @@
       "file": "p5-steak.jpg",
       "describe": "Plate with sliced medium-rare steak under chimichurri, roasted carrot sticks, steamed broccoli.",
       "shouldIdentify": [
-        "beef"
+        "beef",
+        "broccoli"
       ],
       "notInDatabase": [
-        "steak cut",
         "chimichurri",
-        "broccoli",
-        "roasted carrots"
+        "roasted carrots as prepared"
       ],
       "invisible": "Chimichurri is mostly oil. Two spoonfuls is ~200 kcal sitting in plain sight and looking like herbs.",
       "probes": "The clearest case of energy hiding as garnish. Also tests whether ground beef is offered for steak, and whether that substitution is disclosed.",

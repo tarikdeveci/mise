@@ -82,6 +82,7 @@ export const ResolutionMethod = z.enum([
   'lexical',      // trigram/token match, decisive margin
   'vector',       // embedding nearest-neighbour, decisive margin
   'llm_rerank',   // ambiguous: model chose from a closed candidate list
+  'corpus',       // not in the curated set; a verified row from USDA's full 7,793
   'composite',    // decomposed into ingredient template
   'unresolved',   // nothing crossed the bar — ask the user
 ]);

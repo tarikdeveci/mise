@@ -313,7 +313,7 @@
     "id": "X09",
     "stratum": "adversarial",
     "input": { "text": "half an avocado", "locale": "en-US" },
-    "expected": [{ "foodId": "fdc:170178", "grams": 75 }],
+    "expected": [{ "foodId": "fdc:171705", "grams": 75 }],
     "probes": "Fractional quantity.",
     "risks": ["E4_PORTION"]
   },
