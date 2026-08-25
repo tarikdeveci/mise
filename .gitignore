@@ -8,3 +8,8 @@ eval-runs/
 *.log
 .DS_Store
 .cache/
+.gaps/
+
+# Tooling and export artefacts — not part of the submission
+graphify-out/
+packages/mobile/dist-ios-sauce-check/

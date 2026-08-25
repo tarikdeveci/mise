@@ -42,11 +42,13 @@ Run the photo cases (needs a vision key; see the model line at the end of this s
 npm run eval:photos
 ```
 
-Start the app (Expo Go on a phone, or press `w` for the browser):
+Start the app — Expo Go on a phone, or an Android emulator / iOS simulator:
 
 ```bash
 npm run mobile
 ```
+
+This is a native app rather than a web page, which is what the brief asked for: React Native through Expo, with the platform camera and image picker. Verified end to end on an Android emulator (API 36) and on Expo Go. Metro will also serve it in a browser with `w` — that is a convenience for reviewing it quickly, not the target.
 
 On a physical device, point the app at your machine:
 
@@ -75,24 +77,26 @@ GOOGLE_API_KEY=... EXTRACTOR=gemini npm run dev
 | **interval coverage** (truth inside the range shown) | **100%** |
 | **hallucination rate** | **0%** |
 | deterministic resolutions (no model call) | 96.5% |
-| auto-logged (needed no user input) | 39.1% |
+| auto-logged (needed no user input) | 43.5% |
 | precision when auto-logged | 100% |
-| calibration error (ECE) | 0.209 |
-| latency p50 / p95 | 0 ms / 2 ms |
+| calibration error (ECE) | 0.2066 |
+| latency p50 / p95 | 0 ms / 3 ms |
 
 **Read that 100% as a warning, not a result.** See [Where this is weak](#where-this-is-weak) before believing any of it. The eval tool prints the same warning itself.
 
-`npm test` — 118 unit and integration tests, no key and no network required.
+`npm test` — 212 unit and integration tests, no key and no network required.
 
 `npm run eval:photos` on five real meal photographs, Gemini vision:
 
 | | |
 |---|---|
-| items extracted across 5 photos | 23 |
+| items extracted across 5 photos | 21 |
 | **invented** (a food reported that is not in the picture) | **0** |
-| correctly declined (real food, not in a 68-row database) | 17 |
-| photos that asked the user something rather than guessing | 5 of 5 |
-| latency per photo | 12-16 s, with one outlier at 623 s (see below) |
+| declined (named in the picture, in neither database tier) | 4 |
+| photos auto-logged without asking the user anything | 0 of 5 |
+| latency per photo | 12-37 s across three runs |
+
+Before the USDA corpus tier existed the same five photographs produced 23 items of which **17** were declined — honest, and nearly useless. That is the change worth reading in this table, and it is a data change, not a model one.
 
 Those are the figures a photograph can settle. Calorie accuracy is not among them, and the reason is in [Where this is weak](#where-this-is-weak).
 
@@ -155,7 +159,9 @@ This is the central design decision. Most food phrases are easy, and paying a mo
 | 3. lexical | ~1 ms | decisive string match (IDF-weighted tokens + trigram Dice) |
 | 4. lexical + vector | ~15 ms | decisive after multilingual embedding retrieval |
 | 5. LLM verify | ~800 ms | plausible but not self-evident, or genuinely contested |
-| 6. unresolved | — | ask the user one targeted question |
+| 6. USDA corpus | ~800 ms | nothing curated fits, so search all 13,339 reference rows — verifier-gated |
+| 7. corpus choices | ~1 ms | no verifier available: show the closed shortlist, accept nothing yet |
+| 8. unresolved | — | ask the user one targeted question |
 
 The escalation signal is the **margin** between the top two candidates, not the top score. A 0.9 top score with a 0.02 gap means two foods look equally likely, which is exactly when a model is worth paying for and when the user is worth interrupting.
 
@@ -167,6 +173,22 @@ Two properties fall out of this that matter more than the latency saving:
 
 - **Determinism.** Rungs 1–4 are pure functions, and the model tier runs at `temperature: 0`. Re-scanning the same meal cannot return a different number. This is a documented, reproducible failure of shipped competitors and it is simply not a failure we need to have.
 - **Bounded hallucination.** Rung 5 receives a *closed* candidate list. The reranker's schema constrains it to an ID from that list or an abstention; a reply outside the set is dropped and the item falls through to asking the user. It is not "the model usually behaves", it is "the model has no other move available".
+
+**Rung 6 is a second database tier, and it is only safe because a verifier — model or human — must endorse it.** The curated seed is 121 rows — two languages, aliases, household measures — and it will always be too small: real plates carry pita, edamame, chimichurri. Behind it sit **13,339 USDA reference rows**, built from three of FoodData Central's sets:
+
+| set | what it is | rows here |
+|---|---|---|
+| SR Legacy (2018) | ingredients, analysed — "Avocados, raw" | 7,793 |
+| FNDDS Survey (2021-23) | **dishes people report eating** — guacamole, sushi, pad thai | 5,331 |
+| Foundation (2025) | few rows, deepest analysis, newest data | 215 |
+
+FDC is not one database, and wiring only the first of those left a hole shaped exactly like a real meal. SR Legacy carries four avocado rows and **no guacamole**, because a dish is not an ingredient — so a plate of real food kept falling through to a question the user could not answer either. FNDDS is the set that closes that, and it is why `"guacamole"` now resolves to `Guacamole, NFS` at 155 kcal/100 g with a citation instead of to an apology. **Branded Foods is deliberately excluded**: it is roughly two million packaged products and several gigabytes, and the barcode rung already answers that question exactly, off a label, without retrieval guessing at it.
+
+What makes a wide corpus usable is that it is never accepted on a retrieval score. Searching loosely across thousands of loosely-worded descriptions produces confident nonsense — a plain matcher over this corpus answers `"iced tea"` with beef sandwich steaks and `"grapes"` with grapeseed oil, both around ten times the real energy, and both perfectly plausible in a log. The curated tier is protected from that by being eighty-odd rows a person read; this one has no such protection, so every corpus match needs a verifier. With a model verifier the chosen row can proceed at capped confidence. Without one, mise returns the shortlist as a question and keeps calories blank until the user taps a row. That preserves coverage during provider outages without quietly turning retrieval into nutrition. Both probes still behave after the corpus grew by 71%: `"grapes"` resolves to *Grapes, raw*, and `"iced tea"` is declined outright.
+
+A corpus match is a real USDA citation, so nothing about traceability changes — but nobody curated it, and the pipeline says so rather than hiding it: a confidence ceiling of 0.6 that keeps it out of the auto-logged set, a wider portion interval because there are no household measures, and a line in the gap ledger. `uncurated_food` is the highest-value curation queue this system has: each row is a food real people ate, already matched to the USDA row somebody would have to find anyway.
+
+FDC descriptions are English. A small explicit query bridge covers common Turkish spellings (`kinoa → quinoa`, `kuskus → couscous`, `suşi → sushi`, `guakamole → guacamole`, `pad tay → pad thai`, `lazanya → lasagna`). It changes retrieval text only: the returned row still needs the same verifier, so localization cannot manufacture nutrition.
 
 
 ### The portion ladder
@@ -185,6 +207,8 @@ Identity and amount are two different questions, and the amount is the one that 
 
 Every rung returns `null` rather than guessing, so falling through is a real decision and not an accident.
 
+Above all seven sits the one thing no ladder can derive: the person telling us. Every item in the app carries a gram field, and both ends of its range are one tap from becoming the answer — so a range is something you can close rather than only something you are shown. A hand-set amount is recorded as `user_set` (±5%: asserted, not weighed), applied to the meal on screen, and remembered as this user's usual for that wording, which drops the same phrase onto rung 4 next time. This is deliberately *not* a rung: rungs answer "what can be worked out from what we were given", and a correction is not an inference.
+
 The evidence behind the ordering is why it is shaped this way rather than "ask a better model":
 
 - Nutrition5k reports **9.5% error predicting kcal per gram against 26.1% predicting total calories** from the same image. The model is far better at *what this is* than at *how much of it there is*. Splitting the questions lets each one be answered by whatever is actually good at it.
@@ -201,7 +225,7 @@ I picked the hybrid path, and the reason is measurement rather than taste: it is
 
 ### What the model is allowed to do
 
-The extraction prompt (`src/pipeline/extract/prompt.ts`, versioned `extract-2026-08-24.a`) withholds three capabilities on purpose, and the response schema enforces each:
+The extraction prompt (`src/pipeline/extract/prompt.ts`, versioned `extract-2026-08-25.b`) withholds three capabilities on purpose, and the response schema enforces each:
 
 - **No nutrition.** The model never sees or writes a calorie figure, so it cannot get one wrong.
 - **No database IDs.** The model does not know the database exists, so it cannot invent a plausible-looking key.
@@ -220,7 +244,7 @@ npm run eval -- --extractor=gemini
 
 Gemini is the default vision path because published 2026 multimodal benchmarks give it the widest lead of any current family on vision, at roughly half the token price of the Opus/GPT tier, and vision is the bottleneck stage here. That is a starting hypothesis with an expiry date. The bake-off table is what should settle it, and it will settle it differently every time a model ships.
 
-Run on all 46 cases (`gemini-3.1-pro-preview`), both at pipeline v1.3.0:
+Run on all 46 cases (`gemini-3.1-pro-preview`), both at pipeline v1.3.0 — that snapshot, not the figures above, because a bake-off only means anything when both rows come out of the same run:
 
 | extractor | pass | food match | auto-logged | ECE | p95 |
 |---|---|---|---|---|---|
@@ -238,6 +262,8 @@ That points at the deployment I would actually ship: rules on the hot path, mode
 Local `multilingual-e5-small` via `@huggingface/transformers`, not a hosted embedding API. Three reasons: eval runs stay deterministic and free (a benchmark whose numbers drift because a remote model was updated is not a benchmark); Turkish food terms like "kaşar" have no English cognate and lexical matching alone cannot bridge them; and there is no key to manage. If the model cannot load, the layer disables itself and the router degrades to lexical-only rather than the endpoint dying.
 
 **No vector database.** At ~350 surface forms, brute-force cosine is 300 KB and sub-millisecond. An index here is pure overhead. I would revisit at roughly 100k rows or when the food database becomes multi-tenant.
+
+The embedding layer covers the curated tier only. The 13,339-row corpus is searched lexically, because that rung's safety comes from the verifier rather than from the retrieval score, and embedding that many loosely-worded USDA descriptions would buy recall in exactly the place where more recall is the risk.
 
 ---
 
@@ -321,9 +347,12 @@ Turkish is agglutinative, so "çay", "çayın", "çaydan" are one food to a pers
 - **Idempotency.** `POST /v1/meals` accepts an `Idempotency-Key` and stores a hash of the body with it. Replays return the original log; the same key with a *different* body returns 409 rather than silently serving a stale result, because that is a client bug and hiding it helps nobody. Phones lose connectivity mid-request and users tap Save twice; without this, "the network dropped" and "the meal was logged twice" are the same observable event.
 - **Retries with full jitter**, both client and server side. Jitter is not a detail here: meal traffic is extremely peaky, three sharp spikes a day at the same clock times for everyone, so a synchronised retry storm is the realistic failure mode. The client retries transport failures only — a 400 will not become a 201 on the third attempt.
 - **A ceiling on every outbound call** (30 s extraction, 10 s verification, 8 s barcode). Retrying does nothing against a request that never returns, and one measured for real took 623 s. A hang is classified as retryable, so the second attempt is a fresh connection rather than a longer wait on a dead one.
-- **Deadlines, per route and per whole call.** A typed meal answers in milliseconds; a photo of five foods can legitimately spend tens of seconds at the verifier rung. One flat timeout is wrong in both directions, so the client carries a deadline per route (text 15 s, photo 45 s, reads 8 s) that covers the *whole* call including retries — otherwise `retries: 2` silently triples the stated budget. The server's own `requestTimeout` sits above the client's, so the phone gives up first and gets the better error message, and a hung upstream cannot hold a socket until restart.
+- **Deadlines, per route and per whole call.** A typed meal answers in milliseconds; a photo of five foods can legitimately spend tens of seconds at the verifier rung. One flat timeout is wrong in both directions, so the client carries a deadline per route that covers the *whole* call including retries — otherwise `retries: 2` silently triples the stated budget. The server's own `requestTimeout` sits above the client's, so the phone gives up first and gets the better error message, and a hung upstream cannot hold a socket until restart.
+- **The text deadline follows the extractor, and that is a bug I shipped once.** 15 s was measured against the rule tier and quietly stopped being true: run the same typed meal through a model extractor with the verifier and corpus rung behind it and it takes 7-17 s, because an unknown food is now the *slowest* text case rather than the fastest — it is the one that reaches every rung. Typing "guacamole" on the emulator produced a 16.6 s server response against a 15 s client budget: the meal logged, and the person was told it had failed. The client now reads `/healthz` and takes 40 s when a model is doing the extraction, 15 s when the deterministic tier is.
 - **A cancellable wait.** While a request is in flight the app offers Cancel. A long wait and an inescapable wait are different problems, and only one of them is defensible.
-- **Graceful degradation.** If the embedding model cannot load, the router runs lexical-only. If a provider is down, the endpoint can fall back to the rule tier: text logging keeps working and the user sees "worth a look" instead of an error. If the verifier is unreachable it fails **closed** — the item goes to the user rather than being accepted unchecked — and a verifier that throws costs that item its verification, not the whole meal.
+- **Graceful degradation, observed rather than asserted.** If the embedding model cannot load, the router runs lexical-only. If a provider is down, the endpoint falls back to the rule tier: text logging keeps working and the user sees "worth a look" instead of an error. If the verifier is unreachable it fails **closed** — the item goes to the user rather than being accepted unchecked — and a verifier that throws costs that item its verification, not the whole meal.
+
+  I got to watch all of that fire for real: mid-session the provider started returning `429 quota exceeded`. Extraction retried twice, logged `extractor failed, degrading to rule tier`, and carried on; the verifier retried, logged `reranker unavailable`, and declined to endorse anything. The corpus still returned a closed shortlist, but calories stayed blank until the user selected a real row. The meal came back asking rather than guessing or erroring. That is the whole design working in the one condition nobody schedules.
 - **Typed error envelope.** Every failure returns `{ error: { code, message, traceId } }`. Stack traces and provider errors stay in the log; the message is safe to display.
 
 ## Observability
@@ -342,9 +371,75 @@ The same information is one tap away in the app.
 
 ---
 
+## What mise does not know
+
+The golden set is saturated — every case in it passes — so it can no longer say what to build next. Production can. Every time the pipeline fails to answer something, it writes down *what it was asked*, and `npm run gaps` renders the accumulated result:
+
+```
+GAPS  17 distinct  ·  18 observations
+
+  WHAT WOULD FIX THEM
+  curate                           15  83% — rows, aliases, measures
+  train                             3  17% — model judgement
+  of which labelled                 2  the user supplied the answer
+
+UNKNOWN_FOOD  ·  No row in either tier
+     2x   2u  kinoa            best guess: Beef, ground, 85% lean, cooked (0.56)
+     1x   1u  guacamole        best guess: Avocado, raw (0.69)
+
+UNCURATED_FOOD  ·  Answered only from the USDA corpus
+     1x   1u  kimchi           → fdc:170392
+
+CORRECTED_FOOD  ·  The user overruled the food we picked
+     1x   1u  ekmek            fdc:174924 → fdc:172688
+
+CORRECTED_AMOUNT  ·  The user moved the amount we estimated
+     1x   1u  fdc:170567       28 g → 70 g
+```
+
+Ten kinds, each attached to the component that can fix it: a food neither tier could name, one answered only from the uncurated corpus, a tie a model had to break that an alias would settle for free, a measure word we cannot convert, a portion that fell to the ladder's last rung, a dish the extractor split, text a person meant as a meal that read as nothing, a food that was on the plate and never came out at all, and the two kinds of correction.
+
+**The `curate` / `train` split is the part worth arguing with.** Most of what a food logger does not know is a missing row, and no amount of fine-tuning supplies one: a model cannot be taught quinoa's calorie content by gradient descent, because in this architecture the number has to come from a row someone can cite. So the report leads with that ratio rather than a total, and names the two piles separately. The training pile is the smaller one, and it is real — an extractor that splits a dish with its own database row is a model error, not a data gap.
+
+A record is only a *labelled* training example when the user supplied the answer, which is why corrections are counted apart. `npm run gaps -- --labelled --jsonl train.jsonl` exports exactly those; everything else is a candidate that still needs a human to say what the right output was. Saying that plainly matters more than the export format: a file of unlabelled failures presented as a training set is how a fine-tune quietly learns to reproduce them.
+
+- `GET /v1/gaps` — the same data as JSON, `?format=text` for the report, `?format=jsonl` for the export, `?kind=` for one queue.
+- `DELETE /v1/me` — erasure, and it reaches this ledger too. See [below](#erasure).
+- **Privacy.** This is the one component that deliberately keeps meal text, where the logger redacts it — the words *are* the deliverable. It earns that by keeping as little else as possible: user ids are salted hashes used only to count distinct people, the salt is generated per installation and never leaves the disk, the export never emits the hashes, entries are capped with the eviction count reported, and the directory is git-ignored and outside the repository. `GAPS=off` disables collection entirely. The eval builds its pipeline without a ledger, so a benchmark run never pollutes the record of what real people asked for.
+
+---
+
+## Erasure
+
+Four stores here hold data derived from one person, and only the first is the obvious one:
+
+| store | what it holds | what `DELETE /v1/me` does to it |
+|---|---|---|
+| meals | the logs themselves | deletes them |
+| idempotency cache | a replayable copy of a log, under its key | deletes it — a cached meal *is* the meal, and leaving it would make the deletion a lie |
+| alias table | their corrections | deletes the user-scoped rows. The curated global seed is nobody's correction and stays |
+| gap ledger | the phrases that defeated the resolver | deletes rows only they hit; removes their pseudonym from rows other people hit too |
+
+The receipt is itemised rather than a bare `204`, because one of those guarantees is deliberately partial and the partial one is the interesting one:
+
+```json
+{
+  "erased": { "meals": 10, "cachedResponses": 0, "corrections": 2, "gapRows": 10 },
+  "retained": { "sharedGapRows": 1, "note": "..." }
+}
+```
+
+A gap row other people also hit keeps its aggregate and loses only this account's pseudonym, so the distinct-user count drops by one. Deleting it outright would be the stronger promise and it is the wrong one: knowing which of the kept sample spellings was whose means storing that mapping — retaining *more* personal data in order to be able to erase it. The ledger is aggregate by construction, and this keeps it that way.
+
+Two smaller decisions worth naming. The user id must be sent explicitly: everywhere else a missing `x-user-id` falls back to `anonymous`, and here that fallback would let a header-less request wipe the shared anonymous bucket, which is the one destructive accident this API has available. And the ledger goes to disk immediately rather than through its two-second write debounce, because an erasure still sitting in a timer is not an erasure.
+
+What this does **not** do: authenticate. Identity here is a device header and nothing else, so anyone holding a device id can erase that device's data. That is the same "auth is out of scope" position as the rest of the API rather than a hole specific to this route — but erasure is where it stops being merely a demo shortcut, and a real deployment must not ship this route as it stands. The golden and photo eval sets are fixtures in the repository, hand-written and never fed from traffic, so there is nothing of anyone's in them to remove.
+
+---
+
 ## Compared to EatBetter
 
-I have not used EatBetter's app, so I am not going to invent claims about its internals. What follows is grounded in two things I can defend: documented, reproducible failures of shipped photo-calorie apps in this category, and specific design decisions here that address them. Every row names how to check it.
+As of 25 August 2026, EatBetter's [App Store listing](https://apps.apple.com/us/app/eatbetter-ai-food-journal/id6639614109) and [official site](https://eatbetterai.com/) lead with instant AI meal photos, barcode scanning, an AI coach, personalised guidance and daily progress. I have not run the app, so I am not going to invent claims about its internals or accuracy. What follows is grounded in the public product promise, documented and reproducible failures of photo-calorie apps in this category, and specific design decisions here that address them. Every row names how to check it.
 
 | | Category norm | mise | How to verify |
 |---|---|---|---|
@@ -353,11 +448,14 @@ I have not used EatBetter's app, so I am not going to invent claims about its in
 | **Where the number came from** | Not exposed | Tap any item: matched row, portion assumption, literal arithmetic, source citation | Ask either app why it said 537 |
 | **Being wrong** | Full edit form or a search screen | One question, chosen by how many calories the answer moves, answered by tapping a chip | Log "yogurt" in both and count the taps to fix it |
 | **Being corrected** | The correction applies to that entry | The correction becomes a per-user alias: the same phrase resolves instantly and deterministically next time, with no model call | Correct "tavuk" → thigh, log "tavuk" again. A test asserts this |
+| **A food the AI missed** | The list is whatever the model produced. A food it never saw has no row to edit, so the repair is to log the meal a second time | Add the missing line to the meal in front of you: search the verified vocabulary, pick a row, set an amount or let the ladder estimate. Same meal, same photograph, same item ids, every earlier correction intact | Photograph a plate with a drink beside it. Count what it takes to get the drink into that same log |
 | **Turkish** | Usually a translation layer over an English database | Turkish is a first-class input path: measure words, agglutinative stemming, diacritic folding, Turkish food rows, curated Turkish defaults | Log "çayın yanında 2 küp şeker" |
 | **Packaged food** | Barcode scanning is common, and usually presented as exact | Same scan, but the tolerance is stated: a printed serving is a fact, "I ate one serving" is not, so it reads ±8% rather than ±0% | Scan the same item in both and compare what each claims about its own certainty |
 | **Published accuracy** | Category-leading apps generally publish none | `npm run eval` — test set, metrics, error taxonomy, and a warning when the benchmark is saturated | Run it |
 
 **How I would measure the improvement in production**, beyond the offline eval: correction rate per logged item and its decay over a user's first 30 days (the alias loop should bend this down, and it is the cleanest evidence that the system learns); time-to-log for repeat meals; abandonment rate on the review screen; and the share of logs auto-accepted without a correction within 24 hours.
+
+That last row is also the cleanest label this system collects. A missed item arrives with its own answer attached — the food was there, here are the words for it, here is the row it should have reached — so it is filed as `missed_item`, which the gap report counts as labelled and the JSONL export ships straight into a fine-tune. An extraction miss is normally the one error class you cannot mine from traffic, because nobody tells you about the thing that is not on the screen.
 
 **The failure cases that show the difference** are the adversarial stratum, and they are all runnable: `X01` (cream vs milk, the documented 380 kcal VLM error), `X05` (raw vs cooked rice, 365 vs 130 kcal/100g), `A06`/`X12` (boiled vs fried potato in both directions), `X10` (butter stated in the text, ~100 kcal, trivially dropped by a naive splitter), `X07`/`X14`/`X17` (non-food, nothing-eaten, and prompt injection, where the correct answer is an empty log).
 
@@ -380,19 +478,29 @@ The most important section here.
 
 So photo *portion* accuracy remains unmeasured here. Measuring it needs a weighed set — Nutrition5k is the obvious candidate — and that is the first thing I would build with more time, not another model.
 
-**The confidence is measurably wrong in one direction.** ECE is 0.209 and every populated bin is under-confident: the pipeline is right far more often than it claims, which is why only 39% of logs auto-accept. That is a real cost to users, and it is unfixable with the data I have.
+**The confidence is measurably wrong in one direction.** ECE is 0.2066 and every populated bin is under-confident: the pipeline is right far more often than it claims, which is why only 43.5% of logs auto-accept. That is a real cost to users, and it is unfixable with the data I have.
 
-**The food database is 68 curated rows**, not the full FDC. It covers the ambiguity pairs the tests need and common Turkish foods. Real coverage is a data problem, not an architecture one — `CanonicalFood` is the shape an FDC import would produce — but 68 rows is a demo, not a product.
+**The curated database is 121 rows.** It covers the ambiguity pairs the tests need and common Turkish foods, with aliases and household measures — and it will always be too small. 13,339 USDA rows now sit behind it as a verifier-gated second tier, which is a real coverage answer rather than a hopeful one. If the model verifier is unavailable, those rows remain selectable by the user but never auto-log. A corpus row has no Turkish name, no aliases and no curated household measures, so its portion interval is wider — and a food in neither tier still cannot be logged at all.
 
-Running real photographs is what made that concrete rather than theoretical. **P5 logs 0 kcal**: steak under chimichurri with roasted carrots and broccoli, and nothing on that plate exists in the database. The system behaves correctly — it names nothing it cannot cite and asks the user — but "honest and useless" is still useless. On real meals the bottleneck is no longer the pipeline, it is coverage.
+Where the remaining holes are is now a measurable question rather than a worry. USDA covers American eating: it has guacamole, sushi, pad thai and baklava, and it has **no chimichurri, no kebab, no shawarma** — and Turkish home cooking is in this build only because I typed those 121 rows myself. A Turkish product would need a Turkish reference table (TürKomp is the obvious candidate) as a fourth set, and that is a data partnership rather than an afternoon. Coverage is a data problem, not an architecture one (`CanonicalFood` is the shape any import produces), and the gap ledger names the exact rows worth writing first, ranked by how many real people hit them.
+
+Running real photographs is what made that concrete rather than theoretical. With the curated tier alone, **P5 logged 0 kcal**: steak under chimichurri with roasted carrots and broccoli, and nothing on that plate had a row. The system behaved correctly — it named nothing it could not cite and asked the user — but "honest and useless" is still useless.
+
+The corpus tier is the answer to that, and it works: the same photograph now logs 735 kcal with a USDA citation on every item, and across the five photos the declined share went from 17 of 23 items to 4 of 21. It is also not a free win, and the costs are all visible in that run. Every corpus match is a second verifier call, so photo latency roughly doubled (14-37 s against 12-16 s). A corpus row has no household measures, so its portion falls to the ladder's last rung more often. And the confidence ceiling means a plate answered from the corpus can never auto-log — correct, but it moves work to the user. The queue that fixes all three is `uncurated_food` in the gap ledger: it names the exact rows worth promoting into the curated seed, ranked by how many real people hit them.
 
 **The verifier trades one kind of error for another, and I have not found the right point on that curve.** It correctly rejects sesame-seeds → tahini and steak → ground beef, which were the failures that motivated building it. It still accepts sweet potato fries → french fries, despite that pair being named in its instructions as an example to reject.
 
-And it now over-rejects in the other direction: on P4, a pan of stuffed pasta shells, it declined `"jumbo pasta shells"` → pasta and the meal came out at **66 kcal** — the grated cheese, and nothing else. Strictly the refusal is defensible (a stuffed shell is not plain pasta) and the user is asked rather than misled, but a stricter verifier declining real matches is a real cost, not a free win. Measuring where that line should sit needs the labelled photo set this submission does not have.
+P4 is where that curve is easiest to see, because the same photograph has now produced an error in each direction. Before the corpus tier the verifier declined `"jumbo pasta shells"` → pasta and the pan came out at **66 kcal** — the grated cheese and nothing else. Now it accepts `"spinach and cheese stuffed shells"` → **börek**, a phyllo pastry: the right idea (dough with cheese in it), the wrong dish, and a denser one, so the pan reads 492 kcal. Both answers are defensible one at a time and neither is right, which is the honest summary of where this sits. A verifier tuned by argument rather than by data will keep landing somewhere on that curve at random. Measuring where the line should sit needs the labelled photo set this submission does not have.
 
-**Photo latency was 20-65 s per meal. It is now 12-16 s — except when it is 623 s.** Resolving items concurrently instead of serially did most of the work, since they were never dependent on each other. Then re-running the cases surfaced something the averages had been hiding: one photo spent **623 seconds** in a single provider call while its four neighbours took 12-16. Nothing in the system had a ceiling on an outbound call, and retrying is no defence against a request that never comes back — attempt two hangs exactly as well as attempt one.
+Run-to-run variance is part of the same picture: across three runs of these five photographs the extractor phrased one item as `"fried anchovies"`, then `"anchovies"`, and called the carrots `"carrots"` once and `"carrot sticks"` the next time — each of which is the difference between a decline and a match. Resolution is deterministic; what the model chooses to *call* the food is not, and on a five-photo set that noise is larger than most changes I could make to the resolver.
 
-Every outbound call now has a per-attempt timeout (30 s extraction, 10 s verification, 8 s barcode), a hang is classified as retryable, and the client carries its own per-route deadline plus a cancel control. That is a bound, not a speed-up: batching the verifier's shortlists into one request instead of one call per unresolved item is the real remaining win, and it is not done.
+That is also why widening the corpus from 7,793 rows to 13,339 barely moved this table: these five plates were already covered. The rows FNDDS added are **dishes** — guacamole, sushi, pad thai — and none of these photographs contain one. The gain is real and it is simply not what a five-photo set measures, which is one more reason the weighed set is the thing this submission most needs.
+
+**Photo latency was 20-65 s per meal, then 12-16 s — except when it was 623 s.** Resolving items concurrently instead of serially did most of the work, since they were never dependent on each other. Then re-running the cases surfaced something the averages had been hiding: one photo spent **623 seconds** in a single provider call while its four neighbours took 12-16. Nothing in the system had a ceiling on an outbound call, and retrying is no defence against a request that never comes back — attempt two hangs exactly as well as attempt one.
+
+Every outbound call now has a per-attempt timeout (30 s extraction, 10 s verification, 8 s barcode), a hang is classified as retryable, and the client carries its own per-route deadline plus a cancel control. That is a bound, not a speed-up — and the corpus tier spent the headroom it bought: photos now run **14-37 s**, because a plate with three unknown foods makes three more verifier calls. Batching the verifier's shortlists into one request instead of one call per unresolved item is the real remaining win, it would pay for the corpus rung outright, and it is not done.
+
+**A line can be added and corrected, but not removed.** The mirror of the missing-item problem is the invented one: a plate read as five items when there were four. The photo eval says that has not happened yet — 0 invented across 21 items — but "not yet observed on five photographs" is not a guarantee, and the honest position is that the repair for it does not exist. It is a small route (`DELETE /v1/meals/:id/items/:itemId` over the same `rebuild`), and the reason it is not here is that I would want it to record a `phantom_item` gap, which is a taxonomy decision I would rather make against real traffic than invent.
 
 **Deliberately out of scope**, and named rather than hidden: authentication beyond a device header, persistence beyond in-memory stores, offline sync, and daily targets or charts. The brief's focus was accuracy; these would have taken time away from it.
 
@@ -451,7 +559,7 @@ Cost per log is the first wall: at rung 5 pricing, the escalation rate is the wh
 
 **Biggest security/privacy risks?**
 
-Meal photos are health data, and they are special-category under GDPR and KVKK. They routinely contain faces, homes, medication on the table, and location signal in EXIF. Concretely: (1) **third-party model providers** — raw images must not go to a provider without a zero-retention agreement, and that is a contract question before it is an engineering one; (2) **logs and traces**, the easiest accidental leak, which is why redaction is in the logger rather than at each call site; (3) **prompt injection via photographed text**, since a menu or label in frame reaches the model as instructions unless the prompt and the rule tier treat it as data, which is what golden case `X17` tests; (4) **right to erasure**, which has to reach the eval sets and the alias tables, not just the meals table — an alias derived from someone's correction is derived personal data; (5) **cross-user alias leakage**, which is why corrections are user-scoped and there is a test asserting one user's correction does not reach another.
+Meal photos are health data, and they are special-category under GDPR and KVKK. They routinely contain faces, homes, medication on the table, and location signal in EXIF. Concretely: (1) **third-party model providers** — raw images must not go to a provider without a zero-retention agreement, and that is a contract question before it is an engineering one; (2) **logs and traces**, the easiest accidental leak, which is why redaction is in the logger rather than at each call site; (3) **prompt injection via photographed text**, since a menu or label in frame reaches the model as instructions unless the prompt and the rule tier treat it as data, which is what golden case `X17` tests; (4) **right to erasure**, which has to reach the alias tables and the gap ledger and not just the meals table — an alias derived from someone's correction is derived personal data, and so is the phrase that defeated the resolver. `DELETE /v1/me` now reaches all four stores and returns an itemised receipt, including the one guarantee it can only make partially; [Erasure](#erasure) is the whole argument. What it still does not do is authenticate, because nothing in this build does; (5) **cross-user alias leakage**, which is why corrections are user-scoped and there is a test asserting one user's correction does not reach another.
 
 ---
 
@@ -469,7 +577,8 @@ Web search for the literature cited throughout: Nutrition5k (portion error), the
 
 ```
 data/
-  foods/seed.json           68 canonical foods, USDA FDC + Turkish reference
+  foods/seed.json           121 canonical foods, USDA FDC + Turkish reference
+  foods/fdc-corpus.json     13,339 USDA rows (SR Legacy + FNDDS + Foundation)
   golden/cases.json         46 labelled cases, three strata
   golden/photos.json        5 photo cases + the invisible calories in each
   golden/photos/            the photographs themselves
@@ -477,19 +586,24 @@ packages/api/src/
   domain/                   types, Zod schemas, error taxonomy
   data/
     foodDb.ts               the canonical rows, loaded and integrity-checked
+    corpus.ts               the second tier, and why it needs the verifier
     openFoodFacts.ts        barcode lookup — the one untrusted external input
   pipeline/
     normalize.ts            folding, stemming, units, quantities
     extract/                prompt (shared) + rules | gemini | openai | anthropic
+      compound.ts           rejoins a dish the extractor took apart
     resolve/                router, lexical, vector, alias store, reranker
     portion/                the ladder: seven strategies, each able to decline
+    questions.ts            what to ask, and what is not worth asking
+    correct.ts              edits to the meal in front of them: fix a line, add a missing one
     nutrition.ts            arithmetic + the E11 traceability assertion
     confidence.ts           per-stage scoring, banding, disposition
   eval/                     harness, taxonomy classifier, report, CLI, photos
-  http/                     Fastify server, idempotency
+  gaps/                     what mise did not know: ledger, report, CLI
+  http/                     Fastify server, idempotency, erasure
   obs/                      logger, metrics
 packages/mobile/src/
   screens/                  Log, Scan, Result, History
-  components/               the gauge, method chips, and the rest
+  components/               the gauge, the amount editor, the question card
   theme.ts                  tokens, contrast ratios recorded
 ```
