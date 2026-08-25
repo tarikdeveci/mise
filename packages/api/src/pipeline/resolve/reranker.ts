@@ -2,7 +2,7 @@ import { GoogleGenAI } from '@google/genai';
 import { z } from 'zod';
 import { logger } from '../../obs/logger.js';
 import { metrics } from '../../obs/metrics.js';
-import { withRetry } from '../../util/retry.js';
+import { retryableExceptHang, withRetry } from '../../util/retry.js';
 import type { Reranker } from './router.js';
 
 /**
@@ -104,10 +104,23 @@ export function createGeminiReranker(): Reranker | undefined {
               temperature: 0,
             },
           }),
-          // One short question about a five-item list. If it has not answered
-          // in 10 s it is not going to, and the honest fallback — ask the user —
-          // is already the failure path.
-          { label: 'gemini.rerank', attempts: 2, timeoutMs: 10_000 },
+          {
+            label: 'gemini.rerank',
+            attempts: 2,
+            // One short question about a five-item list. If it has not answered
+            // in 10 s it is not going to, and the honest fallback — ask the user —
+            // is already the failure path.
+            timeoutMs: 10_000,
+            // So a hang is not retried — which the line above argues for and the
+            // default policy was quietly undoing, because `CallTimeout` carries
+            // status 408 and the default reads 408 as transient. Items resolve
+            // concurrently, so the slowest one *is* the meal's latency, and a
+            // second attempt here buys another 10 s of spinner for the whole
+            // plate in exchange for a better answer to a question whose fallback
+            // — ask the user — is already a good outcome. It was costing real
+            // time: one exhausted retry turned a photo of six foods into 25 s.
+            isRetryable: retryableExceptHang,
+          },
         );
 
         const text = response.text;

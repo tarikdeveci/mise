@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
-import { withRetry, CallTimeout, defaultIsRetryable } from './retry.js';
+import { withRetry, CallTimeout, defaultIsRetryable, retryableExceptHang } from './retry.js';
 
 /**
  * The retry layer is where every outbound call in this system passes, so its
@@ -69,5 +69,48 @@ describe('what is worth retrying', () => {
       withRetry(fn, { label: 'test.fatal', attempts: 3, baseDelayMs: 1 }),
     ).rejects.toThrow('bad request');
     expect(fn).toHaveBeenCalledTimes(1);
+  });
+});
+
+/**
+ * The opposite trade, for calls that are an improvement rather than the answer.
+ *
+ * The verifier is the case: it makes a match better, and when it cannot answer
+ * the item goes to the user, which is a good outcome rather than a failure.
+ * Retrying its hang spends a second full ceiling of wall-clock, and because
+ * items resolve concurrently the slowest one is the whole meal's latency. This
+ * was measured, not supposed — one exhausted retry turned a photo of six foods
+ * into 25 s.
+ */
+describe('a hang, for a call whose fallback is already good', () => {
+  it('is not retried, while a real transient fault still is', () => {
+    expect(retryableExceptHang(new CallTimeout('verify', 10_000))).toBe(false);
+    // The distinction is a server that said "not now" against one that said
+    // nothing at all. The first is worth asking twice.
+    expect(retryableExceptHang({ status: 429 })).toBe(true);
+    expect(retryableExceptHang({ status: 503 })).toBe(true);
+    expect(retryableExceptHang({ status: 400 })).toBe(false);
+  });
+
+  it('costs one ceiling rather than two', async () => {
+    const hang = vi.fn((): Promise<never> => new Promise(() => { /* never */ }));
+
+    await expect(withRetry(hang, {
+      label: 'test.verify', attempts: 2, baseDelayMs: 1, timeoutMs: 20,
+      isRetryable: retryableExceptHang,
+    })).rejects.toBeInstanceOf(CallTimeout);
+
+    expect(hang).toHaveBeenCalledTimes(1);
+  });
+
+  it('still gets its second attempt when the fault is transient', async () => {
+    const flaky = vi.fn(async () => { throw Object.assign(new Error('busy'), { status: 429 }); });
+
+    await expect(withRetry(flaky, {
+      label: 'test.verify', attempts: 2, baseDelayMs: 1,
+      isRetryable: retryableExceptHang,
+    })).rejects.toThrow('busy');
+
+    expect(flaky).toHaveBeenCalledTimes(2);
   });
 });

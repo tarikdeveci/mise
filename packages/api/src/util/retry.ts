@@ -55,6 +55,25 @@ export function defaultIsRetryable(err: unknown): boolean {
 }
 
 /**
+ * Retry real faults, but let a hang stand.
+ *
+ * The default policy calls a timeout transient, which is right for a call whose
+ * failure costs the user the whole result — the extractor, say, where "we could
+ * not read your meal" is the alternative. It is the wrong trade for a call that
+ * is an *optional improvement* with a good fallback. There, a second attempt
+ * spends another full ceiling of wall-clock to maybe improve an answer the
+ * system can already give, and the person is left watching a spinner for it.
+ *
+ * Genuine transient faults — 429, 5xx, a reset connection — are still retried.
+ * The distinction is between a server that said "not now" and one that said
+ * nothing at all: the first is worth asking twice, the second has already spent
+ * the budget.
+ */
+export function retryableExceptHang(err: unknown): boolean {
+  return !(err instanceof CallTimeout) && defaultIsRetryable(err);
+}
+
+/**
  * Retry with exponential backoff and full jitter.
  *
  * Jitter is not a detail. Meal logging traffic is extremely peaky — three
