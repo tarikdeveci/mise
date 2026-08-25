@@ -110,6 +110,14 @@ function fuse(lexical: FoodCandidate[], vector: FoodCandidate[]): FoodCandidate[
 const marginOf = (c: FoodCandidate[]): number =>
   Number(((c[0]?.score ?? 0) - (c[1]?.score ?? 0)).toFixed(4));
 
+/**
+ * How far a candidate moves up when its cooking state matches what was stated.
+ *
+ * Expressed as a fraction of the distance to 1 rather than a multiplier, so the
+ * boost can never saturate and flatten the ranking it was meant to sharpen.
+ */
+const PREPARATION_BOOST = 0.4;
+
 /** Specific states that a generic "cooked" is compatible with. */
 const COOKED_STATES = new Set(['cooked', 'boiled', 'fried', 'grilled', 'baked']);
 
@@ -161,7 +169,19 @@ function applyPreparation(
       if (!food || food.state === 'n/a') return c;
 
       if (food.state === preparation) {
-        return { ...c, score: Number(Math.min(1, c.score * 1.4).toFixed(4)) };
+        // Boost into the headroom rather than multiplying and clamping.
+        //
+        // `min(1, score * 1.4)` looked equivalent and was not: it pinned every
+        // candidate above ~0.72 to exactly 1.0, so two rows that agreed on
+        // preparation arrived at the margin check indistinguishable. That is how
+        // "patates kızartması büyük boy" ended up unresolved — french fries and
+        // sweet potato fries are both `fried`, entered the boost at different
+        // scores, and left it tied at 1.0 with a margin of zero.
+        //
+        // This form is strictly monotonic, so agreeing on preparation can move a
+        // candidate up the list but can never erase the evidence that separated
+        // it from the next one.
+        return { ...c, score: Number((c.score + (1 - c.score) * PREPARATION_BOOST).toFixed(4)) };
       }
       // "cooked" is a generic: it should not push a row down just for being
       // more specific about *how* it was cooked.

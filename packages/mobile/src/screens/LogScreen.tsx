@@ -156,15 +156,25 @@ export function LogScreen({ onLogged, onScan }: Props) {
           <Text style={[type.label, { color: color.ok }]}>±8%</Text>
         </Pressable>
 
-        <Text style={[type.title, { color: color.ink, marginTop: space.xl }]}>Or describe it</Text>
+        {/*
+          With a photo attached this box stops being an alternative and becomes
+          the more valuable half of the input. A camera cannot see oil, sauce or
+          sugar, and those are usually where the calories are — so the copy asks
+          for exactly what the photo cannot supply rather than repeating itself.
+        */}
+        <Text style={[type.title, { color: color.ink, marginTop: space.xl }]}>
+          {photo ? 'Now tell mise what the photo can’t show' : 'Or describe it'}
+        </Text>
         <Text style={[type.small, { color: color.inkMuted, marginTop: space.xs }]}>
-          However you say it. Turkish or English, exact grams or a rough guess.
+          {photo
+            ? 'The sauce, the oil, the amount. A camera cannot see any of them, and they usually carry most of the calories.'
+            : 'However you say it. Turkish or English, exact grams or a rough guess.'}
         </Text>
 
         <TextInput
           value={text}
           onChangeText={setText}
-          placeholder="2 dilim ekmek, peynir ve çay"
+          placeholder={photo ? '150 g noodle, 2 kaşık teriyaki sos, susam' : '2 dilim ekmek, peynir ve çay'}
           placeholderTextColor={color.inkFaint}
           multiline
           style={[s.input, type.body]}
@@ -173,7 +183,7 @@ export function LogScreen({ onLogged, onScan }: Props) {
         />
 
         <Text style={[type.label, { color: color.inkFaint, marginTop: space.lg }]}>
-          Or try one of these
+          {photo ? 'Or start from one of these' : 'Or try one of these'}
         </Text>
         <View style={s.examples}>
           {EXAMPLES.map((ex) => (
@@ -226,6 +236,25 @@ export function LogScreen({ onLogged, onScan }: Props) {
                 ? 'Without a size reference the portion is a guess, so the range stays wide.'
                 : 'That gives the estimate a scale to work from.'}
             </Text>
+
+            {/*
+              The text box sits above this block, so after attaching a photo the
+              user is looking away from the single most useful thing they can do.
+              This points back at it, and says why rather than just asking.
+            */}
+            <View style={s.tellUs}>
+              <Text style={[type.smallStrong, { color: color.ink }]}>
+                {text.trim()
+                  ? 'Your description is in — it will be read together with the photo.'
+                  : 'A photo cannot show the sauce or the oil'}
+              </Text>
+              {!text.trim() && (
+                <Text style={[type.small, { color: color.inkMuted, marginTop: 2 }]}>
+                  Those are usually most of the calories. Add them in the box above
+                  and mise will read both together, e.g. “2 kaşık teriyaki sos”.
+                </Text>
+              )}
+            </View>
 
             <Pressable
               onPress={() => { setPhoto(null); setReference('none'); }}
@@ -316,6 +345,12 @@ const s = StyleSheet.create({
     backgroundColor: color.surface,
   },
   photoButtons: { flexDirection: 'row', gap: space.md, marginTop: space.lg },
+  tellUs: {
+    marginTop: space.md,
+    padding: space.md,
+    borderRadius: radius.sm,
+    backgroundColor: color.raised,
+  },
   cancel: { alignSelf: 'center', paddingVertical: space.md, paddingHorizontal: space.lg },
   photoWrap: { marginTop: space.lg, gap: space.md },
   photo: { width: '100%', height: 190, borderRadius: radius.md, backgroundColor: color.surface },

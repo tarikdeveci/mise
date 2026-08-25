@@ -81,13 +81,18 @@ describe('preparation-aware resolution', () => {
  * about not inventing foods reduces to that line, and until now nothing
  * exercised it.
  *
- * `sesame seeds` is the phrase used throughout because it is the real failure
- * that motivated the rung: it beat everything else to tahini uncontested, at a
- * score too low to be self-evident, and became the only item logged for a large
- * bowl of noodles.
+ * `spinach and cheese filling` is the phrase used throughout because it is a
+ * real failure from a meal photograph: it resolved to börek, a pastry, on a
+ * clear margin over nothing in particular.
+ *
+ * The rung's original motivating case — `sesame seeds` resolving to tahini and
+ * becoming the only item logged for a bowl of noodles — is no longer usable
+ * here, because the database now contains sesame seeds and the phrase resolves
+ * on rung 3. That is the better fix: the cheapest way to stop a phrase reaching
+ * a model is to give the database the food it was looking for.
  */
 describe('the verifier rung', () => {
-  const AMBIGUOUS = 'sesame seeds';
+  const AMBIGUOUS = 'spinach and cheese filling';
 
   /** A verifier that always names `foodId`, regardless of what it was shown. */
   const saying = (foodId: string | null) => ({
@@ -175,67 +180,40 @@ describe('phrase cleaning must not change which food is meant', () => {
    * "tatlı" was listed as a unit — shorthand for "tatlı kaşığı", the dessert
    * spoon. So the phrase cleaner stripped it as a measure word, and "tatlı
    * patates" (sweet potato) arrived at the router as "patates". That exact-
-   * matched the potato row at score 1.0 on rung 3, which meant: a confident,
+   * matched the potato row at score 1.0 on rung 3, which meant a confident,
    * deterministic, reproducible wrong food at roughly double the true energy
    * density, on a common Turkish ingredient — and it never reached the verifier
-   * that exists to catch exactly this, because the deterministic rung answered
-   * first.
+   * that exists to catch this, because the deterministic rung answered first.
    *
    * Every defence in this system was in place and none of them fired, because
    * the error happened before any of them ran.
    */
   it('does not strip "tatlı" out of "tatlı patates"', async () => {
     const r = await resolve('tatlı patates');
-    expect(r.foodId).not.toBe('fdc:170440'); // Potato, raw
-    expect(r.foodId).not.toBe('fdc:170698'); // Potato, french fried
+    expect(r.foodId).toBe('fdc:168483');           // sweet potato, baked
+    expect(r.foodId).not.toBe('fdc:170440');       // not plain potato
   });
 
   /**
-   * The full phrase behaves differently to the bare one, and the difference is
-   * worth pinning rather than smoothing over.
+   * The second half of the same story, and the more interesting one.
    *
-   * "tatlı patates kızartması" scores 0.694 against french fries: two of its
-   * three words are that row's alias. That is below `SELF_EVIDENT_SCORE`, so it
-   * correctly does NOT take the deterministic fast path — it reaches the
-   * verifier, which is exactly where a judgement call belongs.
+   * For a long time this phrase resolved to french fries, and the defence was
+   * routing: it scored below `SELF_EVIDENT_SCORE`, so it reached the verifier
+   * and became a question rather than a silent wrong answer. That was correct
+   * but unsatisfying — the system was working hard to be honest about a food it
+   * simply did not have.
    *
-   * These two tests therefore assert the routing, not the answer. Whether the
-   * verifier then rules correctly on this pair is a model-quality question, and
-   * on real photographs it has gone both ways; that is recorded in the README
-   * rather than papered over with a threshold tuned until this one case passes.
+   * The real fix was data. USDA FDC 167606 is sweet potato fries, 182 kcal/100 g
+   * against 90 for the baked flesh and 312 for potato fries. With the row
+   * present the phrase resolves exactly, deterministically, with no model call —
+   * which is the argument this whole design rests on.
    */
-  it('sends sweet potato fries to the verifier instead of matching outright', async () => {
-    const r = await resolve('tatlı patates kızartması');
-    const top = r.candidates[0];
-
-    expect(top?.foodId).toBe('fdc:170698');
-    // The guard that keeps this out of the deterministic tier. If a database
-    // edit ever pushes this above 0.72 it becomes a silent wrong answer again,
-    // and this assertion is what fails first.
-    expect(top!.score).toBeLessThan(0.72);
+  it('resolves sweet potato fries to sweet potato fries', async () => {
+    expect((await resolve('tatlı patates kızartması')).foodId).toBe('fdc:167606');
+    expect((await resolve('sweet potato fries')).foodId).toBe('fdc:167606');
   });
 
-  it('leaves sweet potato fries unresolved when a verifier rejects the match', async () => {
-    const refusing = { id: 'fake', choose: async () => ({ foodId: null, confidence: 0 }) };
-    const r = await resolvePhrase(
-      { ...deps, reranker: refusing },
-      'tatlı patates kızartması',
-      { userId: 'test' },
-    );
-
-    expect(r.foodId).toBeNull();
-  });
-
-  it('falls back to the plausible match when no verifier is configured', async () => {
-    // Deliberate, and stated in the router: without a checker, a match the user
-    // can correct in one tap beats a blank. This test exists so the trade-off
-    // is visible rather than discovered.
-    expect((await resolve('tatlı patates kızartması')).foodId).toBe('fdc:170698');
-  });
-
-  it('admits it does not know sweet potato rather than substituting potato', async () => {
-    // There is no sweet potato row in a 68-food database. Unresolved is the
-    // correct answer, and the one the user can fix in a single tap.
-    expect((await resolve('tatlı patates')).method).toBe('unresolved');
+  it('still separates them from potato fries, which differ by 130 kcal/100 g', async () => {
+    expect((await resolve('patates kızartması')).foodId).toBe('fdc:170698');
   });
 });

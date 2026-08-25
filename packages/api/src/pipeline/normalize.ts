@@ -276,8 +276,34 @@ const STOPWORDS = new Set([
  * Strips quantity, unit and size tokens from a phrase so the resolver matches
  * on the food itself. "2 dilim tam bugday ekmegi" → "tam bugday ekmegi".
  */
+/**
+ * Multi-word measure and size phrases, longest first.
+ *
+ * `foodPhraseOnly` filters token by token, so a two-word key could never match
+ * and both halves stayed in the food phrase — or worse, only one half was
+ * stripped. "büyük boy patates kızartması" reached the matcher as "boy patates
+ * kizartmasi", which was enough to stop it matching the french-fries alias
+ * exactly and left it tied against sweet potato fries. "tatlı kaşığı bal" had
+ * the same shape.
+ *
+ * Computed once from the alias tables rather than hand-listed, so a multi-word
+ * unit added later cannot silently reintroduce this.
+ */
+const MULTIWORD_MEASURES: readonly string[] = [
+  ...Object.keys(UNIT_ALIASES),
+  ...Object.keys(SIZE_ALIASES),
+].filter((k) => k.includes(' ')).sort((a, b) => b.length - a.length);
+
 export function foodPhraseOnly(phrase: string): string {
-  const tokens = normalizeText(phrase).split(' ');
+  // Padded split/join rather than a regex: the word-boundary form of this needs
+  // `\\s` inside a template literal, and written as `\s` it silently compiles to
+  // the letter "s" — a regex that matches nothing and reports no error. Plain
+  // string operations cannot go wrong that way.
+  let padded = ` ${normalizeText(phrase)} `;
+  for (const key of MULTIWORD_MEASURES) {
+    padded = padded.split(` ${key} `).join(' ');
+  }
+  const tokens = padded.trim().split(' ');
   const kept = tokens.filter((tok) => {
     if (!tok) return false;
     if (/^\d+([.,/]\d+)?$/.test(tok)) return false;

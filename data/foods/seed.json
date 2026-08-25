@@ -79,7 +79,7 @@
     "id": "fdc:169737",
     "name": "Pasta, cooked",
     "names": { "tr": "Makarna (haşlanmış)" },
-    "aliases": ["pasta", "spaghetti", "makarna", "penne", "noodles", "cooked pasta"],
+    "aliases": ["pasta", "spaghetti", "makarna", "penne", "cooked pasta"],
     "group": "grain",
     "state": "boiled",
     "per100g": { "kcal": 158, "proteinG": 5.8, "carbG": 30.9, "fatG": 0.9, "fiberG": 1.8 },
@@ -878,5 +878,299 @@
       { "unit": "portion", "grams": 85, "spread": 0.4 }
     ],
     "source": "USDA FDC 169247"
+  },
+  {
+    "id": "fdc:169732",
+    "name": "Noodles, egg, cooked",
+    "names": { "tr": "Erişte (yumurtalı)" },
+    "aliases": ["noodles", "noodle", "egg noodles", "ramen noodles", "ramen", "erişte", "çin eriştesi"],
+    "group": "grain",
+    "state": "cooked",
+    "per100g": { "kcal": 138, "proteinG": 4.5, "carbG": 25.2, "fatG": 2.1, "fiberG": 1.2 },
+    "measures": [
+      { "unit": "cup", "grams": 160, "spread": 0.1 },
+      { "unit": "bowl", "grams": 320, "spread": 0.2 },
+      { "unit": "portion", "grams": 220, "spread": 0.2 }
+    ],
+    "composedOf": [],
+    "source": "USDA FDC 169732"
+  },
+  {
+    "id": "fdc:170005",
+    "name": "Spring onion (scallion), raw",
+    "names": { "tr": "Yeşil soğan" },
+    "aliases": ["spring onion", "scallion", "green onion", "yeşil soğan", "taze soğan"],
+    "group": "vegetable",
+    "state": "raw",
+    "per100g": { "kcal": 32, "proteinG": 1.8, "carbG": 7.3, "fatG": 0.2, "fiberG": 2.6 },
+    "measures": [
+      { "unit": "tbsp", "grams": 6, "spread": 0.2 },
+      { "unit": "cup", "grams": 100, "spread": 0.2 },
+      { "unit": "piece", "grams": 25, "spread": 0.3 }
+    ],
+    "composedOf": [],
+    "source": "USDA FDC 170005"
+  },
+  {
+    "id": "fdc:170150",
+    "name": "Sesame seeds, whole, dried",
+    "names": { "tr": "Susam" },
+    "aliases": ["sesame seeds", "sesame", "susam", "susam tanesi"],
+    "group": "nut",
+    "state": "raw",
+    "per100g": { "kcal": 573, "proteinG": 17.7, "carbG": 23.4, "fatG": 49.7, "fiberG": 11.8 },
+    "measures": [
+      { "unit": "tbsp", "grams": 9, "spread": 0.1 },
+      { "unit": "tsp", "grams": 3, "spread": 0.2 }
+    ],
+    "composedOf": [],
+    "source": "USDA FDC 170150"
+  },
+  {
+    "id": "fdc:171167",
+    "name": "Teriyaki sauce",
+    "names": { "tr": "Teriyaki sos" },
+    "aliases": ["teriyaki", "teriyaki sauce", "teriyaki sos", "teriyaki sosu"],
+    "group": "condiment",
+    "state": "n/a",
+    "per100g": { "kcal": 89, "proteinG": 5.9, "carbG": 15.6, "fatG": 0.0, "fiberG": 0.1 },
+    "measures": [
+      { "unit": "tbsp", "grams": 18, "spread": 0.1 },
+      { "unit": "drizzle", "grams": 18, "spread": 0.4 },
+      { "unit": "portion", "grams": 36, "spread": 0.3 }
+    ],
+    "composedOf": [],
+    "source": "USDA FDC 171167"
+  },
+  {
+    "id": "fdc:174277",
+    "name": "Soy sauce (shoyu)",
+    "names": { "tr": "Soya sosu" },
+    "aliases": ["soy sauce", "shoyu", "soya sosu", "soya"],
+    "group": "condiment",
+    "state": "n/a",
+    "per100g": { "kcal": 53, "proteinG": 8.1, "carbG": 4.9, "fatG": 0.6, "fiberG": 0.8 },
+    "measures": [
+      { "unit": "tbsp", "grams": 16, "spread": 0.1 },
+      { "unit": "tsp", "grams": 5.3, "spread": 0.2 },
+      { "unit": "drizzle", "grams": 16, "spread": 0.4 }
+    ],
+    "composedOf": [],
+    "source": "USDA FDC 174277"
+  },
+  {
+    "id": "fdc:171016",
+    "name": "Sesame oil",
+    "names": { "tr": "Susam yağı" },
+    "aliases": ["sesame oil", "susam yağı", "susam yagi"],
+    "group": "fat",
+    "state": "n/a",
+    "per100g": { "kcal": 884, "proteinG": 0.0, "carbG": 0.0, "fatG": 100.0, "fiberG": 0.0 },
+    "measures": [
+      { "unit": "tbsp", "grams": 13.6, "spread": 0.1 },
+      { "unit": "tsp", "grams": 4.5, "spread": 0.1 },
+      { "unit": "drizzle", "grams": 13.6, "spread": 0.4 }
+    ],
+    "composedOf": [],
+    "source": "USDA FDC 171016"
+  },
+  {
+    "id": "fdc:174182",
+    "name": "Anchovy, European, raw",
+    "names": { "tr": "Hamsi" },
+    "aliases": ["anchovy", "anchovies", "hamsi", "european anchovy"],
+    "group": "protein",
+    "state": "raw",
+    "per100g": { "kcal": 131, "proteinG": 20.4, "carbG": 0.0, "fatG": 4.8, "fiberG": 0.0 },
+    "measures": [
+      { "unit": "piece", "grams": 12, "spread": 0.3 },
+      { "unit": "portion", "grams": 100, "spread": 0.3 }
+    ],
+    "composedOf": [],
+    "source": "USDA FDC 174182"
+  },
+  {
+    "id": "fdc:168483",
+    "name": "Sweet potato, baked in skin",
+    "names": { "tr": "Tatlı patates (fırında)" },
+    "aliases": ["sweet potato", "sweet potatoes", "tatlı patates", "tatli patates"],
+    "group": "vegetable",
+    "state": "baked",
+    "per100g": { "kcal": 90, "proteinG": 2.0, "carbG": 20.7, "fatG": 0.1, "fiberG": 3.3 },
+    "measures": [
+      { "unit": "cup", "grams": 200, "spread": 0.2 },
+      { "unit": "piece", "grams": 114, "spread": 0.3 },
+      { "unit": "portion", "grams": 150, "spread": 0.3 }
+    ],
+    "composedOf": [],
+    "source": "USDA FDC 168483"
+  },
+  {
+    "id": "fdc:169055",
+    "name": "Caesar dressing",
+    "names": { "tr": "Sezar sos" },
+    "aliases": ["caesar dressing", "caesar", "creamy dressing", "salad dressing", "sezar sos", "sezar sosu"],
+    "group": "condiment",
+    "state": "n/a",
+    "per100g": { "kcal": 542, "proteinG": 2.2, "carbG": 3.3, "fatG": 57.9, "fiberG": 0.5 },
+    "measures": [
+      { "unit": "tbsp", "grams": 14.7, "spread": 0.1 },
+      { "unit": "portion", "grams": 30, "spread": 0.3 },
+      { "unit": "drizzle", "grams": 15, "spread": 0.4 }
+    ],
+    "composedOf": [],
+    "source": "USDA FDC 169055"
+  },
+  {
+    "id": "fdc:167746",
+    "name": "Lemon, raw, without peel",
+    "names": { "tr": "Limon" },
+    "aliases": ["lemon", "lemons", "limon", "lemon wedge", "limon dilimi"],
+    "group": "fruit",
+    "state": "raw",
+    "per100g": { "kcal": 29, "proteinG": 1.1, "carbG": 9.3, "fatG": 0.3, "fiberG": 2.8 },
+    "measures": [
+      { "unit": "piece", "grams": 58, "spread": 0.3 },
+      { "unit": "slice", "grams": 7, "spread": 0.3 }
+    ],
+    "composedOf": [],
+    "source": "USDA FDC 167746"
+  },
+  {
+    "id": "fdc:170851",
+    "name": "Cheese, ricotta, whole milk",
+    "names": { "tr": "Ricotta peyniri" },
+    "aliases": ["ricotta", "ricotta cheese", "ricotta peyniri", "lor peyniri"],
+    "group": "dairy",
+    "state": "n/a",
+    "per100g": { "kcal": 150, "proteinG": 7.5, "carbG": 7.3, "fatG": 10.2, "fiberG": 0.0 },
+    "measures": [
+      { "unit": "cup", "grams": 246, "spread": 0.1 },
+      { "unit": "tbsp", "grams": 15, "spread": 0.2 }
+    ],
+    "composedOf": [],
+    "source": "USDA FDC 170851"
+  },
+  {
+    "id": "fdc:171247",
+    "name": "Cheese, parmesan, grated",
+    "names": { "tr": "Parmesan (rendelenmiş)" },
+    "aliases": ["parmesan", "parmigiano", "grated cheese", "rendelenmiş peynir", "parmesan peyniri"],
+    "group": "dairy",
+    "state": "n/a",
+    "per100g": { "kcal": 420, "proteinG": 28.4, "carbG": 13.9, "fatG": 27.8, "fiberG": 0.0 },
+    "measures": [
+      { "unit": "tbsp", "grams": 5, "spread": 0.2 },
+      { "unit": "cup", "grams": 100, "spread": 0.1 }
+    ],
+    "composedOf": [],
+    "source": "USDA FDC 171247"
+  },
+  {
+    "id": "fdc:170845",
+    "name": "Cheese, mozzarella, whole milk",
+    "names": { "tr": "Mozzarella" },
+    "aliases": ["mozzarella", "mozarella", "mozzarella peyniri", "pizza cheese"],
+    "group": "dairy",
+    "state": "n/a",
+    "per100g": { "kcal": 299, "proteinG": 22.2, "carbG": 2.4, "fatG": 22.1, "fiberG": 0.0 },
+    "measures": [
+      { "unit": "slice", "grams": 28, "spread": 0.2 },
+      { "unit": "cup", "grams": 112, "spread": 0.1 }
+    ],
+    "composedOf": [],
+    "source": "USDA FDC 170845"
+  },
+  {
+    "id": "fdc:171192",
+    "name": "Tomato / marinara pasta sauce",
+    "names": { "tr": "Domates sosu (makarna)" },
+    "aliases": ["tomato sauce", "marinara", "pasta sauce", "spaghetti sauce", "domates sosu", "makarna sosu"],
+    "group": "condiment",
+    "state": "n/a",
+    "per100g": { "kcal": 50, "proteinG": 1.4, "carbG": 7.4, "fatG": 1.6, "fiberG": 1.8 },
+    "measures": [
+      { "unit": "cup", "grams": 264, "spread": 0.2 },
+      { "unit": "portion", "grams": 132, "spread": 0.2 }
+    ],
+    "composedOf": [],
+    "source": "USDA FDC 171192"
+  },
+  {
+    "id": "fdc:168462",
+    "name": "Spinach, raw",
+    "names": { "tr": "Ispanak (çiğ)" },
+    "aliases": ["spinach", "ıspanak", "ispanak", "baby spinach"],
+    "group": "vegetable",
+    "state": "raw",
+    "per100g": { "kcal": 23, "proteinG": 2.9, "carbG": 3.6, "fatG": 0.4, "fiberG": 2.2 },
+    "measures": [
+      { "unit": "cup", "grams": 30, "spread": 0.2 },
+      { "unit": "handful", "grams": 30, "spread": 0.4 },
+      { "unit": "bunch", "grams": 340, "spread": 0.3 }
+    ],
+    "composedOf": [],
+    "source": "USDA FDC 168462"
+  },
+  {
+    "id": "fdc:172164",
+    "name": "Steak, rib eye, grilled",
+    "names": { "tr": "Biftek (ızgara)" },
+    "aliases": ["steak", "ribeye", "rib eye", "sirloin", "biftek", "antrikot", "bonfile", "grilled steak"],
+    "group": "protein",
+    "state": "grilled",
+    "per100g": { "kcal": 271, "proteinG": 24.9, "carbG": 0.0, "fatG": 19.0, "fiberG": 0.0 },
+    "measures": [
+      { "unit": "piece", "grams": 251, "spread": 0.3 },
+      { "unit": "portion", "grams": 170, "spread": 0.2 }
+    ],
+    "composedOf": [],
+    "source": "USDA FDC 172164"
+  },
+  {
+    "id": "fdc:169967",
+    "name": "Broccoli, boiled",
+    "names": { "tr": "Brokoli (haşlanmış)" },
+    "aliases": ["broccoli", "brokoli", "steamed broccoli", "broccoli florets"],
+    "group": "vegetable",
+    "state": "boiled",
+    "per100g": { "kcal": 35, "proteinG": 2.4, "carbG": 7.2, "fatG": 0.4, "fiberG": 3.3 },
+    "measures": [
+      { "unit": "cup", "grams": 156, "spread": 0.2 },
+      { "unit": "piece", "grams": 180, "spread": 0.3 },
+      { "unit": "portion", "grams": 90, "spread": 0.2 }
+    ],
+    "composedOf": [],
+    "source": "USDA FDC 169967"
+  },
+  {
+    "id": "fdc:170393",
+    "name": "Carrots, raw",
+    "names": { "tr": "Havuç" },
+    "aliases": ["carrot", "carrots", "havuç", "havuc", "carrot sticks", "roasted carrots"],
+    "group": "vegetable",
+    "state": "raw",
+    "per100g": { "kcal": 41, "proteinG": 0.9, "carbG": 9.6, "fatG": 0.2, "fiberG": 2.8 },
+    "measures": [
+      { "unit": "cup", "grams": 128, "spread": 0.2 },
+      { "unit": "piece", "grams": 61, "spread": 0.3 }
+    ],
+    "composedOf": [],
+    "source": "USDA FDC 170393"
+  },
+  {
+    "id": "fdc:167606",
+    "name": "Sweet potato fries, frozen",
+    "names": { "tr": "Tatlı patates kızartması" },
+    "aliases": ["sweet potato fries", "sweet potato chips", "tatlı patates kızartması", "tatli patates kizartmasi", "tatlı patates kızartma"],
+    "group": "vegetable",
+    "state": "fried",
+    "per100g": { "kcal": 182, "proteinG": 2.2, "carbG": 35.6, "fatG": 8.9, "fiberG": 5.7 },
+    "measures": [
+      { "unit": "portion", "grams": 85, "spread": 0.3 },
+      { "unit": "cup", "grams": 100, "spread": 0.2 }
+    ],
+    "composedOf": [],
+    "source": "USDA FDC 167606"
   }
 ]

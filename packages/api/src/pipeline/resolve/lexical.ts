@@ -67,9 +67,13 @@ export function buildLexicalIndex(db: FoodDb): LexicalIndex {
       text: s.text,
       tokens: new Set(s.tokens),
       grams: trigrams(s.text),
+      // The surface's own IDF mass, for the precision term in `blend`.
+      weight: [...new Set(s.tokens)].reduce((sum, t) => sum + idf(t), 0),
       stemText: stemmed,
       stemTokens: new Set(stemmed.split(' ')),
       stemGrams: trigrams(stemmed),
+      stemWeight: [...new Set(stemmed.split(' ').filter(Boolean))]
+        .reduce((sum, t) => sum + idf(t), 0),
     };
   });
 
@@ -86,13 +90,32 @@ export function buildLexicalIndex(db: FoodDb): LexicalIndex {
       const qStemTrigrams = trigrams(qStem);
       const qStemWeight = qStemTokens.reduce((sum, t) => sum + idf(t), 0) || 1;
 
+      /**
+       * Recall alone is not enough, and a real failure showed why.
+       *
+       * Scoring only "how much of the query does this surface explain" gives a
+       * surface full marks for containing every query token, no matter what
+       * else it contains. So "patates kızartması" scored 0.943 against the
+       * alias "tatlı patates kızartması" — a different food at half the energy
+       * — because the one word that distinguishes them was simply absent from
+       * the arithmetic. The two came within 0.05 of each other and the item
+       * went unresolved.
+       *
+       * `precision` is the missing half: how much of the surface the query
+       * actually accounts for, weighted by IDF, so an unmatched *rare* token
+       * ("tatlı") costs far more than an unmatched common one ("cooked").
+       * Recall still dominates, because a person types less than the canonical
+       * name and should not be punished for it.
+       */
       const blend = (
         tokens: string[], weight: number, tri: Set<string>,
-        sTokens: Set<string>, sGrams: Set<string>,
+        sTokens: Set<string>, sGrams: Set<string>, sWeight: number,
       ): number => {
         let overlap = 0;
         for (const t of tokens) if (sTokens.has(t)) overlap += idf(t);
-        return 0.65 * (overlap / weight) + 0.35 * dice(tri, sGrams);
+        const recall = overlap / weight;
+        const precision = sWeight > 0 ? overlap / sWeight : 0;
+        return 0.5 * recall + 0.2 * precision + 0.3 * dice(tri, sGrams);
       };
 
       // Best score per food — a food with many aliases should not out-rank a
@@ -108,8 +131,9 @@ export function buildLexicalIndex(db: FoodDb): LexicalIndex {
           s.text === q
             ? 1
             : Math.max(
-                blend(qTokens, qWeight, qTrigrams, s.tokens, s.grams),
-                0.95 * blend(qStemTokens, qStemWeight, qStemTrigrams, s.stemTokens, s.stemGrams),
+                blend(qTokens, qWeight, qTrigrams, s.tokens, s.grams, s.weight),
+                0.95 * blend(qStemTokens, qStemWeight, qStemTrigrams,
+                             s.stemTokens, s.stemGrams, s.stemWeight),
               );
 
         const prev = best.get(s.foodId) ?? 0;

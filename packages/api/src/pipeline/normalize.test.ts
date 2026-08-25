@@ -143,6 +143,31 @@ describe('foodPhraseOnly', () => {
     expect(foodPhraseOnly('3 kaşık zeytinyağı')).toBe('zeytinyagi');
   });
 
+  /**
+   * Regression: multi-word measures were only ever half-removed.
+   *
+   * The filter ran token by token, so a two-word key like "büyük boy" or "tatlı
+   * kaşığı" could never match it. One half was stripped as a single-token
+   * entry and the other stayed in the food phrase, which was enough to stop an
+   * exact alias match: "patates kızartması büyük boy" reached the matcher as
+   * "patates kizartmasi boy" and tied against sweet potato fries instead of
+   * matching french fries outright. The eval caught it only once the food
+   * database was wide enough for a near-neighbour to exist.
+   */
+  it('removes multi-word measures, not just their first word', () => {
+    expect(foodPhraseOnly('patates kızartması büyük boy')).toBe('patates kizartmasi');
+    expect(foodPhraseOnly('büyük boy latte')).toBe('latte');
+    expect(foodPhraseOnly('2 tatlı kaşığı bal')).toBe('bal');
+    expect(foodPhraseOnly('1 çay kaşığı şeker')).toBe('seker');
+    expect(foodPhraseOnly('2 yemek kaşığı zeytinyağı')).toBe('zeytinyagi');
+  });
+
+  it('leaves a food name alone when it merely contains a measure word', () => {
+    // "tatlı patates" is sweet potato, not a dessert spoon of potato.
+    expect(foodPhraseOnly('tatlı patates kızartması')).toBe('tatli patates kizartmasi');
+    expect(foodPhraseOnly('tatlı patates')).toBe('tatli patates');
+  });
+
   it('never returns an empty string', () => {
     expect(foodPhraseOnly('2 dilim')).toBe('2 dilim');
     expect(foodPhraseOnly('   ')).toBe('');
