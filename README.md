@@ -8,7 +8,9 @@ Built for the EatBetter Full Stack case study. Node.js / TypeScript backend, Exp
 
 ## The one-paragraph version
 
-Every calorie figure this system displays is `per100g × grams ÷ 100` over a row in a food database. No model ever writes a nutrition number, and no model ever names a food ID: the extractor describes what it sees in words, and a resolver maps those words to a canonical row by a ladder of increasingly expensive strategies, stopping at the first one that answers decisively. 96.5% of resolutions on the test set never touch a model at all. What the model *is* used for is the part that genuinely needs judgement, and even there it chooses from a closed candidate list rather than generating an identifier. The result is a system where hallucinated nutrition is not rare, it is structurally impossible, and where the same photo scanned twice cannot produce two different answers.
+Every calorie figure this system displays is `per100g × grams ÷ 100` over a row in a food database. No model ever writes a nutrition number, and no model ever names a food ID: the extractor describes what it sees in words, and a resolver maps those words to a canonical row by a ladder of increasingly expensive strategies, stopping at the first one that answers decisively. 96.5% of resolutions on the test set never touch a model at all. What the model *is* used for is the part that genuinely needs judgement, and even there it chooses from a closed candidate list rather than generating an identifier. The result is a system where hallucinated nutrition is not rare, it is structurally impossible, and where the same words logged twice cannot produce two different answers.
+
+A photograph is the case that does still vary, and I would rather say so here than bury it: the vision model's *wording* changes between runs, the wording is what gets resolved, and two consecutive runs of one JPEG in this repository read 736 and 865 kcal. What does not vary is the arithmetic, the citation, or the honesty of the range — each of those figures sits inside the interval the other run displayed. [Where this is weak](#where-this-is-weak) has the measurement.
 
 The second commitment is the portion interval. Nutrition5k measured trained dietitians at ~41% average error estimating portions from images, so a single-figure calorie count is precision the evidence does not support. mise carries min/likely/max through the whole pipeline and shows the range in the UI. On the current test set the true total falls inside the displayed range 100% of the time.
 
@@ -84,17 +86,21 @@ GOOGLE_API_KEY=... EXTRACTOR=gemini npm run dev
 
 **Read that 100% as a warning, not a result.** See [Where this is weak](#where-this-is-weak) before believing any of it. The eval tool prints the same warning itself.
 
-`npm test` — 212 unit and integration tests, no key and no network required.
+`npm test` — 215 unit and integration tests, no key and no network required.
 
 `npm run eval:photos` on five real meal photographs, Gemini vision:
 
 | | |
 |---|---|
-| items extracted across 5 photos | 21 |
+| items extracted across 5 photos | 21-22 |
 | **invented** (a food reported that is not in the picture) | **0** |
-| declined (named in the picture, in neither database tier) | 4 |
+| declined (named in the picture, in neither database tier) | 2 |
 | photos auto-logged without asking the user anything | 0 of 5 |
-| latency per photo | 12-37 s across three runs |
+| latency per photo | 3.5-18.5 s |
+
+The item count is a range because two consecutive runs of the same five files
+disagree about what they are looking at. That is the honest headline of this
+table and it is discussed in [Where this is weak](#where-this-is-weak).
 
 Before the USDA corpus tier existed the same five photographs produced 23 items of which **17** were declined — honest, and nearly useless. That is the change worth reading in this table, and it is a data change, not a model one.
 
@@ -443,7 +449,8 @@ As of 25 August 2026, EatBetter's [App Store listing](https://apps.apple.com/us/
 
 | | Category norm | mise | How to verify |
 |---|---|---|---|
-| **Same meal, twice** | Re-scanning the same photo returns different calorie counts — a recurring complaint in shipped apps' reviews | Rungs 1–4 are pure functions and the model tier runs at temperature 0. Identical input returns byte-identical nutrition | Scan one meal three times in each app. A test asserts this for mise |
+| **The same words, twice** | Re-scanning returns different calorie counts — a recurring complaint in shipped apps' reviews | Rungs 1–4 are pure functions and the model tier runs at temperature 0, so identical *extraction* gives byte-identical nutrition | Log the same text three times. A test asserts it |
+| **The same photo, twice** | A single confident figure that quietly changes | It changes here too, and that is a limit rather than a fix — but it changes *inside the range that was shown*. Two consecutive runs of the same JPEG read 736 and 865 kcal, and each figure sits inside the other run's stated interval | Photograph one plate twice in each app. Compare what moved against what each app claimed to know |
 | **Precision** | A single figure to the calorie: "537 kcal" | A range, plus a sentence saying the width is the honest part | Log "bir avuç badem" in both. One will give you a number; the other tells you it could be 340–1000 kcal |
 | **Where the number came from** | Not exposed | Tap any item: matched row, portion assumption, literal arithmetic, source citation | Ask either app why it said 537 |
 | **Being wrong** | Full edit form or a search screen | One question, chosen by how many calories the answer moves, answered by tapping a chip | Log "yogurt" in both and count the taps to fix it |
@@ -492,7 +499,13 @@ The corpus tier is the answer to that, and it works: the same photograph now log
 
 P4 is where that curve is easiest to see, because the same photograph has now produced an error in each direction. Before the corpus tier the verifier declined `"jumbo pasta shells"` → pasta and the pan came out at **66 kcal** — the grated cheese and nothing else. Now it accepts `"spinach and cheese stuffed shells"` → **börek**, a phyllo pastry: the right idea (dough with cheese in it), the wrong dish, and a denser one, so the pan reads 492 kcal. Both answers are defensible one at a time and neither is right, which is the honest summary of where this sits. A verifier tuned by argument rather than by data will keep landing somewhere on that curve at random. Measuring where the line should sit needs the labelled photo set this submission does not have.
 
-Run-to-run variance is part of the same picture: across three runs of these five photographs the extractor phrased one item as `"fried anchovies"`, then `"anchovies"`, and called the carrots `"carrots"` once and `"carrot sticks"` the next time — each of which is the difference between a decline and a match. Resolution is deterministic; what the model chooses to *call* the food is not, and on a five-photo set that noise is larger than most changes I could make to the resolver.
+**Retrieval can miss a row that is sitting right there, and the verifier will not always catch it.** P5 is the case, and it is the sharpest failure in this repository. The plate is steak under chimichurri. The extractor described the sauce as `"herb and chili sauce"` — a fair description — and the resolver matched it to **Hot pepper sauce**, which is Tabasco, at 12 kcal/100g. `recipe:chimichurri` is in the curated tier at **548 kcal/100g**. So the one component the case was written to probe is under-reported by roughly 165 kcal, and it is marked as a match rather than declined: the system is quietly wrong there, which is the failure mode this whole design exists to prevent.
+
+Two words are lexically close and ten times apart in energy per gram. The verifier rung is exactly the thing meant to catch that, and it did not. What would: the sauce rows are new, and none of them carry the aliases that make the curated tier work — "chimichurri" has no `otlu acı sos`, no `herb sauce`, no `green sauce`. Coverage without aliases is a row nobody can reach.
+
+Run-to-run variance is part of the same picture, and it is larger than I would like. Across two consecutive runs of these five photographs, **P5 read 736 kcal and then 865 kcal** — the second run decided a pale smear beside the steak was potato purée and added 150 g of it, and phrased the broccoli differently. Earlier runs called one item `"fried anchovies"`, then `"anchovies"`, and the carrots `"carrots"` once and `"carrot sticks"` the next time; each of those is the difference between a decline and a match. Resolution is deterministic. What the model chooses to *call* the food is not, and on a five-photo set that noise is larger than most changes I could make to the resolver.
+
+The one thing that behaved well under that variance is the interval: 736 sits inside the second run's stated range and 865 sits inside the first's. A single confident figure would have moved 129 kcal with nothing on screen admitting it could.
 
 That is also why widening the corpus from 7,793 rows to 13,339 barely moved this table: these five plates were already covered. The rows FNDDS added are **dishes** — guacamole, sushi, pad thai — and none of these photographs contain one. The gain is real and it is simply not what a five-photo set measures, which is one more reason the weighed set is the thing this submission most needs.
 
@@ -500,7 +513,7 @@ That is also why widening the corpus from 7,793 rows to 13,339 barely moved this
 
 Every outbound call now has a per-attempt timeout (30 s extraction, 10 s verification, 8 s barcode), a hang is classified as retryable, and the client carries its own per-route deadline plus a cancel control. That is a bound, not a speed-up — and the corpus tier spent the headroom it bought: photos now run **14-37 s**, because a plate with three unknown foods makes three more verifier calls. Batching the verifier's shortlists into one request instead of one call per unresolved item is the real remaining win, it would pay for the corpus rung outright, and it is not done.
 
-**A line can be added and corrected, but not removed.** The mirror of the missing-item problem is the invented one: a plate read as five items when there were four. The photo eval says that has not happened yet — 0 invented across 21 items — but "not yet observed on five photographs" is not a guarantee, and the honest position is that the repair for it does not exist. It is a small route (`DELETE /v1/meals/:id/items/:itemId` over the same `rebuild`), and the reason it is not here is that I would want it to record a `phantom_item` gap, which is a taxonomy decision I would rather make against real traffic than invent.
+**A line can be added and corrected, but not removed, and I now have a case that wants it.** The mirror of the missing-item problem is the invented one: a plate read as five items when there were four. The harness scores 0 invented, but that counter is judged against what I labelled, and the second P5 run added `potato puree` at 150 g — about 130 kcal — for a pale smear beside the steak. It is arguable rather than clear-cut, which is exactly why it matters: a human would want to swipe that line away, and there is no way to. It is a small route (`DELETE /v1/meals/:id/items/:itemId` over the same `rebuild`) and it should have been built before the add. What held it back is that I want it to record a `phantom_item` gap, and I would rather settle that taxonomy against real traffic than invent it — but that is a reason to ship the route and defer the gap kind, not to ship neither.
 
 **Deliberately out of scope**, and named rather than hidden: authentication beyond a device header, persistence beyond in-memory stores, offline sync, and daily targets or charts. The brief's focus was accuracy; these would have taken time away from it.
 
