@@ -26,7 +26,7 @@ import type { Reranker } from './router.js';
  * the cheap deterministic rungs have already declined to be confident.
  */
 
-const DEFAULT_MODEL = process.env.RERANK_MODEL ?? process.env.GEMINI_MODEL ?? 'gemini-3.1-pro-preview';
+const DEFAULT_MODEL = process.env.RERANK_MODEL ?? process.env.GEMINI_MODEL ?? 'gemini-2.5-flash';
 
 const Verdict = z.object({
   /** Index into the candidate list, or -1 for "none of these is that food". */

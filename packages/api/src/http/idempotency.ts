@@ -19,6 +19,12 @@ export interface IdempotencyRecord<T> {
   bodyHash: string;
   response: T;
   createdAt: number;
+  /**
+   * Whose response this is. Held only so erasure can reach it: a cached meal
+   * log is the meal, and deleting the meal while leaving a replayable copy
+   * behind would make the erasure a lie.
+   */
+  owner?: string;
 }
 
 export class IdempotencyConflict extends Error {
@@ -31,7 +37,9 @@ export class IdempotencyConflict extends Error {
 export interface IdempotencyStore<T> {
   /** Returns a stored response, or throws if the key was reused with new content. */
   get(key: string, body: unknown): T | undefined;
-  put(key: string, body: unknown, response: T): void;
+  put(key: string, body: unknown, response: T, owner?: string): void;
+  /** Drops every cached response belonging to one user. Returns how many. */
+  forget(owner: string): number;
   size(): number;
 }
 
@@ -69,8 +77,22 @@ export function createIdempotencyStore<T>(ttlMs = 24 * 60 * 60 * 1000): Idempote
       if (rec.bodyHash !== hashBody(body)) throw new IdempotencyConflict(key);
       return rec.response;
     },
-    put(key, body, response) {
-      records.set(key, { bodyHash: hashBody(body), response, createdAt: Date.now() });
+    put(key, body, response, owner) {
+      records.set(key, {
+        bodyHash: hashBody(body),
+        response,
+        createdAt: Date.now(),
+        ...(owner !== undefined ? { owner } : {}),
+      });
+    },
+    forget(owner) {
+      let removed = 0;
+      for (const [key, rec] of records) {
+        if (rec.owner !== owner) continue;
+        records.delete(key);
+        removed++;
+      }
+      return removed;
     },
     size: () => records.size,
   };

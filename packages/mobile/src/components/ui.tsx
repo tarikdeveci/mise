@@ -152,7 +152,12 @@ export function Gauge({ min, likely, max }: RangeProps) {
 
   const span = Math.max(max - min, 0.0001);
   const markerPct = Math.min(100, Math.max(0, ((likely - min) / span) * 100));
-  const flat = max - min < 0.5;
+  // A zero-wide range at zero calories is not an exact measurement, it is a
+  // log with nothing in it. Both collapse to the same arithmetic, so the label
+  // has to tell them apart — "EXACT" over an empty meal claims the one kind of
+  // certainty this app exists not to fake.
+  const empty = max <= 0;
+  const flat = !empty && max - min < 0.5;
 
   useEffect(() => {
     if (reduced) { slide.setValue(1); return; }
@@ -167,7 +172,9 @@ export function Gauge({ min, likely, max }: RangeProps) {
   return (
     <View
       accessibilityRole="progressbar"
-      accessibilityLabel={`${Math.round(likely)} kcal, between ${Math.round(min)} and ${Math.round(max)}`}
+      accessibilityLabel={empty
+        ? 'No foods matched yet, so there is nothing to total'
+        : `${Math.round(likely)} kcal, between ${Math.round(min)} and ${Math.round(max)}`}
     >
       <View style={s.gaugeTrack}>
         {[0, 25, 50, 75, 100].map((pct) => (
@@ -178,7 +185,7 @@ export function Gauge({ min, likely, max }: RangeProps) {
       <View style={s.gaugeLabels}>
         <Text style={[type.label, numeric, { color: color.inkMuted }]}>{Math.round(min)}</Text>
         <Text style={[type.label, { color: color.inkFaint, letterSpacing: 0.8 }]}>
-          {flat ? 'EXACT' : 'RANGE'}
+          {empty ? 'NOT MATCHED' : flat ? 'EXACT' : 'RANGE'}
         </Text>
         <Text style={[type.label, numeric, { color: color.inkMuted }]}>{Math.round(max)}</Text>
       </View>

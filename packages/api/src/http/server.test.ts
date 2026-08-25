@@ -1,10 +1,16 @@
 import { describe, it, expect, beforeAll, afterAll, afterEach, vi } from 'vitest';
+import { mkdtempSync, rmSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import type { FastifyInstance } from 'fastify';
 import { loadFoodDb } from '../data/foodDb.js';
+import { createGapLedger } from '../gaps/ledger.js';
 import { buildServer } from './server.js';
 import type { MealLog } from '../domain/log.js';
 import { createPipeline } from '../pipeline/index.js';
+import { withRuleFallback } from '../pipeline/extract/fallback.js';
 import { createRuleExtractor } from '../pipeline/extract/rules.js';
+import type { Extractor } from '../pipeline/extract/types.js';
 import { createAliasStore, GLOBAL_ALIAS_SEED } from '../pipeline/resolve/aliasStore.js';
 import { buildLexicalIndex } from '../pipeline/resolve/lexical.js';
 
@@ -73,6 +79,49 @@ describe('POST /v1/meals', () => {
   });
 });
 
+describe('GET /v1/foods/search', () => {
+  it('lets a person find the exact row that corrects one mistaken item', async () => {
+    const res = await app.inject({
+      method: 'GET',
+      url: '/v1/foods/search?q=tatl%C4%B1%20patates',
+    });
+
+    expect(res.statusCode).toBe(200);
+    const body = res.json();
+    expect(body.foods[0]).toMatchObject({
+      foodId: 'fdc:168483',
+      localizedName: 'Tatlı patates (fırında)',
+      tier: 'curated',
+    });
+    expect(body.foods[0].source).toContain('USDA');
+    expect(body.foods[0].kcalPer100g).toBeGreaterThan(0);
+  });
+
+  it('requires enough text to return a meaningful correction list', async () => {
+    const res = await app.inject({ method: 'GET', url: '/v1/foods/search?q=a' });
+    expect(res.statusCode).toBe(400);
+    expect(res.json().error.code).toBe('invalid_request');
+  });
+
+  it('surfaces common sauces under Turkish and misspelled names', async () => {
+    const cases: Array<[string, string]> = [
+      ['guacomole', 'fdc:2709307'],
+      ['mayonez', 'fdc:2710204'],
+      ['ketcap', 'fdc:2709733'],
+      ['chımıchurı', 'recipe:chimichurri'],
+    ];
+
+    for (const [query, expectedId] of cases) {
+      const res = await app.inject({
+        method: 'GET',
+        url: `/v1/foods/search?q=${encodeURIComponent(query)}`,
+      });
+      expect(res.statusCode, query).toBe(200);
+      expect(res.json().foods[0]?.foodId, query).toBe(expectedId);
+    }
+  });
+});
+
 describe('photos when the extractor is text-only', () => {
   it('refuses loudly instead of returning a confirmed, empty, zero-calorie log', async () => {
     // The old behaviour was the worst possible answer: status "confirmed",
@@ -87,6 +136,43 @@ describe('photos when the extractor is text-only', () => {
   it('advertises the limitation on /healthz so the app can hide the camera', async () => {
     const body = (await app.inject({ method: 'GET', url: '/healthz' })).json();
     expect(body.visionAvailable).toBe(false);
+  });
+});
+
+describe('photos when the vision provider is temporarily unavailable', () => {
+  it('returns an actionable 503 instead of a generic internal error', async () => {
+    const failingVision: Extractor = {
+      id: 'failing-vision',
+      model: 'test-model',
+      supportsVision: true,
+      promptVersion: 'test',
+      extract: () => Promise.reject(new Error('429 provider quota exhausted')),
+      lastUsage: () => null,
+    };
+    const extractor = withRuleFallback(failingVision);
+    const outageApp = await buildServer({
+      db,
+      aliases,
+      vector,
+      extractorId: extractor.id,
+      supportsVision: true,
+      pipeline: createPipeline({
+        db, lexical: buildLexicalIndex(db), vector, aliases, extractor,
+      }),
+    });
+
+    try {
+      const res = await outageApp.inject({
+        method: 'POST',
+        url: '/v1/meals',
+        payload: { imageBase64: 'iVBORw0KGgo=', imageMediaType: 'image/png' },
+      });
+      expect(res.statusCode).toBe(503);
+      expect(res.json().error.code).toBe('vision_temporarily_unavailable');
+      expect(res.json().error.message).toMatch(/description|later/i);
+    } finally {
+      await outageApp.close();
+    }
   });
 });
 
@@ -164,6 +250,453 @@ describe('corrections', () => {
     expect(res.statusCode).toBe(400);
     expect(res.json().error.code).toBe('unknown_food');
   });
+
+  it('turns an unresolved line into a traceable food without re-logging the meal', async () => {
+    const meal = (await post({ text: 'bir kase kinoa' }, { 'x-user-id': 'u-unresolved' })).json();
+    expect(meal.items).toHaveLength(1);
+    expect(meal.items[0].foodId).toBeNull();
+
+    const correction = await app.inject({
+      method: 'POST',
+      url: `/v1/meals/${meal.id}/corrections`,
+      headers: { 'x-user-id': 'u-unresolved' },
+      payload: { itemId: meal.items[0].id, foodId: 'fdc:168483' },
+    });
+
+    expect(correction.statusCode).toBe(200);
+    const corrected = correction.json().log;
+    expect(corrected.id).toBe(meal.id);
+    expect(corrected.items[0].id).toBe(meal.items[0].id);
+    expect(corrected.items[0].foodId).toBe('fdc:168483');
+    expect(corrected.items[0].nutrition.likely.kcal).toBeGreaterThan(0);
+    expect(corrected.items[0].source).toContain('USDA');
+  });
+});
+
+/**
+ * Correcting the meal you are looking at.
+ *
+ * The alias tests above are about the NEXT meal. These are about this one: the
+ * app used to re-log from the item phrases to see a change, which could not
+ * move a stated amount, threw away photographs, and renumbered every item
+ * mid-question. See `pipeline/correct.ts`.
+ */
+describe('corrections applied in place', () => {
+  const correct = (mealId: string, payload: Record<string, unknown>, userId = 'u-fix') =>
+    app.inject({
+      method: 'POST',
+      url: `/v1/meals/${mealId}/corrections`,
+      headers: { 'x-user-id': userId },
+      payload,
+    });
+
+  it('moves an amount the user stated in words — the case that used to do nothing', async () => {
+    const meal = (await post({ text: '150 g makarna' }, { 'x-user-id': 'u-fix' })).json();
+    const item = meal.items[0];
+    expect(item.portion.method).toBe('stated_mass');
+    expect(item.portion.gramsLikely).toBe(150);
+
+    const res = await correct(meal.id, { itemId: item.id, grams: 220 });
+    expect(res.statusCode).toBe(200);
+
+    const updated = res.json().log;
+    expect(updated.items[0].portion.gramsLikely).toBe(220);
+    expect(updated.items[0].portion.method).toBe('user_set');
+    // 220 g x 158 kcal/100g, and the total moves with it.
+    expect(updated.items[0].nutrition.likely.kcal).toBeCloseTo(347.6, 1);
+    expect(updated.totals.likely.kcal).toBeCloseTo(347.6, 1);
+  });
+
+  it('keeps the meal and its item ids, so the app does not lose its place', async () => {
+    const meal = (await post({ text: '2 dilim beyaz ekmek' }, { 'x-user-id': 'u-fix' })).json();
+    const updated = (await correct(meal.id, { itemId: meal.items[0].id, grams: 90 })).json().log;
+
+    expect(updated.id).toBe(meal.id);
+    expect(updated.items[0].id).toBe(meal.items[0].id);
+    expect(updated.createdAt).toBe(meal.createdAt);
+  });
+
+  it('stores the corrected meal rather than leaving a stale one behind', async () => {
+    const meal = (await post({ text: '2 dilim beyaz ekmek' }, { 'x-user-id': 'u-fix' })).json();
+    await correct(meal.id, { itemId: meal.items[0].id, grams: 90 });
+
+    const reread = (await app.inject({
+      method: 'GET', url: `/v1/meals/${meal.id}`, headers: { 'x-user-id': 'u-fix' },
+    })).json();
+    expect(reread.items[0].portion.gramsLikely).toBe(90);
+  });
+
+  it('re-derives the amount from the words when only the food changed', async () => {
+    // "2 dilim" is 56 g of white bread and 64 g of whole-wheat. Carrying the
+    // old grams across would apply one food's measure table to another.
+    const meal = (await post({ text: '2 dilim ekmek' }, { 'x-user-id': 'u-fix2' })).json();
+    expect(meal.items[0].portion.gramsLikely).toBe(56);
+
+    const updated = (await correct(
+      meal.id, { itemId: meal.items[0].id, foodId: 'fdc:172688' }, 'u-fix2',
+    )).json().log;
+
+    expect(updated.items[0].foodId).toBe('fdc:172688');
+    expect(updated.items[0].portion.gramsLikely).toBe(64);
+  });
+
+  it('settles the item it answered, so the next question becomes reachable', async () => {
+    const meal = (await post({ text: 'biraz peynir' }, { 'x-user-id': 'u-fix3' })).json();
+    const asked = meal.questions.filter((q: { itemId: string }) => q.itemId === meal.items[0].id);
+    expect(asked.length).toBeGreaterThan(0);
+
+    const updated = (await correct(
+      meal.id, { itemId: meal.items[0].id, foodId: 'tr:kasar', grams: 40 }, 'u-fix3',
+    )).json().log;
+
+    expect(updated.questions.some((q: { itemId: string }) => q.itemId === updated.items[0].id))
+      .toBe(false);
+    expect(updated.items[0].confidence.band).toBe('high');
+  });
+
+  it('refuses a body that changes neither the food nor the amount', async () => {
+    const meal = (await post({ text: '1 elma' }, { 'x-user-id': 'u-fix' })).json();
+    const res = await correct(meal.id, { itemId: meal.items[0].id });
+    expect(res.statusCode).toBe(400);
+    expect(res.json().error.code).toBe('invalid_request');
+  });
+
+  it('refuses a slipped digit rather than reporting 7,000 kcal of pasta', async () => {
+    const meal = (await post({ text: '150 g makarna' }, { 'x-user-id': 'u-fix' })).json();
+    const res = await correct(meal.id, { itemId: meal.items[0].id, grams: 20000 });
+    expect(res.statusCode).toBe(400);
+    expect(res.json().error.code).toBe('invalid_request');
+  });
+});
+
+/**
+ * Adding a food the meal was logged without.
+ *
+ * Correction can only reach a line that already exists. A plate read as four
+ * items when there were five has no wrong line on it — it has a missing one —
+ * and the only repair available for that used to be logging the whole meal a
+ * second time, which throws away the photograph, the item ids the app is
+ * mid-question about, and every correction already made to it.
+ */
+describe('POST /v1/meals/:id/items', () => {
+  const add = (mealId: string, payload: Record<string, unknown>, userId = 'u-add') =>
+    app.inject({
+      method: 'POST',
+      url: `/v1/meals/${mealId}/items`,
+      headers: { 'x-user-id': userId },
+      payload,
+    });
+
+  it('appends the food and moves the total, leaving the existing line alone', async () => {
+    const meal = (await post({ text: '2 dilim beyaz ekmek' }, { 'x-user-id': 'u-add' })).json();
+    expect(meal.items).toHaveLength(1);
+
+    const res = await add(meal.id, { foodId: 'fdc:174924', grams: 50, phrase: 'bir dilim daha' });
+    expect(res.statusCode).toBe(201);
+
+    const updated = res.json().log;
+    expect(updated.id).toBe(meal.id);
+    expect(updated.items).toHaveLength(2);
+    expect(res.json().itemId).toBe(updated.items[1].id);
+
+    // The line that was already there keeps its id and its number.
+    expect(updated.items[0].id).toBe(meal.items[0].id);
+    expect(updated.items[0].nutrition.likely.kcal).toBeCloseTo(148.96, 1);
+
+    // 50 g x 266 kcal/100g, the value on USDA FDC 174924.
+    expect(updated.items[1].nutrition.likely.kcal).toBeCloseTo(133, 1);
+    expect(updated.items[1].portion.method).toBe('user_set');
+    expect(updated.items[1].source).toContain('USDA');
+    expect(updated.totals.likely.kcal).toBeCloseTo(281.96, 1);
+  });
+
+  it('estimates the amount when none was given, rather than refusing to add', async () => {
+    const meal = (await post({ text: '1 elma' }, { 'x-user-id': 'u-add' })).json();
+    const updated = (await add(meal.id, { foodId: 'fdc:174924' })).json().log;
+
+    const added = updated.items[1];
+    expect(added.portion.gramsLikely).toBeGreaterThan(0);
+    expect(added.portion.method).not.toBe('user_set');
+    expect(added.nutrition.likely.kcal).toBeGreaterThan(0);
+  });
+
+  it('stores the extended meal rather than leaving a stale one behind', async () => {
+    const meal = (await post({ text: '1 elma' }, { 'x-user-id': 'u-add2' })).json();
+    await add(meal.id, { foodId: 'tr:kasar', grams: 30 }, 'u-add2');
+
+    const reread = (await app.inject({
+      method: 'GET', url: `/v1/meals/${meal.id}`, headers: { 'x-user-id': 'u-add2' },
+    })).json();
+    expect(reread.items).toHaveLength(2);
+    expect(reread.totals.likely.kcal).toBeGreaterThan(0);
+  });
+
+  it('gives an empty log somewhere to go — the case with nothing else to tap', async () => {
+    const meal = (await post({ text: 'bir sey yemedim' }, { 'x-user-id': 'u-add3' })).json();
+    expect(meal.items).toHaveLength(0);
+    expect(meal.totals.likely.kcal).toBe(0);
+
+    const updated = (await add(meal.id, { foodId: 'fdc:174924', grams: 100 }, 'u-add3')).json().log;
+    expect(updated.items).toHaveLength(1);
+    expect(updated.totals.likely.kcal).toBeCloseTo(266, 1);
+    // The "nothing eaten" note stops being true the moment something is added.
+    expect(updated.questions.some((q: { itemId: string }) => q.itemId === 'none')).toBe(false);
+  });
+
+  it('teaches mise the wording, so the same word resolves itself next time', async () => {
+    const meal = (await post({ text: '1 elma' }, { 'x-user-id': 'u-add-alias' })).json();
+    await add(meal.id, { foodId: 'fdc:172388', phrase: 'tavuk' }, 'u-add-alias');
+
+    const next = (await post({ text: 'tavuk' }, { 'x-user-id': 'u-add-alias' })).json();
+    expect(next.items[0].foodId).toBe('fdc:172388');
+    expect(next.items[0].resolution.method).toBe('user_alias');
+  });
+
+  it('refuses a food that is not in either tier', async () => {
+    const meal = (await post({ text: '1 elma' }, { 'x-user-id': 'u-add' })).json();
+    const res = await add(meal.id, { foodId: 'fdc:does-not-exist' });
+    expect(res.statusCode).toBe(400);
+    expect(res.json().error.code).toBe('unknown_food');
+  });
+
+  it('404s on a meal that does not exist', async () => {
+    const res = await add('no-such-meal', { foodId: 'fdc:174924' });
+    expect(res.statusCode).toBe(404);
+    expect(res.json().error.code).toBe('not_found');
+  });
+
+  it('refuses a slipped digit rather than logging 7,000 kcal of bread', async () => {
+    const meal = (await post({ text: '1 elma' }, { 'x-user-id': 'u-add' })).json();
+    const res = await add(meal.id, { foodId: 'fdc:174924', grams: 20000 });
+    expect(res.statusCode).toBe(400);
+    expect(res.json().error.code).toBe('invalid_request');
+  });
+});
+
+/**
+ * The gap ledger, end to end.
+ *
+ * Its own server instance with its own temporary directory: the shared one
+ * above deliberately has no ledger, which is also the assertion that the
+ * pipeline works without one.
+ */
+describe('GET /v1/gaps', () => {
+  let dir: string;
+  let withGaps: FastifyInstance;
+
+  beforeAll(async () => {
+    dir = mkdtempSync(join(tmpdir(), 'mise-gaps-http-'));
+    const gaps = createGapLedger({ dir, enabled: true });
+    const ledgerAliases = createAliasStore(GLOBAL_ALIAS_SEED);
+    withGaps = await buildServer({
+      db, vector, gaps,
+      aliases: ledgerAliases,
+      extractorId: 'rules-v1',
+      supportsVision: false,
+      pipeline: createPipeline({
+        db, lexical: buildLexicalIndex(db), vector, gaps,
+        aliases: ledgerAliases,
+        extractor: createRuleExtractor(),
+      }),
+    });
+  });
+
+  afterAll(async () => {
+    await withGaps.close();
+    rmSync(dir, { recursive: true, force: true });
+  });
+
+  const log = (text: string, userId = 'g1') =>
+    withGaps.inject({
+      method: 'POST', url: '/v1/meals', payload: { text, locale: 'tr-TR' },
+      headers: { 'x-user-id': userId },
+    });
+
+  it('writes down a food it could not name', async () => {
+    await log('bir kase kinoa');
+    const body = (await withGaps.inject({ method: 'GET', url: '/v1/gaps?kind=unknown_food' })).json();
+
+    expect(body.entries.length).toBeGreaterThan(0);
+    expect(body.entries.some((e: { subject: string }) => e.subject.includes('kinoa'))).toBe(true);
+  });
+
+  it('writes down a correction with the answer the user gave', async () => {
+    const meal = (await log('tavuk', 'g2')).json();
+    await withGaps.inject({
+      method: 'POST',
+      url: `/v1/meals/${meal.id}/corrections`,
+      headers: { 'x-user-id': 'g2' },
+      payload: { itemId: meal.items[0].id, foodId: 'fdc:172388' },
+    });
+
+    const body = (await withGaps.inject({ method: 'GET', url: '/v1/gaps?kind=corrected_food' })).json();
+    const entry = body.entries.find((e: { subject: string }) => e.subject === 'tavuk');
+    expect(entry.observed).toBe('fdc:171477');
+    expect(entry.expected).toBe('fdc:172388');
+    expect(entry.candidates.length).toBeGreaterThan(0);
+  });
+
+  it('writes down a food it never extracted, with the row the user picked', async () => {
+    const meal = (await log('1 elma', 'g3')).json();
+    await withGaps.inject({
+      method: 'POST',
+      url: `/v1/meals/${meal.id}/items`,
+      headers: { 'x-user-id': 'g3' },
+      payload: { foodId: 'fdc:172388', phrase: 'yanında tavuk' },
+    });
+
+    const body = (await withGaps.inject({ method: 'GET', url: '/v1/gaps?kind=missed_item' })).json();
+    expect(body.entries).toHaveLength(1);
+    expect(body.entries[0].expected).toBe('fdc:172388');
+    expect(body.entries[0].samples).toContain('yanında tavuk');
+  });
+
+  it('renders a report and an export from the same data', async () => {
+    const text = await withGaps.inject({ method: 'GET', url: '/v1/gaps?format=text' });
+    expect(text.headers['content-type']).toContain('text/plain');
+    expect(text.body).toContain('WHAT WOULD FIX THEM');
+
+    const jsonl = await withGaps.inject({ method: 'GET', url: '/v1/gaps?format=jsonl' });
+    const lines = jsonl.body.trim().split('\n').map((l) => JSON.parse(l) as { kind: string });
+    expect(lines.length).toBeGreaterThan(0);
+    expect(lines.every((l) => typeof l.kind === 'string')).toBe(true);
+  });
+
+  it('rejects a kind that does not exist rather than returning everything', async () => {
+    const res = await withGaps.inject({ method: 'GET', url: '/v1/gaps?kind=whatever' });
+    expect(res.statusCode).toBe(400);
+    expect(res.json().error.code).toBe('unknown_kind');
+  });
+
+  it('404s on a server that is not collecting', async () => {
+    const res = await app.inject({ method: 'GET', url: '/v1/gaps' });
+    expect(res.statusCode).toBe(404);
+    expect(res.json().error.code).toBe('gaps_disabled');
+  });
+});
+
+describe('DELETE /v1/me', () => {
+  let dir: string;
+  let server: FastifyInstance;
+
+  beforeAll(async () => {
+    dir = mkdtempSync(join(tmpdir(), 'mise-erase-'));
+    const gaps = createGapLedger({ dir, enabled: true });
+    const eraseAliases = createAliasStore(GLOBAL_ALIAS_SEED);
+    server = await buildServer({
+      db, vector, gaps,
+      aliases: eraseAliases,
+      extractorId: 'rules-v1',
+      supportsVision: false,
+      pipeline: createPipeline({
+        db, lexical: buildLexicalIndex(db), vector, gaps,
+        aliases: eraseAliases,
+        extractor: createRuleExtractor(),
+      }),
+    });
+  });
+
+  afterAll(async () => {
+    await server.close();
+    rmSync(dir, { recursive: true, force: true });
+  });
+
+  const log = (text: string, userId: string, headers: Record<string, string> = {}) =>
+    server.inject({
+      method: 'POST', url: '/v1/meals', payload: { text, locale: 'tr-TR' },
+      headers: { 'x-user-id': userId, ...headers },
+    });
+
+  const erase = (userId?: string) =>
+    server.inject({
+      method: 'DELETE', url: '/v1/me',
+      ...(userId !== undefined ? { headers: { 'x-user-id': userId } } : {}),
+    });
+
+  const history = async (userId: string) =>
+    (await server.inject({ method: 'GET', url: '/v1/meals', headers: { 'x-user-id': userId } }))
+      .json().meals as MealLog[];
+
+  it('erases the meals, and reports how many', async () => {
+    await log('2 dilim ekmek', 'e-meals');
+    await log('bir bardak süt', 'e-meals');
+    expect(await history('e-meals')).toHaveLength(2);
+
+    const res = await erase('e-meals');
+    expect(res.statusCode).toBe(200);
+    expect(res.json().erased.meals).toBe(2);
+    expect(await history('e-meals')).toHaveLength(0);
+  });
+
+  it('erases the correction, so the phrase resolves as it did before they ever corrected it', async () => {
+    const meal = (await log('tavuk', 'e-alias')).json();
+    await server.inject({
+      method: 'POST',
+      url: `/v1/meals/${meal.id}/corrections`,
+      headers: { 'x-user-id': 'e-alias' },
+      payload: { itemId: meal.items[0].id, foodId: 'fdc:172388' },
+    });
+    expect((await log('tavuk', 'e-alias')).json().items[0].foodId).toBe('fdc:172388');
+
+    expect((await erase('e-alias')).json().erased.corrections).toBeGreaterThan(0);
+    // Back to the curated global default. An alias that outlived the erasure
+    // would keep answering in the voice of someone who asked to be forgotten.
+    expect((await log('tavuk', 'e-alias')).json().items[0].foodId).toBe('fdc:171477');
+  });
+
+  it('erases the cached response, so a replayed key cannot resurrect the meal', async () => {
+    const key = { 'idempotency-key': 'erase-replay-1' };
+    const first = await log('2 dilim ekmek', 'e-idem', key);
+    const replay = await log('2 dilim ekmek', 'e-idem', key);
+    expect(replay.json().id).toBe(first.json().id);
+
+    expect((await erase('e-idem')).json().erased.cachedResponses).toBe(1);
+
+    const after = await log('2 dilim ekmek', 'e-idem', key);
+    expect(after.headers['idempotent-replay']).toBeUndefined();
+    expect(after.json().id).not.toBe(first.json().id);
+  });
+
+  it('deletes a gap row only they hit, and keeps one other people hit too', async () => {
+    await log('bir kase kinoa', 'e-gap');
+    await log('kuskus', 'e-gap');
+    await log('kuskus', 'e-other');
+
+    const before = (await server.inject({ method: 'GET', url: '/v1/gaps?kind=unknown_food' })).json();
+    const subjects = before.entries.map((e: { subject: string }) => e.subject);
+    expect(subjects).toContain('kinoa');
+    expect(subjects).toContain('kuskus');
+
+    const body = (await erase('e-gap')).json();
+    expect(body.erased.gapRows).toBeGreaterThan(0);
+    expect(body.retained.sharedGapRows).toBeGreaterThan(0);
+
+    const after = (await server.inject({ method: 'GET', url: '/v1/gaps?kind=unknown_food' })).json();
+    const left = after.entries as Array<{ subject: string; users: number }>;
+    // Theirs alone is gone; the shared one stays, with one fewer person behind it.
+    expect(left.some((e) => e.subject === 'kinoa')).toBe(false);
+    expect(left.find((e) => e.subject === 'kuskus')?.users).toBe(1);
+  });
+
+  it('erases one account without touching the next', async () => {
+    await log('2 dilim ekmek', 'e-keep');
+    await log('2 dilim ekmek', 'e-go');
+
+    await erase('e-go');
+    expect(await history('e-keep')).toHaveLength(1);
+  });
+
+  it('refuses a request with no user id rather than erasing the anonymous bucket', async () => {
+    const res = await erase();
+    expect(res.statusCode).toBe(400);
+    expect(res.json().error.code).toBe('user_required');
+  });
+
+  it('is idempotent: erasing twice reports nothing left the second time', async () => {
+    await log('2 dilim ekmek', 'e-twice');
+    expect((await erase('e-twice')).json().erased.meals).toBe(1);
+    expect((await erase('e-twice')).json().erased.meals).toBe(0);
+  });
 });
 
 describe('GET /v1/meals/:id/trace', () => {
@@ -187,6 +720,9 @@ describe('GET /healthz', () => {
     const body = (await app.inject({ method: 'GET', url: '/healthz' })).json();
     expect(body.status).toBe('ok');
     expect(body.foods).toBeGreaterThan(50);
+    expect(body.curatedFoods).toBe(body.foods);
+    expect(body.referenceFoods).toBe(0);
+    expect(body.searchableFoods).toBe(body.foods);
   });
 });
 

@@ -13,7 +13,8 @@
     "eval": "tsx --env-file-if-exists=.env src/eval/cli.ts",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "eval:photos": "tsx --env-file-if-exists=.env src/eval/photos.ts",
-    "build:corpus": "tsx src/data/buildCorpus.ts"
+    "build:corpus": "tsx src/data/buildCorpus.ts",
+    "gaps": "tsx src/gaps/cli.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.68.0",

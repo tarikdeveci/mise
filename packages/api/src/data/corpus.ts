@@ -6,7 +6,7 @@ import { logger } from '../obs/logger.js';
 import { normalizeText } from '../pipeline/normalize.js';
 
 /**
- * The second-tier food corpus: USDA SR Legacy, all 7,793 reference foods.
+ * The second-tier food corpus: USDA SR Legacy + FNDDS + Foundation.
  *
  * The curated seed answers the meals this system was designed around, in two
  * languages, with household measures. It is 87 rows and it will always be too
@@ -18,7 +18,7 @@ import { normalizeText } from '../pipeline/normalize.js';
  * name, and no model authors it.
  *
  * What *does* change is how much we trust the match, and that is the point of
- * keeping the two tiers apart. Searching loosely across 7,793 descriptions is
+ * keeping the two tiers apart. Searching loosely across thousands of descriptions is
  * actively dangerous — a substring matcher over this corpus answers "iced tea"
  * with beef sandwich steaks and "grapes" with grapeseed oil, both around ten
  * times the real energy. So a corpus row is never accepted on retrieval score
@@ -37,7 +37,23 @@ interface RawRow {
   f: number;
   fi: number;
   g?: number[];
+  /** Which FDC set the row came from; absent in corpora built before this. */
+  d?: string;
 }
+
+/**
+ * FDC set names, for the citation.
+ *
+ * Worth the extra words on screen: "USDA FDC 2341234" is checkable, but which
+ * set it came from is what tells a reader whether they are looking at a
+ * laboratory analysis of an ingredient or a survey row for a whole dish, and
+ * those carry different kinds of certainty.
+ */
+const SET_LABEL: Record<string, string> = {
+  sr_legacy: 'SR Legacy',
+  survey: 'FNDDS',
+  foundation: 'Foundation',
+};
 
 export interface CorpusSurface {
   foodId: string;
@@ -98,7 +114,9 @@ function toFood(id: string, row: RawRow): CanonicalFood {
     per100g: { kcal: row.k, proteinG: row.p, carbG: row.c, fatG: row.f, fiberG: row.fi },
     measures: measuresFrom(row),
     composedOf: [],
-    source: `USDA FDC ${id}`,
+    source: row.d && SET_LABEL[row.d]
+      ? `USDA FDC ${id} (${SET_LABEL[row.d]})`
+      : `USDA FDC ${id}`,
   };
 }
 

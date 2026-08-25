@@ -8,14 +8,14 @@ import { resolvePhrase } from '../pipeline/resolve/router.js';
 /**
  * The second tier, and the reason it is gated.
  *
- * Widening from 87 curated rows to 7,793 USDA rows is the single biggest
+ * Widening from 87 curated rows to 13k+ USDA rows is the single biggest
  * coverage win available, and also the single easiest way to start returning
  * confident nonsense. Measured on this corpus, plain retrieval answers "iced
  * tea" with beef sandwich steaks and "grapes" with grapeseed oil — both around
  * ten times the real energy, both perfectly plausible-looking in a log.
  *
  * So these tests are less about the corpus finding things and more about what
- * it refuses to do without supervision.
+ * it refuses to auto-accept without supervision.
  */
 
 const db = loadFoodDb();
@@ -60,8 +60,23 @@ describe('the corpus', () => {
   it('materialises a row into a food with its citation intact', () => {
     const food = corpusData.get('fdc:168917');           // Quinoa, cooked
     expect(food?.name).toMatch(/quinoa/i);
-    expect(food?.source).toBe('USDA FDC 168917');
+    // The id is the checkable part; the set name says what kind of evidence it
+    // is, which matters now that one corpus is built from three of them.
+    expect(food?.source).toContain('USDA FDC 168917');
+    expect(food?.source).toContain('SR Legacy');
     expect(food?.per100g.kcal).toBeGreaterThan(0);
+  });
+
+  it('carries dishes, not only ingredients — the reason FNDDS is in here', () => {
+    // "guacamole" is the case that exposed the hole: SR Legacy has four
+    // avocado rows and no guacamole, so a real plate fell through to a
+    // question the user could not answer either.
+    const dishes = corpusData.surfaces.filter((s) => s.text.includes('guacamole'));
+    expect(dishes.length).toBeGreaterThan(0);
+
+    const food = corpusData.get(dishes[0]!.foodId);
+    expect(food?.source).toContain('FNDDS');
+    expect(food?.per100g.kcal).toBeGreaterThan(50);
   });
 
   it('gives every row a measure, so the portion ladder always has a rung', () => {
@@ -90,14 +105,32 @@ describe('the corpus rung', () => {
   /**
    * The property that makes the whole tier safe to ship.
    */
-  it('does nothing at all without a verifier', async () => {
+  it('offers candidates without a verifier but does not turn them into calories', async () => {
     const r = await resolvePhrase({ ...base, corpus }, 'quinoa', { userId: 'test' });
 
-    // Not "fall back to the best corpus score". Retrieval alone over 7,793 rows
-    // is exactly the thing that produces "iced tea" -> beef, so with no model
-    // able to say "none of these", the honest answer is that we do not know it.
+    // Not "fall back to the best corpus score". Retrieval alone over thousands
+    // of rows is exactly the thing that produces "iced tea" -> beef. The user
+    // may choose from the shortlist, but no row is accepted before that tap.
     expect(r.foodId).toBeNull();
     expect(r.method).toBe('unresolved');
+    expect(r.candidates[0]?.name).toMatch(/quinoa/i);
+    expect(r.candidates[0]?.score).toBeGreaterThan(0.72);
+  });
+
+  it('bridges common Turkish spellings into the English USDA shortlist', async () => {
+    const cases = [
+      ['kinoa', /quinoa/i],
+      ['kuskus', /couscous/i],
+      ['suşi', /sushi/i],
+      ['pad tay', /pad thai/i],
+      ['lazanya', /lasagna/i],
+    ] as const;
+
+    for (const [phrase, expected] of cases) {
+      const r = await resolvePhrase({ ...base, corpus }, phrase, { userId: 'test' });
+      expect(r.foodId).toBeNull();
+      expect(r.candidates[0]?.name).toMatch(expected);
+    }
   });
 
   it('leaves the item unknown when the verifier rejects the corpus shortlist', async () => {
@@ -105,6 +138,7 @@ describe('the corpus rung', () => {
       { ...base, corpus, reranker: refusing }, 'quinoa', { userId: 'test' },
     );
     expect(r.foodId).toBeNull();
+    expect(r.candidates[0]?.name).toMatch(/quinoa/i);
   });
 
   it('drops a verifier answer that was not on the corpus shortlist', async () => {
@@ -113,6 +147,20 @@ describe('the corpus rung', () => {
       { ...base, corpus, reranker: smuggling }, 'quinoa', { userId: 'test' },
     );
     expect(r.foodId).toBeNull();
+    expect(r.candidates.some((candidate) => candidate.foodId === 'fdc:999999')).toBe(false);
+    expect(r.candidates[0]?.name).toMatch(/quinoa/i);
+  });
+
+  it('keeps the shortlist available when the verifier is down', async () => {
+    const unavailable = {
+      id: 'fake',
+      choose: async () => { throw new Error('provider unavailable'); },
+    };
+    const r = await resolvePhrase(
+      { ...base, corpus, reranker: unavailable }, 'quinoa', { userId: 'test' },
+    );
+    expect(r.foodId).toBeNull();
+    expect(r.candidates[0]?.name).toMatch(/quinoa/i);
   });
 
   it('never reaches the corpus for a food the curated set knows', async () => {
@@ -126,7 +174,7 @@ describe('the corpus rung', () => {
     );
 
     // The curated tier answered on rung 2. Paying for a model *and* searching
-    // 7,793 rows to confirm that would be the opposite of the design.
+    // 13k+ rows to confirm that would be the opposite of the design.
     expect(r.method).toBe('global_alias');
     expect(asked).toBe(0);
   });

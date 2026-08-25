@@ -1,6 +1,6 @@
 import { ExtractionResult } from '../../domain/log.js';
 
-export const PROMPT_VERSION = 'extract-2026-08-25.a';
+export const PROMPT_VERSION = 'extract-2026-08-25.b';
 
 /**
  * The extraction prompt, shared verbatim by every provider.
@@ -36,10 +36,19 @@ HARD RULES
 4. Split distinct foods into separate items, including cooking fat, sauces, and
    drinks when they are stated or visible. "2 eggs fried in butter" is two
    items: the eggs, and the butter.
-5. Do not double-count. A sandwich described once is one set of items.
-6. Keep quantities exactly as given. Do not convert units, do not round, and do
+5. A dish named with an ingredient modifier is ONE item. Turkish makes these
+   with -lı/-li/-lu/-lü and -sız/-siz/-suz/-süz; English stacks nouns. Keep the
+   whole phrase together:
+     "yumurtalı noodle"  -> one item, phrase "yumurtalı noodle". The egg is in
+                            the dough. It is NOT an egg plus plain noodles.
+     "peynirli börek"    -> one item. "sütlü kahve" -> one item.
+     "egg noodles", "chicken soup", "cheese toast" -> one item each.
+   Split only when the words say the parts were eaten alongside each other:
+   "noodle ve yumurta", "noodles with a fried egg on top".
+6. Do not double-count. A sandwich described once is one set of items.
+7. Keep quantities exactly as given. Do not convert units, do not round, and do
    not invent a quantity that was not stated. Leave quantity empty instead.
-7. Preparation matters more than it looks: boiled and fried versions of the same
+8. Preparation matters more than it looks: boiled and fried versions of the same
    food differ by up to 3x in energy. Report it when you can see or read it,
    and use "unknown" when you cannot.
 

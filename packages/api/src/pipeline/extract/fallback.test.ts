@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import type { ExtractionResult, MealInput } from '../../domain/log.js';
-import { withRuleFallback } from './fallback.js';
+import { VisionExtractionUnavailable, withRuleFallback } from './fallback.js';
 import { ExtractorError, type Extractor } from './types.js';
 
 function brokenExtractor(err: unknown): Extractor {
@@ -52,7 +52,7 @@ describe('rule fallback', () => {
     const err = new ExtractorError('provider down', 'broken', true);
     await expect(
       withRuleFallback(brokenExtractor(err)).extract({ imageBase64: 'abc', locale: 'tr-TR' }),
-    ).rejects.toThrow('provider down');
+    ).rejects.toBeInstanceOf(VisionExtractionUnavailable);
   });
 
   it('does not wrap the id in a way that hides which model was configured', () => {

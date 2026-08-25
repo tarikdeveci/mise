@@ -82,7 +82,7 @@ export const ResolutionMethod = z.enum([
   'lexical',      // trigram/token match, decisive margin
   'vector',       // embedding nearest-neighbour, decisive margin
   'llm_rerank',   // ambiguous: model chose from a closed candidate list
-  'corpus',       // not in the curated set; a verified row from USDA's full 7,793
+  'corpus',       // not in the curated set; a verified row from USDA's full reference corpus
   'composite',    // decomposed into ingredient template
   'unresolved',   // nothing crossed the bar — ask the user
 ]);
@@ -122,6 +122,10 @@ export type Resolution = z.infer<typeof Resolution>;
  * which they are looking at.
  */
 export const PortionMethod = z.enum([
+  // Not a rung: an override the user typed into the log after seeing our
+  // estimate. It outranks every rung because it is the only figure in the list
+  // that the person who ate the food asserted about this specific meal.
+  'user_set',
   'stated_mass',        // the user measured it
   'stated_volume',      // stated volume through the food's density
   'barcode_label',      // the package says

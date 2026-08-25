@@ -49,7 +49,7 @@ export interface LexicalIndex {
  * The minimum a collection must expose to be searchable.
  *
  * Structural rather than `FoodDb` so the same scorer can index the curated seed
- * and the 7,793-row USDA corpus. One retriever, two tiers — a second
+ * and the 13k-row USDA corpus. One retriever, two tiers — a second
  * implementation would be a second set of scoring bugs.
  */
 export interface Indexable {

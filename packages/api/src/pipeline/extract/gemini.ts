@@ -10,21 +10,54 @@ import { ExtractorError, type Extractor } from './types.js';
 /**
  * Gemini extractor.
  *
- * This is the default vision path. The reason is measured, not brand loyalty:
- * across published 2026 multimodal benchmarks Gemini holds the widest lead of
- * any current model family on vision and video understanding, at roughly half
- * the token price of the Opus/GPT tier — and vision is the bottleneck stage
- * here. `npm run eval -- --compare` is what should actually settle it, and it
- * will settle it differently as models ship.
+ * This is the default vision path. The production default favors the stable,
+ * high-throughput Flash model so a preview-model daily cap cannot take photo
+ * logging offline. Higher-cost Pro models remain available through
+ * `GEMINI_MODEL`, and `npm run eval -- --compare` is what should actually
+ * settle the quality trade-off as models ship.
  *
  * Model id is configurable because it changes faster than this code does.
  */
-const DEFAULT_MODEL = process.env.GEMINI_MODEL ?? 'gemini-3.1-pro-preview';
+const DEFAULT_MODEL = process.env.GEMINI_MODEL ?? 'gemini-2.5-flash';
+
+// Gemini 2.5 Flash rejects the provider-neutral schema as having too many
+// serving states. This compact equivalent keeps the important types and enum
+// at generation time; parseExtraction still enforces the full contract locally.
+const FLASH_JSON_SCHEMA = {
+  type: 'object',
+  properties: {
+    items: {
+      type: 'array',
+      items: {
+        type: 'object',
+        properties: {
+          phrase: { type: 'string' },
+          quantity: { type: 'number' },
+          unit: { type: 'string' },
+          preparation: {
+            type: 'string',
+            enum: ['raw', 'cooked', 'fried', 'grilled', 'boiled', 'baked', 'unknown'],
+          },
+          brand: { type: 'string' },
+          confidence: { type: 'number' },
+        },
+        required: ['phrase', 'preparation', 'confidence'],
+      },
+    },
+    notFood: { type: 'boolean' },
+    note: { type: 'string' },
+  },
+  required: ['items', 'notFood'],
+} as const;
+
+const RESPONSE_SCHEMA = DEFAULT_MODEL === 'gemini-2.5-flash'
+  ? FLASH_JSON_SCHEMA
+  : EXTRACTION_JSON_SCHEMA;
 
 /** USD per million tokens. Override when the published rate changes. */
 const PRICING = {
-  inputPerMTok: Number(process.env.GEMINI_INPUT_PRICE ?? 2),
-  outputPerMTok: Number(process.env.GEMINI_OUTPUT_PRICE ?? 12),
+  inputPerMTok: Number(process.env.GEMINI_INPUT_PRICE ?? 0.3),
+  outputPerMTok: Number(process.env.GEMINI_OUTPUT_PRICE ?? 2.5),
 };
 
 export function createGeminiExtractor(): Extractor {
@@ -63,7 +96,7 @@ export function createGeminiExtractor(): Extractor {
             config: {
               systemInstruction: EXTRACTION_SYSTEM_PROMPT,
               responseMimeType: 'application/json',
-              responseJsonSchema: EXTRACTION_JSON_SCHEMA,
+              responseJsonSchema: RESPONSE_SCHEMA,
               // Deterministic decoding. Re-scanning the same meal must not
               // produce a different answer — a documented failure of shipped
               // competitors, and one we can simply decline to have.

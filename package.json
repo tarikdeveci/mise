@@ -17,6 +17,7 @@
     "eval": "npm run eval --workspace=@mise/api",
     "mobile": "npm run start --workspace=@mise/mobile",
     "eval:photos": "npm run eval:photos --workspace=@mise/api",
-    "build:corpus": "npm run build:corpus --workspace=@mise/api"
+    "build:corpus": "npm run build:corpus --workspace=@mise/api",
+    "gaps": "npm run gaps --workspace=@mise/api"
   }
 }

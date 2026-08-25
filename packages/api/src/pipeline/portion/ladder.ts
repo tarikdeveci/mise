@@ -16,6 +16,14 @@ import type { PortionContext, PortionStrategy } from './types.js';
 const SPREAD = {
   /** The user weighed it. Only scale rounding is left. */
   statedMass: 0.02,
+  /**
+   * The user typed a mass into the log after seeing our estimate. Wider than a
+   * weighing and narrower than a remembered usual: they asserted this number
+   * about this plate, but a figure someone dialled in is not a figure someone
+   * put on a scale, and printing it as if it were would be the exact kind of
+   * borrowed precision this product exists to refuse.
+   */
+  userSet: 0.05,
   /** Stated volume through the food's own density. */
   statedVolume: 0.05,
   /** A label serving. Exact, but people eat partial packages. */
@@ -372,8 +380,27 @@ export function runLadder(ctx: PortionContext): PortionEstimate {
   throw new Error(`portion ladder exhausted for ${ctx.food.id}`);
 }
 
+/**
+ * The amount the user set by hand, after seeing what we estimated.
+ *
+ * Deliberately not a rung. The ladder answers "what can we work out from what
+ * we were given"; this answers "the person corrected us", which no ordering of
+ * evidence can produce and which nothing else is allowed to overrule.
+ */
+export function userSetPortion(grams: number, fromVision = false): PortionEstimate {
+  return interval(
+    grams,
+    SPREAD.userSet,
+    'explicit_mass',
+    'user_set',
+    `${Math.round(grams)} g, set by you`,
+    fromVision,
+  );
+}
+
 /** Human wording for each rung, shown in the app next to the number. */
 export const METHOD_LABEL: Record<PortionMethod, string> = {
+  user_set: 'You set it',
   stated_mass: 'You weighed it',
   stated_volume: 'You measured it',
   barcode_label: 'From the label',
@@ -385,6 +412,7 @@ export const METHOD_LABEL: Record<PortionMethod, string> = {
 
 /** Rough calorie error to expect from each rung. Shown so the number is judgeable. */
 export const METHOD_ERROR: Record<PortionMethod, string> = {
+  user_set: '±5%',
   stated_mass: '±2%',
   stated_volume: '±5%',
   barcode_label: '±8%',

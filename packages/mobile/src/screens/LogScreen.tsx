@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   Image, KeyboardAvoidingView, Platform, Pressable, ScrollView,
   StyleSheet, Text, TextInput, View,
@@ -7,14 +7,6 @@ import * as ImagePicker from 'expo-image-picker';
 import { api, ApiError, TimeoutError, type MealLog, type ReferenceObject } from '../api';
 import { Button } from '../components/ui';
 import { color, radius, space, type } from '../theme';
-
-/** Real phrasings, deliberately messy: they teach the input by example. */
-const EXAMPLES = [
-  '2 dilim ekmek, peynir ve çay',
-  'menemen ve bir bardak ayran',
-  '180g grilled chicken with rice',
-  'bir avuç badem',
-];
 
 const REFERENCES: ReadonlyArray<readonly [ReferenceObject, string]> = [
   ['none', 'Nothing'],
@@ -34,21 +26,53 @@ export function LogScreen({ onLogged, onScan }: Props) {
   const [reference, setReference] = useState<ReferenceObject>('none');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  // `null` while unknown: the camera is neither offered nor denied until the
-  // server has said whether it can actually read a photo.
+  // Picking a photo is a local device action, so it must not be gated by a
+  // network health check. Server capability is advisory: it can explain why a
+  // later submission may fail, but it never makes native controls inert.
   const [vision, setVision] = useState<boolean | null>(null);
   // Held for the life of one submission so the user can call it off. A photo
   // legitimately takes tens of seconds; a wait nobody can escape is a different
   // problem to a wait that is long.
   const inFlight = useRef<AbortController | null>(null);
 
+  const acceptPickedPhoto = useCallback((result: ImagePicker.ImagePickerResult) => {
+    if (result.canceled) return;
+    const asset = result.assets[0];
+    if (!asset?.base64) {
+      setError('That photo could not be read. Try another, or type what you ate.');
+      return;
+    }
+    setPhoto({ uri: asset.uri, base64: asset.base64, mime: asset.mimeType ?? 'image/jpeg' });
+  }, []);
+
   useEffect(() => {
     let alive = true;
     void api.health()
       .then((h) => { if (alive) setVision(h.visionAvailable); })
-      .catch(() => { if (alive) setVision(null); });
+      .catch(() => {
+        // Connectivity is reported when the user submits. It should not make
+        // a native camera or photo-library control inert before then.
+      });
     return () => { alive = false; };
   }, []);
+
+  useEffect(() => {
+    if (Platform.OS !== 'android') return undefined;
+    let alive = true;
+    // Android may destroy MainActivity while its system camera or photo picker
+    // is in front. Expo persists that result for the next activity instance;
+    // recover it so returning from the native UI still attaches the photo.
+    void ImagePicker.getPendingResultAsync()
+      .then((pending) => {
+        if (!alive || pending === null) return;
+        if ('canceled' in pending) acceptPickedPhoto(pending);
+        else setError(pending.message || 'Android could not return that photo. Please try again.');
+      })
+      .catch(() => {
+        if (alive) setError('Android could not return that photo. Please try again.');
+      });
+    return () => { alive = false; };
+  }, [acceptPickedPhoto]);
 
   const canSubmit = (text.trim().length > 0 || photo !== null) && !busy;
 
@@ -68,15 +92,11 @@ export function LogScreen({ onLogged, onScan }: Props) {
         ? await ImagePicker.launchCameraAsync({ base64: true, quality: 0.6 })
         : await ImagePicker.launchImageLibraryAsync({ base64: true, quality: 0.6 });
 
-      if (result.canceled) return;
-      const asset = result.assets[0];
-      if (!asset?.base64) {
-        setError('That photo could not be read. Try another, or type what you ate.');
-        return;
-      }
-      setPhoto({ uri: asset.uri, base64: asset.base64, mime: asset.mimeType ?? 'image/jpeg' });
+      acceptPickedPhoto(result);
     } catch {
-      setError('Could not open the camera. You can type what you ate instead.');
+      setError(source === 'camera'
+        ? 'Could not open the camera. Check camera access in Settings, or type what you ate instead.'
+        : 'Could not open the photo library. Check photo access in Settings, or type what you ate instead.');
     }
   };
 
@@ -156,53 +176,24 @@ export function LogScreen({ onLogged, onScan }: Props) {
           <Text style={[type.label, { color: color.ok }]}>±8%</Text>
         </Pressable>
 
-        {/*
-          With a photo attached this box stops being an alternative and becomes
-          the more valuable half of the input. A camera cannot see oil, sauce or
-          sugar, and those are usually where the calories are — so the copy asks
-          for exactly what the photo cannot supply rather than repeating itself.
-        */}
-        <Text style={[type.title, { color: color.ink, marginTop: space.xl }]}>
-          {photo ? 'Now tell mise what the photo can’t show' : 'Or describe it'}
-        </Text>
-        <Text style={[type.small, { color: color.inkMuted, marginTop: space.xs }]}>
-          {photo
-            ? 'The sauce, the oil, the amount. A camera cannot see any of them, and they usually carry most of the calories.'
-            : 'However you say it. Turkish or English, exact grams or a rough guess.'}
-        </Text>
-
-        <TextInput
-          value={text}
-          onChangeText={setText}
-          placeholder={photo ? '150 g noodle, 2 kaşık teriyaki sos, susam' : '2 dilim ekmek, peynir ve çay'}
-          placeholderTextColor={color.inkFaint}
-          multiline
-          style={[s.input, type.body]}
-          accessibilityLabel="Meal description"
-          editable={!busy}
-        />
-
-        <Text style={[type.label, { color: color.inkFaint, marginTop: space.lg }]}>
-          {photo ? 'Or start from one of these' : 'Or try one of these'}
-        </Text>
-        <View style={s.examples}>
-          {EXAMPLES.map((ex) => (
-            <Pressable
-              key={ex}
-              onPress={() => { setText(ex); }}
-              disabled={busy}
-              accessibilityRole="button"
-              accessibilityLabel={`Use example: ${ex}`}
-              style={({ pressed }) => [s.example, pressed && { backgroundColor: color.raised }]}
-            >
-              <Text style={[type.small, { color: color.inkMuted }]}>{ex}</Text>
-            </Pressable>
-          ))}
-        </View>
-
         {photo ? (
           <View style={s.photoWrap}>
             <Image source={{ uri: photo.uri }} style={s.photo} accessibilityLabel="Selected meal photo" />
+
+            <Text style={[type.title, { color: color.ink }]}>Add what the photo can’t show</Text>
+            <Text style={[type.small, { color: color.inkMuted }]}>
+              Sauce, oil and amount make the estimate useful. This description is read together with the photo.
+            </Text>
+            <TextInput
+              value={text}
+              onChangeText={setText}
+              placeholder="150 g noodle, 2 kaşık teriyaki sos, susam"
+              placeholderTextColor={color.inkFaint}
+              multiline
+              style={[s.input, s.photoInput, type.body]}
+              accessibilityLabel="Meal description for selected photo"
+              editable={!busy}
+            />
 
             {/*
               Asked here rather than before the shot, because the answer costs
@@ -237,25 +228,6 @@ export function LogScreen({ onLogged, onScan }: Props) {
                 : 'That gives the estimate a scale to work from.'}
             </Text>
 
-            {/*
-              The text box sits above this block, so after attaching a photo the
-              user is looking away from the single most useful thing they can do.
-              This points back at it, and says why rather than just asking.
-            */}
-            <View style={s.tellUs}>
-              <Text style={[type.smallStrong, { color: color.ink }]}>
-                {text.trim()
-                  ? 'Your description is in — it will be read together with the photo.'
-                  : 'A photo cannot show the sauce or the oil'}
-              </Text>
-              {!text.trim() && (
-                <Text style={[type.small, { color: color.inkMuted, marginTop: 2 }]}>
-                  Those are usually most of the calories. Add them in the box above
-                  and mise will read both together, e.g. “2 kaşık teriyaki sos”.
-                </Text>
-              )}
-            </View>
-
             <Pressable
               onPress={() => { setPhoto(null); setReference('none'); }}
               accessibilityRole="button"
@@ -265,21 +237,39 @@ export function LogScreen({ onLogged, onScan }: Props) {
               <Text style={[type.smallStrong, { color: color.inkMuted }]}>Remove photo</Text>
             </Pressable>
           </View>
-        ) : vision === false ? (
-          <View style={s.notice}>
-            <Text style={[type.smallStrong, { color: color.ink }]}>Photos are off right now</Text>
-            <Text style={[type.small, { color: color.inkMuted, marginTop: 2 }]}>
-              This server is running the text-only extractor. Start the API with a
-              vision provider key to log from a photo.
-            </Text>
-          </View>
         ) : (
-          <View style={s.photoButtons}>
-            <Button label="Take a photo" variant="secondary" style={s.flex}
-              disabled={busy || vision === null} onPress={() => { void pickPhoto('camera'); }} />
-            <Button label="Choose photo" variant="secondary" style={s.flex}
-              disabled={busy || vision === null} onPress={() => { void pickPhoto('library'); }} />
-          </View>
+          <>
+            {vision === false && (
+              <View style={s.notice}>
+                <Text style={[type.smallStrong, { color: color.ink }]}>Photo analysis needs the vision server</Text>
+                <Text style={[type.small, { color: color.inkMuted, marginTop: 2 }]}>
+                  You can attach a photo now, but start the API with a vision provider
+                  before logging it.
+                </Text>
+              </View>
+            )}
+            <View style={s.photoButtons}>
+              <Button label="Take a photo" variant="secondary" style={s.flex}
+                disabled={busy} onPress={() => { void pickPhoto('camera'); }} />
+              <Button label="Choose photo" variant="secondary" style={s.flex}
+                disabled={busy} onPress={() => { void pickPhoto('library'); }} />
+            </View>
+
+            <Text style={[type.title, { color: color.ink, marginTop: space.xl }]}>Or describe it</Text>
+            <Text style={[type.small, { color: color.inkMuted, marginTop: space.xs }]}>
+              However you say it. Turkish or English, exact grams or a rough guess.
+            </Text>
+            <TextInput
+              value={text}
+              onChangeText={setText}
+              placeholder="2 dilim ekmek, peynir ve çay"
+              placeholderTextColor={color.inkFaint}
+              multiline
+              style={[s.input, type.body]}
+              accessibilityLabel="Meal description"
+              editable={!busy}
+            />
+          </>
         )}
 
         {error && (
@@ -337,23 +327,11 @@ const s = StyleSheet.create({
     color: color.ink,
     textAlignVertical: 'top',
   },
-  examples: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm, marginTop: space.sm },
-  example: {
-    paddingVertical: space.sm,
-    paddingHorizontal: space.md,
-    borderRadius: radius.pill,
-    backgroundColor: color.surface,
-  },
   photoButtons: { flexDirection: 'row', gap: space.md, marginTop: space.lg },
-  tellUs: {
-    marginTop: space.md,
-    padding: space.md,
-    borderRadius: radius.sm,
-    backgroundColor: color.raised,
-  },
   cancel: { alignSelf: 'center', paddingVertical: space.md, paddingHorizontal: space.lg },
   photoWrap: { marginTop: space.lg, gap: space.md },
   photo: { width: '100%', height: 190, borderRadius: radius.md, backgroundColor: color.surface },
+  photoInput: { marginTop: 0, minHeight: 104 },
   refRow: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm },
   ref: {
     minHeight: 40,

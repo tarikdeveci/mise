@@ -5,6 +5,18 @@ import { createRuleExtractor } from './rules.js';
 import type { Extractor } from './types.js';
 
 /**
+ * The configured model could not read a photo and there is no text that the
+ * deterministic tier can use instead. This is an upstream capability outage,
+ * not an unknown server bug, so the HTTP layer can give the user a useful exit.
+ */
+export class VisionExtractionUnavailable extends Error {
+  constructor(options?: { cause?: unknown }) {
+    super('Photo analysis is temporarily unavailable.', options);
+    this.name = 'VisionExtractionUnavailable';
+  }
+}
+
+/**
  * Wraps a model-backed extractor with the deterministic rule tier.
  *
  * When a provider is down, rate-limited, or returns something the schema
@@ -42,7 +54,7 @@ export function withRuleFallback(primary: Extractor): Extractor {
           // Nothing to degrade to. Surfacing the real error beats inventing an
           // empty meal that the user would have to notice was wrong.
           logger.error({ err, extractor: primary.id }, 'extractor failed and no text to fall back on');
-          throw err;
+          throw new VisionExtractionUnavailable({ cause: err });
         }
 
         logger.warn(

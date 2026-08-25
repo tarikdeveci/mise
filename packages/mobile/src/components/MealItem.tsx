@@ -2,12 +2,14 @@ import { useState } from 'react';
 import { LayoutAnimation, Pressable, StyleSheet, Text, View } from 'react-native';
 import type { LoggedItem } from '../api';
 import { color, numeric, radius, space, type } from '../theme';
+import { FoodCorrectionEditor } from './FoodCorrectionEditor';
+import { PortionEditor } from './PortionEditor';
 import { BandChip, ChoiceChip, MethodChip, MiniRange, useReducedMotion } from './ui';
 
 /** Human wording for how the food was identified. Shown, not buried in a log. */
 const RESOLUTION_COPY: Record<string, string> = {
   barcode: 'Read off the scanned label',
-  user_alias: 'You corrected this before, so it matched instantly',
+  user_alias: 'You corrected this — mise will match it instantly next time',
   global_alias: 'A curated default for an ambiguous word',
   lexical: 'Matched by name',
   vector: 'Matched by meaning across languages',
@@ -16,9 +18,12 @@ const RESOLUTION_COPY: Record<string, string> = {
   unresolved: 'Not matched yet',
 };
 
+/** Below this retrieval score a candidate is not a suggestion, whatever it looks like. */
+const OFFERABLE_SCORE = 0.72;
+
 interface Props {
   item: LoggedItem;
-  onCorrectFood: (itemId: string, foodId: string) => void;
+  onCorrectFood: (itemId: string, foodId: string) => Promise<boolean>;
   onCorrectPortion: (itemId: string, grams: number) => void;
   busy?: boolean;
 }
@@ -43,8 +48,17 @@ export function MealItem({ item, onCorrectFood, onCorrectPortion, busy }: Props)
     setOpen((v) => !v);
   };
 
+  // Same bar the server uses to decide what is worth offering as a choice
+  // (`OFFERABLE_SCORE` in `pipeline/questions.ts`, which is the router's own
+  // `SELF_EVIDENT_SCORE`). This screen was not applying it, so the two
+  // disagreed about the same item: the question card said mise does not know
+  // "guacamole", and the card directly below it offered diet cola and milk
+  // chocolate as things the user might have meant. Multilingual embeddings
+  // have a high similarity floor — unrelated short strings sit around
+  // 0.45-0.55 — so an unfiltered candidate list is noise, and tapping any of
+  // it would store that food as this user's alias for the word.
   const alternatives = item.resolution.candidates
-    .filter((c) => c.foodId !== item.foodId)
+    .filter((c) => c.foodId !== item.foodId && c.score >= OFFERABLE_SCORE)
     .slice(0, 3);
 
   return (
@@ -72,7 +86,12 @@ export function MealItem({ item, onCorrectFood, onCorrectPortion, busy }: Props)
 
         <Text style={[type.small, { color: color.inkMuted, marginTop: 1 }]} numberOfLines={1}>
           {unresolved
-            ? `“${item.extracted.phrase}” — pick one below`
+            // "pick one below" has to be true. With nothing above the offerable
+            // bar there is nothing to pick, and promising a choice that is not
+            // there reads as a broken screen rather than an honest one.
+            ? (alternatives.length > 0
+              ? `“${item.extracted.phrase}” — pick one below or search`
+              : `“${item.extracted.phrase}” — not matched confidently yet`)
             : (item.portion?.assumption ?? '')}
         </Text>
 
@@ -130,40 +149,36 @@ export function MealItem({ item, onCorrectFood, onCorrectPortion, busy }: Props)
                     key={c.foodId}
                     label={c.name}
                     disabled={busy}
-                    onPress={() => { onCorrectFood(item.id, c.foodId); }}
+                    onPress={() => { void onCorrectFood(item.id, c.foodId); }}
                   />
                 ))}
               </View>
             </>
           )}
 
+          <FoodCorrectionEditor
+            item={item}
+            busy={busy}
+            onSelect={onCorrectFood}
+          />
+
           {/*
             Correcting the amount is what teaches the `user_memory` rung. Next
             time this phrase appears the portion is replayed rather than
             estimated, which is the only rung that improves with use.
+
+            Offered on every resolved item, with no exception for the ones whose
+            amount was stated in words. Hiding it there was the bug: a typed
+            "150 g" pins the top rung of the ladder, so the old flow recorded
+            the correction, re-logged, read the stated mass again and showed the
+            same number back. The correction now applies to this meal directly.
           */}
-          {!unresolved && item.portion && !item.portion.method.startsWith('stated') && (
-            <>
-              <Text style={[type.smallStrong, { color: color.ink, marginTop: space.lg }]}>
-                Set your usual amount
-              </Text>
-              <View style={s.choices}>
-                {[0.5, 1, 1.5, 2].map((factor) => {
-                  const grams = Math.round(item.portion!.gramsLikely * factor);
-                  return (
-                    <ChoiceChip
-                      key={factor}
-                      label={`${grams} g`}
-                      disabled={busy}
-                      onPress={() => { onCorrectPortion(item.id, grams); }}
-                    />
-                  );
-                })}
-              </View>
-              <Text style={[type.small, { color: color.inkFaint, marginTop: space.sm }]}>
-                mise remembers it for this wording and stops estimating.
-              </Text>
-            </>
+          {!unresolved && (
+            <PortionEditor
+              item={item}
+              busy={busy}
+              onSet={(grams) => { onCorrectPortion(item.id, grams); }}
+            />
           )}
         </View>
       )}

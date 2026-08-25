@@ -116,10 +116,11 @@ export const bandStyle: Record<
  * with that route, shown so the figure is judgeable rather than just asserted.
  */
 export type PortionMethod =
-  | 'stated_mass' | 'stated_volume' | 'barcode_label' | 'user_memory'
+  | 'user_set' | 'stated_mass' | 'stated_volume' | 'barcode_label' | 'user_memory'
   | 'household_measure' | 'reference_scaled' | 'model_estimate';
 
 export const methodStyle: Record<PortionMethod, { label: string; exact: boolean }> = {
+  user_set: { label: 'You set it', exact: true },
   stated_mass: { label: 'You weighed it', exact: true },
   stated_volume: { label: 'You measured it', exact: true },
   barcode_label: { label: 'From the label', exact: true },

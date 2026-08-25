@@ -1,6 +1,8 @@
 import { describe, it, expect } from 'vitest';
 import { loadFoodDb } from '../../data/foodDb.js';
 import type { ExtractedItem } from '../../domain/log.js';
+import type { GapLedger } from '../../gaps/ledger.js';
+import type { GapObservation } from '../../gaps/types.js';
 import { createAliasStore, GLOBAL_ALIAS_SEED } from './aliasStore.js';
 import { buildLexicalIndex } from './lexical.js';
 import { resolvePhrase } from './router.js';
@@ -170,6 +172,65 @@ describe('the verifier rung', () => {
     // The economic claim of the whole ladder: most phrases are easy, and paying
     // a model to confirm that is waste.
     expect(asked).toBe(0);
+  });
+});
+
+/**
+ * The ledger has an entry for a tie a model had to break, and until now
+ * nothing proved the router ever writes one. It is the kind that decays
+ * fastest — every one of these is an alias somebody could add to make the
+ * same answer deterministic and free — so it is worth a test rather than a
+ * hope that it fires in production.
+ */
+describe('what the verifier rung writes down', () => {
+  const AMBIGUOUS = 'spinach and cheese filling';
+
+  /** Collects observations in memory; the file format is the ledger's own test. */
+  const recorder = () => {
+    const seen: GapObservation[] = [];
+    const ledger: GapLedger = {
+      enabled: true,
+      record: (o) => { seen.push(o); },
+      entries: () => [],
+      stats: () => ({ entries: seen.length, observations: seen.length, evicted: 0 }),
+      forget: () => ({ deleted: 0, anonymised: 0 }),
+      flush: () => {},
+    };
+    return { seen, ledger };
+  };
+
+  it('files a contested food when a model breaks the tie', async () => {
+    const shortlist = (await resolve(AMBIGUOUS)).candidates;
+    const top = shortlist[0];
+    expect(top).toBeDefined();
+
+    const { seen, ledger } = recorder();
+    const result = await resolvePhrase(
+      { ...deps, gaps: ledger, reranker: { id: 'fake', choose: async () => ({ foodId: top!.foodId, confidence: 0.9 }) } },
+      AMBIGUOUS,
+      { userId: 'test' },
+    );
+
+    expect(result.method).toBe('llm_rerank');
+    const gap = seen.find((o) => o.kind === 'contested_food');
+    expect(gap?.observed).toBe(top!.foodId);
+    // The shortlist rides along: the row is only worth acting on if you can
+    // see what the model was choosing between.
+    expect(gap?.candidates?.length).toBeGreaterThan(0);
+  });
+
+  it('files nothing when the verifier endorses nobody', async () => {
+    const { seen, ledger } = recorder();
+    const result = await resolvePhrase(
+      { ...deps, gaps: ledger, reranker: { id: 'fake', choose: async () => ({ foodId: null, confidence: 0.9 }) } },
+      AMBIGUOUS,
+      { userId: 'test' },
+    );
+
+    // It is an unknown food, not a contested one — a different queue, and a
+    // different fix. Filing both would double-count one failure.
+    expect(result.foodId).toBeNull();
+    expect(seen.map((o) => o.kind)).not.toContain('contested_food');
   });
 });
 

@@ -183,7 +183,7 @@ async function main(): Promise<void> {
   console.log(
     `\n  Read the ✓ rows against the picture yourself. The point of this run is\n` +
     `  not a score, it is to see which failures are the pipeline's and which are\n` +
-    `  simply a 68-row food database meeting real food.\n`,
+    `  simply a food database meeting real food.\n`,
   );
 }
 

@@ -27,13 +27,38 @@ import { Platform } from 'react-native';
  * it is genuinely slow, not because the network might be.
  */
 export const DEADLINE = {
-  /** Typed text: extraction plus deterministic rungs. Server-side p95 is ~2 ms. */
+  /** Typed text on the rule tier: no network past our own. Server p95 is ~3 ms. */
   TEXT: 15_000,
+  /**
+   * Typed text when a *model* is doing the extraction.
+   *
+   * The 15 s above was measured against the rule tier and quietly stopped
+   * being true. Running the same text through a model extractor, with the
+   * verifier and the corpus rung behind it, measures 7-17 s — and an unknown
+   * food is now the *slowest* text case rather than the fastest, because it is
+   * the one that reaches every rung. Typing "guacamole" produced a 16.6 s
+   * server response against a 15 s client budget: the meal logged, and the
+   * person was told it had failed.
+   */
+  TEXT_MODEL: 40_000,
   /** A photograph: vision extraction, then a verifier call per unresolved item. */
   PHOTO: 45_000,
   /** Reads and lookups. Nothing here is allowed to be slow. */
   QUICK: 8_000,
 } as const;
+
+/**
+ * Whether the server is extracting with a model, learned from `/healthz`.
+ *
+ * Cached at module scope because the deadline has to be chosen inside the
+ * request helper, several layers below the screen that knows. Until the first
+ * health check lands this stays false, which is the safe default: the app
+ * calls `health()` when the log screen mounts, well before anything is typed.
+ */
+let modelExtractor = false;
+
+/** The text deadline that matches whatever this server is actually running. */
+const textDeadline = (): number => (modelExtractor ? DEADLINE.TEXT_MODEL : DEADLINE.TEXT);
 
 /** Thrown when a request passed its deadline, and when the user cancelled. */
 export class TimeoutError extends Error {
@@ -75,7 +100,7 @@ export interface NutritionInterval {
 }
 
 export type PortionMethod =
-  | 'stated_mass' | 'stated_volume' | 'barcode_label' | 'user_memory'
+  | 'user_set' | 'stated_mass' | 'stated_volume' | 'barcode_label' | 'user_memory'
   | 'household_measure' | 'reference_scaled' | 'model_estimate';
 
 export interface Portion {
@@ -113,6 +138,16 @@ export interface Candidate {
   name: string;
   score: number;
   via: string;
+}
+
+export interface FoodSearchHit {
+  foodId: string;
+  name: string;
+  localizedName?: string;
+  source: string;
+  kcalPer100g: number;
+  score: number;
+  tier: 'curated' | 'reference';
 }
 
 export interface LoggedItem {
@@ -274,7 +309,7 @@ export const api = {
       headers: { 'Idempotency-Key': key },
       body: JSON.stringify({ locale: 'tr-TR', ...input }),
       // A photo is slow for a legitimate reason; typed text is not allowed to be.
-      timeoutMs: input.imageBase64 ? DEADLINE.PHOTO : DEADLINE.TEXT,
+      timeoutMs: input.imageBase64 ? DEADLINE.PHOTO : textDeadline(),
       ...(signal ? { signal } : {}),
     });
   },
@@ -291,17 +326,62 @@ export const api = {
     return request<{ meals: MealLog[] }>(`/v1/meals?limit=${limit}`, { method: 'GET' });
   },
 
+  /** Search the verified food vocabulary before correcting one meal item. */
+  searchFoods(query: string, signal?: AbortSignal) {
+    return request<{ query: string; foods: FoodSearchHit[] }>(
+      `/v1/foods/search?q=${encodeURIComponent(query)}&limit=8`,
+      { method: 'GET', retries: 0, timeoutMs: DEADLINE.QUICK, ...(signal ? { signal } : {}) },
+    );
+  },
+
   /**
-   * Record a correction. Passing `grams` is what populates the `user_memory`
-   * rung: next time this phrase appears, the portion is replayed rather than
-   * estimated.
+   * Record a correction, and get the meal back with it already applied.
+   *
+   * Two effects, one call. `grams` populates the `user_memory` rung, so next
+   * time this phrase appears the portion is replayed rather than estimated —
+   * and the returned `log` is this meal, same id, same item ids, recomputed.
+   * The screen renders that directly instead of re-logging the meal to see its
+   * own correction, which used to lose photographs and reset every question.
+   *
+   * Either half may be omitted: a food with no amount, or an amount on the
+   * food the item already resolved to.
    */
-  correct(mealId: string, itemId: string, foodId: string, grams?: number) {
-    return request<{ recorded: boolean; hits: number }>(`/v1/meals/${mealId}/corrections`, {
-      method: 'POST',
-      body: JSON.stringify({ itemId, foodId, ...(grams !== undefined ? { grams } : {}) }),
-      retries: 0,
-    });
+  correct(mealId: string, itemId: string, foodId?: string, grams?: number) {
+    return request<{ recorded: boolean; hits: number; log: MealLog }>(
+      `/v1/meals/${mealId}/corrections`,
+      {
+        method: 'POST',
+        body: JSON.stringify({
+          itemId,
+          ...(foodId !== undefined ? { foodId } : {}),
+          ...(grams !== undefined ? { grams } : {}),
+        }),
+        retries: 0,
+      },
+    );
+  },
+
+  /**
+   * Adds a food the meal was logged without, and gets the meal back with it in.
+   *
+   * `correct` can only reach lines that already exist. When mise reads four
+   * items off a plate that had five, nothing on the screen is wrong — one
+   * thing is simply absent — and this is the only way to say so without
+   * logging the meal a second time.
+   */
+  addItem(mealId: string, foodId: string, opts: { grams?: number; phrase?: string } = {}) {
+    return request<{ added: boolean; itemId: string; log: MealLog }>(
+      `/v1/meals/${mealId}/items`,
+      {
+        method: 'POST',
+        body: JSON.stringify({
+          foodId,
+          ...(opts.grams !== undefined ? { grams: opts.grams } : {}),
+          ...(opts.phrase !== undefined ? { phrase: opts.phrase } : {}),
+        }),
+        retries: 0,
+      },
+    );
   },
 
   trace(mealId: string) {
@@ -311,13 +391,18 @@ export const api = {
     );
   },
 
-  health() {
-    return request<{
+  async health() {
+    const h = await request<{
       status: string; extractor: string; foods: number;
       vectorRetrieval: boolean; visionAvailable: boolean;
     }>(
       '/healthz',
       { method: 'GET', retries: 0 },
     );
+    // The rule tier is the only extractor that answers in milliseconds, and it
+    // is the only one that names itself "rules". Everything else is a network
+    // round trip to a model and needs the wider budget.
+    modelExtractor = !h.extractor.startsWith('rules');
+    return h;
   },
 };

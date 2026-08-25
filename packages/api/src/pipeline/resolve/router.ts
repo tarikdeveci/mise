@@ -1,5 +1,6 @@
 import type { FoodDb } from '../../data/foodDb.js';
 import type { ExtractedItem, FoodCandidate, Resolution } from '../../domain/log.js';
+import type { GapLedger } from '../../gaps/ledger.js';
 import { metrics } from '../../obs/metrics.js';
 import { foodPhraseOnly, normalizeText } from '../normalize.js';
 import type { AliasStore } from './aliasStore.js';
@@ -18,8 +19,9 @@ import type { VectorIndex } from './vector.js';
  *   3. lexical         ~1 ms   decisive string match
  *   4. lexical+vector  ~15 ms  decisive after multilingual retrieval
  *   5. LLM verify      ~800 ms plausible but not self-evident — a model checks
- *   6. corpus          ~800 ms not curated at all: USDA's full 7,793, verified
- *   7. unresolved      —       ask the user one targeted question
+ *   6. corpus          ~800 ms not curated at all: USDA's full reference set, verified
+ *   7. corpus choices  ~1 ms   no verifier: show candidates, never auto-accept
+ *   8. unresolved      —       ask the user one targeted question
  *
  * Two properties fall out of this that matter more than the latency:
  *
@@ -32,7 +34,7 @@ import type { VectorIndex } from './vector.js';
  */
 
 /** Above this margin between #1 and #2, the winner is not seriously contested. */
-const DECISIVE_MARGIN = 0.18;
+export const DECISIVE_MARGIN = 0.18;
 
 /**
  * Above this absolute score the winner is close enough to a literal match to
@@ -47,7 +49,7 @@ const DECISIVE_MARGIN = 0.18;
  * So a merely-plausible winner is verified rather than accepted, which is what
  * the reranker rung was always for.
  */
-const SELF_EVIDENT_SCORE = 0.72;
+export const SELF_EVIDENT_SCORE = 0.72;
 
 export interface Reranker {
   readonly id: string;
@@ -74,6 +76,12 @@ export interface ResolveDeps {
    * the food, which is the behaviour this system had before.
    */
   corpus?: LexicalIndex;
+  /**
+   * Where the words that defeated us are written down. Optional so the eval
+   * and the tests resolve against a clean ledger — a benchmark run is not
+   * production traffic and must not look like it.
+   */
+  gaps?: GapLedger;
 }
 
 export interface ResolveOptions {
@@ -116,6 +124,24 @@ function fuse(lexical: FoodCandidate[], vector: FoodCandidate[]): FoodCandidate[
 
 const marginOf = (c: FoodCandidate[]): number =>
   Number(((c[0]?.score ?? 0) - (c[1]?.score ?? 0)).toFixed(4));
+
+/**
+ * Small, auditable bridge into the English-only USDA descriptions.
+ *
+ * These are spelling/name equivalents, not food judgements: they only change
+ * what text retrieval searches, and the resulting row still needs a model or
+ * human verifier. Keeping this list explicit is safer than asking a model to
+ * translate every unknown phrase before search, and it covers the common
+ * Turkish spellings that otherwise look like an empty database.
+ */
+const CORPUS_QUERY_ALIASES: Readonly<Record<string, string>> = {
+  kinoa: 'quinoa',
+  kuskus: 'couscous',
+  susi: 'sushi',
+  guakamole: 'guacamole',
+  'pad tay': 'pad thai',
+  lazanya: 'lasagna',
+};
 
 /**
  * How far a candidate moves up when its cooking state matches what was stated.
@@ -290,6 +316,17 @@ export async function resolvePhrase(
     // we drop it and fall through to asking the user.
     const legal = picked.foodId !== null && shortlist.some((c) => c.foodId === picked.foodId);
     if (legal) {
+      // Reaching a model to settle this is the cost; an alias would make the
+      // same answer deterministic and free, so it is worth writing down which
+      // words keep needing one.
+      deps.gaps?.record({
+        kind: 'contested_food',
+        subject: clean,
+        sample: phrase,
+        userId: opts.userId,
+        observed: picked.foodId ?? undefined,
+        candidates: shortlist.map((c) => ({ foodId: c.foodId, name: c.name, score: c.score })),
+      });
       return done('llm_rerank', picked.foodId, shortlist, fusedMargin);
     }
     if (picked.foodId !== null) {
@@ -320,18 +357,30 @@ export async function resolvePhrase(
   const wider = await resolveFromCorpus(deps, clean, opts, done);
   if (wider) return wider;
 
-  /* 8 — abstain. An honest question beats a confident wrong answer. */
+  /* 8 — abstain. An honest question beats a confident wrong answer.
+
+     This is also the most valuable line in the gap ledger: a word real traffic
+     used that neither tier can name. No amount of model work fixes it — it is
+     a row somebody has to write — so it is recorded with the shortlist that
+     came closest, which is usually enough to see what the row should be. */
+  deps.gaps?.record({
+    kind: 'unknown_food',
+    subject: clean,
+    sample: phrase,
+    userId: opts.userId,
+    candidates: fused.slice(0, 3).map((c) => ({ foodId: c.foodId, name: c.name, score: c.score })),
+  });
   return done('unresolved', null, fused.slice(0, 5), fusedMargin);
 }
 
 /**
- * The corpus rung: USDA's full reference set, 7,793 rows.
+ * The corpus rung: USDA's full reference set.
  *
  * Everything the curated tier gives up on lands here, and the coverage gain is
  * large — of the foods real meal photographs produced and the seed could not
  * name, roughly three quarters have a real row in this corpus.
  *
- * It is gated on the verifier and that is not a formality. Retrieval over 7,793
+ * Automatic acceptance is gated on the verifier and that is not a formality. Retrieval over thousands of
  * loosely-worded descriptions produces confident nonsense: measured on this
  * corpus, a plain matcher answers "iced tea" with beef sandwich steaks and
  * "grapes" with grapeseed oil. The curated tier is protected from that by being
@@ -339,8 +388,11 @@ export async function resolvePhrase(
  * that can say "none of these" is the only thing standing between a wide
  * corpus and a wrong number.
  *
- * Consequently: **no verifier, no corpus.** Falling back to a retrieval score
- * here would be strictly worse than admitting we do not know the food.
+ * Consequently: **no verifier, no automatic corpus match.** The shortlist is
+ * still useful when a person is the verifier: returning it as an unresolved
+ * item's choices gives the user coverage without turning a retrieval score
+ * into nutrition. This is the safe version of the common "AI fallback" flow:
+ * the system can suggest; only a model verifier or the user can accept.
  */
 async function resolveFromCorpus(
   deps: ResolveDeps,
@@ -349,12 +401,35 @@ async function resolveFromCorpus(
   done: (m: Resolution['method'], id: string | null, c: FoodCandidate[], margin: number) => Resolution,
 ): Promise<Resolution | null> {
   const { corpus, reranker } = deps;
-  if (!corpus || !reranker) return null;
+  if (!corpus) return null;
 
-  const hits = corpus.search(clean).filter((c) => c.score >= MIN_RESOLVABLE_SCORE);
+  const corpusQuery = CORPUS_QUERY_ALIASES[clean] ?? clean;
+  const hits = corpus.search(corpusQuery).filter((c) => c.score >= MIN_RESOLVABLE_SCORE);
   if (hits.length === 0) return null;
 
   const shortlist = hits.slice(0, 5);
+
+  const waitForUser = (reason: string): Resolution => {
+    metrics.inc('corpus_candidates_total', { reason });
+    deps.gaps?.record({
+      kind: 'unknown_food',
+      subject: clean,
+      sample: opts.context ?? clean,
+      userId: opts.userId,
+      note: `USDA candidates found; waiting for user confirmation (${reason})`,
+      candidates: shortlist.map((c) => ({ foodId: c.foodId, name: c.name, score: c.score })),
+    });
+    return done('unresolved', null, shortlist, marginOf(shortlist));
+  };
+
+  // Retrieval alone is not evidence enough to display calories, but it is
+  // enough to offer a closed list to the person who ate the meal. A correction
+  // pointing at one of these rows is materialised by `corpusFood` and becomes
+  // a deterministic user alias, so the same phrase is instant next time.
+  if (!reranker) {
+    return waitForUser('verifier unavailable');
+  }
+
   let picked: { foodId: string | null } = { foodId: null };
   try {
     picked = await reranker.choose({
@@ -364,7 +439,7 @@ async function resolveFromCorpus(
     });
   } catch {
     metrics.inc('reranker_error_total', { reranker: reranker.id });
-    return null;
+    return waitForUser('verifier error');
   }
 
   const legal = picked.foodId !== null && shortlist.some((c) => c.foodId === picked.foodId);
@@ -372,9 +447,20 @@ async function resolveFromCorpus(
     if (picked.foodId !== null) {
       metrics.inc('reranker_illegal_choice_total', { reranker: reranker.id });
     }
-    return null;
+    return waitForUser(picked.foodId === null ? 'verifier abstained' : 'verifier returned an invalid choice');
   }
 
   metrics.inc('corpus_resolution_total');
+  // A real USDA citation, but nobody curated it: no Turkish name, no aliases,
+  // no household measures, and a confidence ceiling that keeps it out of the
+  // auto-logged set. Promoting these into the seed is the single highest-value
+  // curation queue this system has.
+  deps.gaps?.record({
+    kind: 'uncurated_food',
+    subject: clean,
+    userId: opts.userId,
+    observed: picked.foodId ?? undefined,
+    note: shortlist.find((c) => c.foodId === picked.foodId)?.name,
+  });
   return done('corpus', picked.foodId, shortlist, marginOf(shortlist));
 }

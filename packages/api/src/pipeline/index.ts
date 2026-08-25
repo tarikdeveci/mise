@@ -1,29 +1,25 @@
 import { randomUUID } from 'node:crypto';
 import type { FoodDb } from '../data/foodDb.js';
-import type {
-  ClarificationQuestion, Confidence, LoggedItem, MealInput, MealLog, NutritionInterval,
-} from '../domain/log.js';
+import type { LoggedItem, MealInput, MealLog, NutritionInterval } from '../domain/log.js';
 import { logger } from '../obs/logger.js';
 import { metrics, timed } from '../obs/metrics.js';
 import { expandComposites } from './composite.js';
 import { dispositionFor, scoreConfidence } from './confidence.js';
+import { mergeModifierCompounds } from './extract/compound.js';
 import type { Extractor } from './extract/types.js';
+import type { GapLedger } from '../gaps/ledger.js';
+import { canonicalUnit, foodPhraseOnly, normalizeText } from './normalize.js';
 import { computeNutrition, sumIntervals, verifyTraceable } from './nutrition.js';
 import { estimatePortion } from './portion/index.js';
 import type { BarcodeFacts } from './portion/types.js';
+import { buildQuestions } from './questions.js';
 import type { CanonicalFood } from '../domain/food.js';
 import type { AliasStore } from './resolve/aliasStore.js';
-import { MIN_RESOLVABLE_SCORE, type LexicalIndex } from './resolve/lexical.js';
-import { resolvePhrase, type Reranker } from './resolve/router.js';
+import type { LexicalIndex } from './resolve/lexical.js';
+import { resolvePhrase, SELF_EVIDENT_SCORE, type Reranker } from './resolve/router.js';
 import type { VectorIndex } from './resolve/vector.js';
 
-export const PIPELINE_VERSION = 'v1.4.0';
-
-/**
- * Below this retrieval score a candidate is string noise, not a suggestion.
- * Matches the resolver's own bar so the two cannot drift apart.
- */
-const PLAUSIBLE_CANDIDATE = MIN_RESOLVABLE_SCORE;
+export const PIPELINE_VERSION = 'v1.5.0';
 
 export interface PipelineDeps {
   db: FoodDb;
@@ -36,6 +32,12 @@ export interface PipelineDeps {
   corpus?: LexicalIndex;
   /** Materialises a corpus row into a food. Required if `corpus` is set. */
   corpusFood?: (id: string) => CanonicalFood | undefined;
+  /**
+   * Where everything this pipeline could not do gets written down, for
+   * curation and for training sets. Optional: the eval builds a pipeline
+   * without one, because a benchmark run is not production traffic.
+   */
+  gaps?: GapLedger;
 }
 
 export interface ProcessOptions {
@@ -56,6 +58,21 @@ export interface Pipeline {
 export function createPipeline(deps: PipelineDeps): Pipeline {
   const { db, extractor } = deps;
 
+  /**
+   * Whether a phrase names a single food we can cite a row for.
+   *
+   * Only the curated tier counts, and only at the bar the router treats as
+   * self-evident. The corpus tier is deliberately excluded: thousands of loosely
+   * worded USDA descriptions will match almost any two words put together, and
+   * a merge justified by that is how "kıymalı makarna" would quietly stop
+   * counting the mince.
+   */
+  const namesOneFood = (phrase: string): boolean => {
+    const clean = foodPhraseOnly(phrase);
+    if (db.byAlias(normalizeText(clean))) return true;
+    return (deps.lexical.search(clean, 1)[0]?.score ?? 0) >= SELF_EVIDENT_SCORE;
+  };
+
   return {
     async process(input, opts): Promise<MealLog> {
       const traceId = opts.traceId ?? randomUUID();
@@ -72,11 +89,45 @@ export function createPipeline(deps: PipelineDeps): Pipeline {
 
       if (extraction.notFood || extraction.items.length === 0) {
         metrics.inc('meal_log_total', { outcome: 'empty' });
+        // Somebody wrote a sentence meaning to log a meal and got an empty log
+        // back. That is worth a line in the ledger even though we cannot say
+        // what the right answer was: `notFood` on a refusal is correct
+        // behaviour, and on a real meal it is the worst failure the extractor
+        // has, and only a human reading these can tell the two apart.
+        if (input.text?.trim() && !opts.barcode) {
+          deps.gaps?.record({
+            kind: 'no_food_found',
+            subject: input.text,
+            sample: input.text,
+            userId: opts.userId,
+            ...(extraction.note !== undefined ? { note: extraction.note } : {}),
+          });
+        }
         return emptyLog(traceId, extractor, performance.now() - started, extraction.note);
       }
 
-      /* 2 — recipe expansion, before resolution so parts resolve individually. */
-      const { items: expanded, notes } = expandComposites(extraction.items);
+      /* 2a — put back together anything the extractor took apart that the words
+         had joined. A dish named with an ingredient modifier is one food, and
+         two items is a different meal from the one that was described. */
+      const { items: joined, notes: joins } = mergeModifierCompounds(
+        extraction.items, input.text, namesOneFood,
+      );
+      if (joins.length) log.debug({ joins }, 'rejoined modifier compounds');
+      // A rejoin is a labelled extraction example: this text, that wrong split,
+      // this correct single item. It is the cleanest fine-tuning pair the
+      // system produces without ever asking the user anything.
+      for (const note of joins) {
+        deps.gaps?.record({
+          kind: 'split_compound',
+          subject: note,
+          sample: input.text ?? note,
+          userId: opts.userId,
+          note,
+        });
+      }
+
+      /* 2b — recipe expansion, before resolution so parts resolve individually. */
+      const { items: expanded, notes } = expandComposites(joined);
       if (notes.length) log.debug({ notes }, 'expanded composite dishes');
 
       /* 3 — resolve, portion, compute, score. Per item, independently.
@@ -145,6 +196,7 @@ export function createPipeline(deps: PipelineDeps): Pipeline {
           ...(opts.barcode ? { barcode: opts.barcode } : {}),
         });
         const nutrition = computeNutrition(food, portion);
+        recordPortionGaps(deps.gaps, opts.userId, food, extracted, portion.method);
 
         // The traceability assertion runs in production, not only in tests.
         // If it ever fires, a boundary leaked and the number is not ours to
@@ -178,13 +230,15 @@ export function createPipeline(deps: PipelineDeps): Pipeline {
 
       /* 4 — merge repeats of the same food. Eating bread twice is more bread,
          not two log lines the user has to reconcile. */
-      const items = mergeByFood(resolved, db);
+      const items = mergeByFood(resolved, db, deps.corpusFood);
 
       const totals = sumIntervals(
         items.map((i) => i.nutrition).filter((n): n is NutritionInterval => n !== null),
       );
 
-      const questions = buildQuestions(items, db);
+      const questions = buildQuestions(items, {
+        byId: (id) => db.byId(id) ?? deps.corpusFood?.(id),
+      });
       const status = dispositionFor(items.map((i) => i.confidence.band));
 
       const latencyMs = Math.round(performance.now() - started);
@@ -331,8 +385,52 @@ function emptyLog(
   };
 }
 
+/**
+ * What the amount question could not answer.
+ *
+ * Both of these are keyed on the FOOD rather than on the phrase, because the
+ * fix is a row in the measure table and that is per food. "Which foods keep
+ * falling to a guess" is a list you can work through; "which sentences" is not.
+ */
+function recordPortionGaps(
+  gaps: GapLedger | undefined,
+  userId: string,
+  food: CanonicalFood,
+  extracted: LoggedItem['extracted'],
+  method: string,
+): void {
+  if (!gaps) return;
+
+  // A measure word the extractor read off real text and we cannot convert. The
+  // count is dropped rather than applied to an unrelated measure, so the
+  // amount silently falls back to a default — this is where that shows up.
+  if (extracted.unit && !canonicalUnit(extracted.unit)) {
+    gaps.record({
+      kind: 'unknown_unit',
+      subject: extracted.unit,
+      sample: extracted.phrase,
+      userId,
+      observed: food.id,
+    });
+  }
+
+  if (method === 'model_estimate') {
+    gaps.record({
+      kind: 'guessed_amount',
+      subject: food.id,
+      sample: extracted.phrase,
+      userId,
+      observed: food.name,
+    });
+  }
+}
+
 /** Sums portions of the same canonical food into one line. */
-function mergeByFood(items: LoggedItem[], db: FoodDb): LoggedItem[] {
+function mergeByFood(
+  items: LoggedItem[],
+  db: FoodDb,
+  corpusFood?: (id: string) => CanonicalFood | undefined,
+): LoggedItem[] {
   const out: LoggedItem[] = [];
   const byFood = new Map<string, LoggedItem>();
 
@@ -347,7 +445,7 @@ function mergeByFood(items: LoggedItem[], db: FoodDb): LoggedItem[] {
       continue;
     }
 
-    const food = db.byId(item.foodId);
+    const food = db.byId(item.foodId) ?? corpusFood?.(item.foodId);
     if (!food) continue;
 
     const merged = {
@@ -373,80 +471,4 @@ function mergeByFood(items: LoggedItem[], db: FoodDb): LoggedItem[] {
   }
 
   return [...out, ...byFood.values()];
-}
-
-/**
- * Builds at most two clarification questions, ranked by how many calories the
- * answer would move.
- *
- * Ranking by kcal swing rather than by confidence is deliberate: being unsure
- * whether the tea glass was 100 ml or 120 ml is not worth a tap, while being
- * unsure whether the potato was boiled or fried is worth several.
- */
-function buildQuestions(items: LoggedItem[], db: FoodDb): ClarificationQuestion[] {
-  const questions: ClarificationQuestion[] = [];
-
-  for (const item of items) {
-    if (item.confidence.band === 'high') continue;
-
-    if (item.confidence.weakest === 'resolution' || !item.foodId) {
-      // Only offer candidates that are actually plausible. Retrieval always
-      // returns *something*, so a food the database has never heard of came
-      // back as "did you mean avocado?" for a lettuce leaf — which is worse
-      // than admitting ignorance, because it invites a wrong answer and then
-      // records it as a correction.
-      const plausible = item.resolution.candidates.filter((c) => c.score >= PLAUSIBLE_CANDIDATE);
-
-      if (plausible.length === 0) {
-        questions.push({
-          itemId: item.id,
-          question: `mise does not know “${item.extracted.phrase}” yet.`,
-          options: [],
-          // Unknown foods are usually salad leaves and garnishes; the honest
-          // ranking is low, not zero, so it never outranks a real ambiguity.
-          expectedKcalSwing: 5,
-        });
-        continue;
-      }
-
-      const options = plausible.slice(0, 4).map((c) => ({
-        label: db.byId(c.foodId)?.name ?? c.name,
-        foodId: c.foodId,
-        grams: null,
-      }));
-      if (options.length < 2) continue;
-
-      const grams = item.portion?.gramsLikely ?? 100;
-      const kcals = options
-        .map((o) => (o.foodId ? (db.byId(o.foodId)?.per100g.kcal ?? 0) * grams / 100 : 0));
-      questions.push({
-        itemId: item.id,
-        question: `Which "${item.extracted.phrase}" did you have?`,
-        options,
-        expectedKcalSwing: Number((Math.max(...kcals) - Math.min(...kcals)).toFixed(1)),
-      });
-      continue;
-    }
-
-    if (item.confidence.weakest === 'portion' && item.foodId && item.portion) {
-      const food = db.byId(item.foodId);
-      if (!food) continue;
-      const options = food.measures.slice(0, 4).map((m) => ({
-        label: `${m.unit} (${m.grams} g)`,
-        foodId: item.foodId,
-        grams: m.grams,
-      }));
-      if (options.length === 0) continue;
-
-      const swing = ((item.nutrition?.max.kcal ?? 0) - (item.nutrition?.min.kcal ?? 0));
-      questions.push({
-        itemId: item.id,
-        question: `How much ${item.foodName ?? item.extracted.phrase}?`,
-        options,
-        expectedKcalSwing: Number(swing.toFixed(1)),
-      });
-    }
-  }
-
-  return questions.sort((a, b) => b.expectedKcalSwing - a.expectedKcalSwing).slice(0, 2);
 }

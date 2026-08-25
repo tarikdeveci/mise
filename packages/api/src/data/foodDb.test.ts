@@ -22,6 +22,25 @@ describe('food database', () => {
     expect(db.byAlias(normalizeText('olive oil'))?.id).toBe('fdc:171413');
   });
 
+  it('resolves common sauces and Turkish spellings without a model', () => {
+    const cases: Array<[string, string]> = [
+      ['guacomole', 'fdc:2709307'],
+      ['bbq', 'fdc:2709750'],
+      ['mayonez', 'fdc:2710204'],
+      ['ketcap', 'fdc:2709733'],
+      ['soya sos', 'fdc:174277'],
+      ['chımıchurı', 'recipe:chimichurri'],
+      ['hardal', 'fdc:2710085'],
+      ['ranch sosu', 'fdc:2710212'],
+      ['acı sos', 'fdc:2710093'],
+      ['balık sosu', 'fdc:2706457'],
+    ];
+
+    for (const [phrase, expectedId] of cases) {
+      expect(db.byAlias(normalizeText(phrase))?.id, phrase).toBe(expectedId);
+    }
+  });
+
   it('keeps the ambiguity pairs the golden set depends on genuinely distinct', () => {
     const pairs: Array<[string, string]> = [
       ['fdc:171284', 'fdc:171304'],  // plain vs Greek yogurt
