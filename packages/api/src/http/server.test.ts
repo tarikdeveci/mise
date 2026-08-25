@@ -52,9 +52,9 @@ describe('POST /v1/meals', () => {
 
     const body = res.json();
     expect(body.items).toHaveLength(1);
-    expect(body.items[0].foodId).toBe('fdc:172687');
-    // 56 g x 265 kcal/100g
-    expect(body.items[0].nutrition.likely.kcal).toBeCloseTo(148.4, 1);
+    expect(body.items[0].foodId).toBe('fdc:174924');
+    // 56 g x 266 kcal/100g, the value on USDA FDC 174924
+    expect(body.items[0].nutrition.likely.kcal).toBeCloseTo(148.96, 1);
     expect(body.items[0].source).toContain('USDA');
     expect(body.provenance.pipelineVersion).toBeTruthy();
   });
@@ -139,12 +139,12 @@ describe('corrections', () => {
       method: 'POST',
       url: `/v1/meals/${first.id}/corrections`,
       headers: { 'x-user-id': 'u2' },
-      payload: { itemId: item.id, foodId: 'fdc:171479' }, // this person means thigh
+      payload: { itemId: item.id, foodId: 'fdc:172388' }, // this person means thigh
     });
     expect(correction.statusCode).toBe(200);
 
     const second = (await post({ text: 'tavuk', locale: 'tr-TR' }, { 'x-user-id': 'u2' })).json();
-    expect(second.items[0].foodId).toBe('fdc:171479');
+    expect(second.items[0].foodId).toBe('fdc:172388');
     expect(second.items[0].resolution.method).toBe('user_alias');
   });
 
@@ -171,7 +171,7 @@ describe('GET /v1/meals/:id/trace', () => {
     const meal = (await post({ text: '2 dilim beyaz ekmek', locale: 'tr-TR' })).json();
     const trace = (await app.inject({ method: 'GET', url: `/v1/meals/${meal.id}/trace` })).json();
 
-    expect(trace.items[0].arithmetic).toMatch(/265 kcal\/100g x 56 g \/ 100 = 148\.4 kcal/);
+    expect(trace.items[0].arithmetic).toMatch(/266 kcal\/100g x 56 g \/ 100 = 148\.96 kcal/);
     expect(trace.items[0].source).toContain('USDA');
     expect(trace.items[0].resolution.method).toBeTruthy();
   });

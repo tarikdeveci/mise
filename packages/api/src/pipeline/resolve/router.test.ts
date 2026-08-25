@@ -28,37 +28,37 @@ describe('preparation-aware resolution', () => {
    */
   it('uses the extracted preparation when the phrase no longer carries it', async () => {
     expect((await resolve('yumurta', 'boiled')).foodId).toBe('fdc:173424');
-    expect((await resolve('yumurta', 'fried')).foodId).toBe('fdc:172183');
+    expect((await resolve('yumurta', 'fried')).foodId).toBe('fdc:173423');
     expect((await resolve('yumurta', 'raw')).foodId).toBe('fdc:171287');
   });
 
   it('separates raw from cooked rice, the largest state-driven error in the DB', async () => {
     // 365 vs 130 kcal/100g.
-    expect((await resolve('pirinç', 'raw')).foodId).toBe('fdc:169708');
-    expect((await resolve('pirinç', 'boiled')).foodId).toBe('fdc:169756');
+    expect((await resolve('pirinç', 'raw')).foodId).toBe('fdc:168877');
+    expect((await resolve('pirinç', 'boiled')).foodId).toBe('fdc:168878');
   });
 
   it('separates fried from grilled chicken', async () => {
-    expect((await resolve('chicken', 'fried')).foodId).toBe('fdc:171123');
+    expect((await resolve('chicken', 'fried')).foodId).toBe('fdc:173346');
     expect((await resolve('chicken', 'grilled')).foodId).toBe('fdc:171477');
   });
 
   it('keeps the curated default when no preparation is stated', async () => {
     expect((await resolve('yumurta')).foodId).toBe('fdc:171287');
-    expect((await resolve('patates')).foodId).toBe('fdc:170026');
+    expect((await resolve('patates')).foodId).toBe('fdc:170440');
   });
 
   it('does not disturb foods that have no meaningful cooking state', async () => {
     // Olive oil and tea are `n/a`; a stated preparation is neither evidence
     // for nor against them, and must not push them down the list.
     expect((await resolve('zeytinyağı', 'fried')).foodId).toBe('fdc:171413');
-    expect((await resolve('çay', 'boiled')).foodId).toBe('fdc:173175');
+    expect((await resolve('çay', 'boiled')).foodId).toBe('fdc:173227');
   });
 
   it('treats generic "cooked" as compatible with any specific method', async () => {
     const cooked = await resolve('pirinç', 'cooked');
-    expect(cooked.foodId).toBe('fdc:169756');
-    expect(cooked.foodId).not.toBe('fdc:169708');
+    expect(cooked.foodId).toBe('fdc:168878');
+    expect(cooked.foodId).not.toBe('fdc:168877');
   });
 
   it('still resolves deterministically — same input, same answer', async () => {
@@ -186,8 +186,8 @@ describe('phrase cleaning must not change which food is meant', () => {
    */
   it('does not strip "tatlı" out of "tatlı patates"', async () => {
     const r = await resolve('tatlı patates');
-    expect(r.foodId).not.toBe('fdc:170026'); // Potato, raw
-    expect(r.foodId).not.toBe('fdc:170032'); // Potato, french fried
+    expect(r.foodId).not.toBe('fdc:170440'); // Potato, raw
+    expect(r.foodId).not.toBe('fdc:170698'); // Potato, french fried
   });
 
   /**
@@ -208,7 +208,7 @@ describe('phrase cleaning must not change which food is meant', () => {
     const r = await resolve('tatlı patates kızartması');
     const top = r.candidates[0];
 
-    expect(top?.foodId).toBe('fdc:170032');
+    expect(top?.foodId).toBe('fdc:170698');
     // The guard that keeps this out of the deterministic tier. If a database
     // edit ever pushes this above 0.72 it becomes a silent wrong answer again,
     // and this assertion is what fails first.
@@ -230,7 +230,7 @@ describe('phrase cleaning must not change which food is meant', () => {
     // Deliberate, and stated in the router: without a checker, a match the user
     // can correct in one tap beats a blank. This test exists so the trade-off
     // is visible rather than discovered.
-    expect((await resolve('tatlı patates kızartması')).foodId).toBe('fdc:170032');
+    expect((await resolve('tatlı patates kızartması')).foodId).toBe('fdc:170698');
   });
 
   it('admits it does not know sweet potato rather than substituting potato', async () => {

@@ -1,28 +1,28 @@
 [
   {
-    "id": "fdc:172687",
+    "id": "fdc:174924",
     "name": "Bread, white, commercial",
     "names": { "tr": "Beyaz ekmek" },
     "aliases": ["white bread", "ekmek", "beyaz ekmek", "toast bread", "tost ekmeği", "sandwich bread"],
     "group": "grain",
     "state": "n/a",
-    "per100g": { "kcal": 265, "proteinG": 9.0, "carbG": 49.0, "fatG": 3.2, "fiberG": 2.7 },
+    "per100g": { "kcal": 266, "proteinG": 8.8, "carbG": 49.4, "fatG": 3.3, "fiberG": 2.7 },
     "measures": [
-      { "unit": "slice", "grams": 28, "spread": 0.15 },
+      { "unit": "slice", "grams": 28, "spread": 0.1 },
       { "unit": "piece", "grams": 28, "spread": 0.2 }
     ],
-    "source": "USDA FDC 172687"
+    "source": "USDA FDC 174924"
   },
   {
-    "id": "fdc:172686",
+    "id": "fdc:172688",
     "name": "Bread, whole-wheat",
     "names": { "tr": "Tam buğday ekmeği" },
     "aliases": ["whole wheat bread", "wholemeal bread", "tam buğday ekmek", "kepekli ekmek", "brown bread"],
     "group": "grain",
     "state": "n/a",
-    "per100g": { "kcal": 247, "proteinG": 13.0, "carbG": 41.0, "fatG": 3.4, "fiberG": 7.0 },
-    "measures": [{ "unit": "slice", "grams": 32, "spread": 0.15 }],
-    "source": "USDA FDC 172686"
+    "per100g": { "kcal": 252, "proteinG": 12.4, "carbG": 42.7, "fatG": 3.5, "fiberG": 6.0 },
+    "measures": [{ "unit": "slice", "grams": 32, "spread": 0.1 }],
+    "source": "USDA FDC 172688"
   },
   {
     "id": "tr:simit",
@@ -36,22 +36,22 @@
     "source": "TÜBER 2022 reference composition"
   },
   {
-    "id": "fdc:169756",
+    "id": "fdc:168878",
     "name": "Rice, white, long-grain, cooked",
     "names": { "tr": "Pirinç pilavı (haşlanmış)" },
     "aliases": ["white rice", "cooked rice", "pirinç", "pilav", "steamed rice", "rice"],
     "group": "grain",
     "state": "boiled",
-    "per100g": { "kcal": 130, "proteinG": 2.7, "carbG": 28.0, "fatG": 0.3, "fiberG": 0.4 },
+    "per100g": { "kcal": 130, "proteinG": 2.7, "carbG": 28.2, "fatG": 0.3, "fiberG": 0.4 },
     "measures": [
       { "unit": "cup", "grams": 158, "spread": 0.2 },
       { "unit": "plate", "grams": 220, "spread": 0.4 },
-      { "unit": "portion", "grams": 180, "spread": 0.35 }
+      { "unit": "portion", "grams": 180, "spread": 0.3 }
     ],
-    "source": "USDA FDC 169756"
+    "source": "USDA FDC 168878"
   },
   {
-    "id": "fdc:169708",
+    "id": "fdc:168877",
     "name": "Rice, white, long-grain, raw",
     "names": { "tr": "Pirinç (çiğ)" },
     "aliases": ["raw rice", "uncooked rice", "çiğ pirinç", "dry rice"],
@@ -59,7 +59,7 @@
     "state": "raw",
     "per100g": { "kcal": 365, "proteinG": 7.1, "carbG": 80.0, "fatG": 0.7, "fiberG": 1.3 },
     "measures": [{ "unit": "cup", "grams": 185, "spread": 0.1 }],
-    "source": "USDA FDC 169708"
+    "source": "USDA FDC 168877"
   },
   {
     "id": "fdc:170287",
@@ -68,44 +68,44 @@
     "aliases": ["bulgur", "bulghur", "bulgur pilavı", "cracked wheat"],
     "group": "grain",
     "state": "boiled",
-    "per100g": { "kcal": 83, "proteinG": 3.1, "carbG": 18.6, "fatG": 0.24, "fiberG": 4.5 },
+    "per100g": { "kcal": 83, "proteinG": 3.1, "carbG": 18.6, "fatG": 0.2, "fiberG": 4.5 },
     "measures": [
       { "unit": "cup", "grams": 182, "spread": 0.2 },
-      { "unit": "portion", "grams": 180, "spread": 0.35 }
+      { "unit": "portion", "grams": 180, "spread": 0.3 }
     ],
     "source": "USDA FDC 170287"
   },
   {
-    "id": "fdc:169738",
+    "id": "fdc:169737",
     "name": "Pasta, cooked",
     "names": { "tr": "Makarna (haşlanmış)" },
     "aliases": ["pasta", "spaghetti", "makarna", "penne", "noodles", "cooked pasta"],
     "group": "grain",
     "state": "boiled",
-    "per100g": { "kcal": 131, "proteinG": 5.0, "carbG": 25.0, "fatG": 1.1, "fiberG": 1.8 },
+    "per100g": { "kcal": 158, "proteinG": 5.8, "carbG": 30.9, "fatG": 0.9, "fiberG": 1.8 },
     "measures": [
       { "unit": "cup", "grams": 140, "spread": 0.2 },
       { "unit": "plate", "grams": 250, "spread": 0.4 },
-      { "unit": "portion", "grams": 200, "spread": 0.35 }
+      { "unit": "portion", "grams": 200, "spread": 0.3 }
     ],
-    "source": "USDA FDC 169738"
+    "source": "USDA FDC 169737"
   },
   {
-    "id": "fdc:173905",
+    "id": "fdc:173904",
     "name": "Oats, dry",
     "names": { "tr": "Yulaf ezmesi (kuru)" },
     "aliases": ["oats", "rolled oats", "yulaf", "dry oats", "oatmeal dry"],
     "group": "grain",
     "state": "raw",
-    "per100g": { "kcal": 389, "proteinG": 16.9, "carbG": 66.3, "fatG": 6.9, "fiberG": 10.6 },
+    "per100g": { "kcal": 379, "proteinG": 13.2, "carbG": 67.7, "fatG": 6.5, "fiberG": 10.1 },
     "measures": [
-      { "unit": "cup", "grams": 81, "spread": 0.15 },
-      { "unit": "tbsp", "grams": 8, "spread": 0.15 }
+      { "unit": "cup", "grams": 81, "spread": 0.1 },
+      { "unit": "tbsp", "grams": 8, "spread": 0.1 }
     ],
-    "source": "USDA FDC 173905"
+    "source": "USDA FDC 173904"
   },
   {
-    "id": "fdc:171592",
+    "id": "fdc:173905",
     "name": "Oatmeal, cooked with water",
     "names": { "tr": "Yulaf lapası (suyla)" },
     "aliases": ["oatmeal", "porridge", "cooked oats", "yulaf lapası"],
@@ -113,9 +113,8 @@
     "state": "boiled",
     "per100g": { "kcal": 71, "proteinG": 2.5, "carbG": 12.0, "fatG": 1.5, "fiberG": 1.7 },
     "measures": [{ "unit": "bowl", "grams": 240, "spread": 0.3 }],
-    "source": "USDA FDC 171592"
+    "source": "USDA FDC 173905"
   },
-
   {
     "id": "fdc:171287",
     "name": "Egg, whole, raw",
@@ -123,11 +122,11 @@
     "aliases": ["egg", "raw egg", "yumurta", "çiğ yumurta"],
     "group": "protein",
     "state": "raw",
-    "per100g": { "kcal": 143, "proteinG": 12.6, "carbG": 0.7, "fatG": 9.5, "fiberG": 0 },
+    "per100g": { "kcal": 143, "proteinG": 12.6, "carbG": 0.7, "fatG": 9.5, "fiberG": 0.0 },
     "measures": [
-      { "unit": "piece", "grams": 50, "spread": 0.12 },
+      { "unit": "piece", "grams": 50, "spread": 0.1 },
       { "unit": "large", "grams": 50, "spread": 0.1 },
-      { "unit": "medium", "grams": 44, "spread": 0.12 }
+      { "unit": "medium", "grams": 44, "spread": 0.1 }
     ],
     "source": "USDA FDC 171287"
   },
@@ -138,20 +137,20 @@
     "aliases": ["boiled egg", "hard boiled egg", "haşlanmış yumurta", "hard-cooked egg"],
     "group": "protein",
     "state": "boiled",
-    "per100g": { "kcal": 155, "proteinG": 12.6, "carbG": 1.1, "fatG": 10.6, "fiberG": 0 },
-    "measures": [{ "unit": "piece", "grams": 50, "spread": 0.12 }],
+    "per100g": { "kcal": 155, "proteinG": 12.6, "carbG": 1.1, "fatG": 10.6, "fiberG": 0.0 },
+    "measures": [{ "unit": "piece", "grams": 50, "spread": 0.1 }],
     "source": "USDA FDC 173424"
   },
   {
-    "id": "fdc:172183",
+    "id": "fdc:173423",
     "name": "Egg, whole, fried",
     "names": { "tr": "Sahanda yumurta" },
     "aliases": ["fried egg", "sahanda yumurta", "sunny side up", "kızarmış yumurta"],
     "group": "protein",
     "state": "fried",
-    "per100g": { "kcal": 196, "proteinG": 13.6, "carbG": 0.8, "fatG": 15.0, "fiberG": 0 },
-    "measures": [{ "unit": "piece", "grams": 46, "spread": 0.15 }],
-    "source": "USDA FDC 172183"
+    "per100g": { "kcal": 196, "proteinG": 13.6, "carbG": 0.8, "fatG": 14.8, "fiberG": 0.0 },
+    "measures": [{ "unit": "piece", "grams": 46, "spread": 0.1 }],
+    "source": "USDA FDC 173423"
   },
   {
     "id": "fdc:171477",
@@ -160,7 +159,7 @@
     "aliases": ["chicken breast", "grilled chicken", "tavuk göğsü", "ızgara tavuk", "roast chicken breast"],
     "group": "protein",
     "state": "grilled",
-    "per100g": { "kcal": 165, "proteinG": 31.0, "carbG": 0, "fatG": 3.6, "fiberG": 0 },
+    "per100g": { "kcal": 165, "proteinG": 31.0, "carbG": 0.0, "fatG": 3.6, "fiberG": 0.0 },
     "measures": [
       { "unit": "piece", "grams": 120, "spread": 0.3 },
       { "unit": "portion", "grams": 150, "spread": 0.3 }
@@ -168,26 +167,26 @@
     "source": "USDA FDC 171477"
   },
   {
-    "id": "fdc:171479",
+    "id": "fdc:172388",
     "name": "Chicken thigh, skinless, roasted",
     "names": { "tr": "Tavuk but (fırında, derisiz)" },
     "aliases": ["chicken thigh", "tavuk but", "tavuk baget", "dark meat chicken"],
     "group": "protein",
     "state": "grilled",
-    "per100g": { "kcal": 209, "proteinG": 26.0, "carbG": 0, "fatG": 10.9, "fiberG": 0 },
+    "per100g": { "kcal": 179, "proteinG": 24.8, "carbG": 0.0, "fatG": 8.2, "fiberG": 0.0 },
     "measures": [{ "unit": "piece", "grams": 95, "spread": 0.3 }],
-    "source": "USDA FDC 171479"
+    "source": "USDA FDC 172388"
   },
   {
-    "id": "fdc:171123",
+    "id": "fdc:173346",
     "name": "Chicken, breaded and fried",
     "names": { "tr": "Kızarmış tavuk (unlanmış)" },
     "aliases": ["fried chicken", "crispy chicken", "kızarmış tavuk", "breaded chicken", "chicken nugget"],
     "group": "protein",
     "state": "fried",
-    "per100g": { "kcal": 290, "proteinG": 24.0, "carbG": 9.0, "fatG": 17.0, "fiberG": 0.5 },
-    "measures": [{ "unit": "piece", "grams": 90, "spread": 0.35 }],
-    "source": "USDA FDC 171123"
+    "per100g": { "kcal": 240, "proteinG": 14.6, "carbG": 14.9, "fatG": 13.6, "fiberG": 1.7 },
+    "measures": [{ "unit": "piece", "grams": 90, "spread": 0.3 }],
+    "source": "USDA FDC 173346"
   },
   {
     "id": "fdc:174032",
@@ -196,7 +195,7 @@
     "aliases": ["ground beef", "minced beef", "kıyma", "dana kıyma", "hamburger meat"],
     "group": "protein",
     "state": "cooked",
-    "per100g": { "kcal": 250, "proteinG": 26.0, "carbG": 0, "fatG": 15.0, "fiberG": 0 },
+    "per100g": { "kcal": 250, "proteinG": 25.9, "carbG": 0.0, "fatG": 15.4, "fiberG": 0.0 },
     "measures": [{ "unit": "portion", "grams": 120, "spread": 0.3 }],
     "source": "USDA FDC 174032"
   },
@@ -209,7 +208,7 @@
     "state": "grilled",
     "per100g": { "kcal": 250, "proteinG": 18.0, "carbG": 6.0, "fatG": 17.0, "fiberG": 0.5 },
     "measures": [
-      { "unit": "piece", "grams": 40, "spread": 0.25 },
+      { "unit": "piece", "grams": 40, "spread": 0.2 },
       { "unit": "portion", "grams": 160, "spread": 0.3 }
     ],
     "source": "TÜBER 2022 reference composition"
@@ -221,8 +220,8 @@
     "aliases": ["chicken doner", "tavuk döner", "chicken shawarma", "chicken gyro"],
     "group": "protein",
     "state": "grilled",
-    "per100g": { "kcal": 220, "proteinG": 22.0, "carbG": 2.0, "fatG": 13.5, "fiberG": 0 },
-    "measures": [{ "unit": "portion", "grams": 130, "spread": 0.35 }],
+    "per100g": { "kcal": 220, "proteinG": 22.0, "carbG": 2.0, "fatG": 13.5, "fiberG": 0.0 },
+    "measures": [{ "unit": "portion", "grams": 130, "spread": 0.3 }],
     "source": "TÜBER 2022 reference composition"
   },
   {
@@ -232,59 +231,58 @@
     "aliases": ["beef doner", "et döner", "lamb doner", "doner kebab"],
     "group": "protein",
     "state": "grilled",
-    "per100g": { "kcal": 280, "proteinG": 20.0, "carbG": 2.0, "fatG": 21.0, "fiberG": 0 },
-    "measures": [{ "unit": "portion", "grams": 130, "spread": 0.35 }],
+    "per100g": { "kcal": 280, "proteinG": 20.0, "carbG": 2.0, "fatG": 21.0, "fiberG": 0.0 },
+    "measures": [{ "unit": "portion", "grams": 130, "spread": 0.3 }],
     "source": "TÜBER 2022 reference composition"
   },
   {
-    "id": "fdc:175167",
+    "id": "fdc:175168",
     "name": "Salmon, Atlantic, cooked",
     "names": { "tr": "Somon (pişmiş)" },
     "aliases": ["salmon", "somon", "grilled salmon", "baked salmon"],
     "group": "protein",
     "state": "cooked",
-    "per100g": { "kcal": 206, "proteinG": 22.1, "carbG": 0, "fatG": 12.4, "fiberG": 0 },
+    "per100g": { "kcal": 206, "proteinG": 22.1, "carbG": 0.0, "fatG": 12.3, "fiberG": 0.0 },
     "measures": [{ "unit": "fillet", "grams": 150, "spread": 0.3 }],
-    "source": "USDA FDC 175167"
+    "source": "USDA FDC 175168"
   },
   {
-    "id": "fdc:173730",
+    "id": "fdc:171986",
     "name": "Tuna, canned in water, drained",
     "names": { "tr": "Ton balığı (suda, konserve)" },
     "aliases": ["tuna", "canned tuna", "ton balığı", "tuna in water"],
     "group": "protein",
     "state": "n/a",
-    "per100g": { "kcal": 116, "proteinG": 25.5, "carbG": 0, "fatG": 0.8, "fiberG": 0 },
+    "per100g": { "kcal": 116, "proteinG": 25.5, "carbG": 0.0, "fatG": 0.8, "fiberG": 0.0 },
     "measures": [{ "unit": "can", "grams": 142, "spread": 0.1 }],
-    "source": "USDA FDC 173730"
+    "source": "USDA FDC 171986"
   },
-
   {
-    "id": "fdc:171284",
+    "id": "fdc:171265",
     "name": "Milk, whole, 3.25% fat",
     "names": { "tr": "Tam yağlı süt" },
     "aliases": ["whole milk", "milk", "süt", "tam yağlı süt", "full fat milk"],
     "group": "dairy",
     "state": "n/a",
-    "per100g": { "kcal": 61, "proteinG": 3.2, "carbG": 4.8, "fatG": 3.3, "fiberG": 0 },
+    "per100g": { "kcal": 61, "proteinG": 3.1, "carbG": 4.8, "fatG": 3.2, "fiberG": 0.0 },
+    "densityGPerMl": 1.03,
     "measures": [
-      { "unit": "cup", "grams": 244, "spread": 0.15 },
+      { "unit": "cup", "grams": 244, "spread": 0.1 },
       { "unit": "glass", "grams": 200, "spread": 0.2 }
     ],
-    "densityGPerMl": 1.03,
-    "source": "USDA FDC 171284"
+    "source": "USDA FDC 171265"
   },
   {
-    "id": "fdc:746782",
+    "id": "fdc:171269",
     "name": "Milk, nonfat (skim)",
     "names": { "tr": "Yağsız süt" },
     "aliases": ["skim milk", "nonfat milk", "yağsız süt", "light milk"],
     "group": "dairy",
     "state": "n/a",
-    "per100g": { "kcal": 34, "proteinG": 3.4, "carbG": 5.0, "fatG": 0.1, "fiberG": 0 },
-    "measures": [{ "unit": "glass", "grams": 200, "spread": 0.2 }],
+    "per100g": { "kcal": 34, "proteinG": 3.4, "carbG": 5.0, "fatG": 0.1, "fiberG": 0.0 },
     "densityGPerMl": 1.03,
-    "source": "USDA FDC 746782"
+    "measures": [{ "unit": "glass", "grams": 200, "spread": 0.2 }],
+    "source": "USDA FDC 171269"
   },
   {
     "id": "fdc:170859",
@@ -293,50 +291,50 @@
     "aliases": ["heavy cream", "krema", "whipping cream", "double cream"],
     "group": "dairy",
     "state": "n/a",
-    "per100g": { "kcal": 340, "proteinG": 2.8, "carbG": 2.8, "fatG": 36.1, "fiberG": 0 },
-    "measures": [{ "unit": "tbsp", "grams": 15, "spread": 0.15 }],
+    "per100g": { "kcal": 340, "proteinG": 2.8, "carbG": 2.8, "fatG": 36.1, "fiberG": 0.0 },
     "densityGPerMl": 0.994,
+    "measures": [{ "unit": "tbsp", "grams": 15, "spread": 0.1 }],
     "source": "USDA FDC 170859"
   },
   {
-    "id": "fdc:171304",
+    "id": "fdc:171284",
     "name": "Yogurt, plain, whole milk",
     "names": { "tr": "Sade tam yağlı yoğurt" },
     "aliases": ["yogurt", "plain yogurt", "yoğurt", "sade yoğurt", "natural yoghurt"],
     "group": "dairy",
     "state": "n/a",
-    "per100g": { "kcal": 61, "proteinG": 3.5, "carbG": 4.7, "fatG": 3.3, "fiberG": 0 },
+    "per100g": { "kcal": 61, "proteinG": 3.5, "carbG": 4.7, "fatG": 3.2, "fiberG": 0.0 },
     "measures": [
       { "unit": "bowl", "grams": 200, "spread": 0.3 },
       { "unit": "cup", "grams": 245, "spread": 0.2 },
       { "unit": "tbsp", "grams": 18, "spread": 0.2 }
     ],
-    "source": "USDA FDC 171304"
+    "source": "USDA FDC 171284"
   },
   {
-    "id": "fdc:330137",
+    "id": "fdc:171304",
     "name": "Yogurt, Greek, plain, whole milk",
     "names": { "tr": "Süzme yoğurt (tam yağlı)" },
     "aliases": ["greek yogurt", "süzme yoğurt", "strained yogurt", "yunan yoğurdu"],
     "group": "dairy",
     "state": "n/a",
-    "per100g": { "kcal": 97, "proteinG": 9.0, "carbG": 3.9, "fatG": 5.0, "fiberG": 0 },
+    "per100g": { "kcal": 97, "proteinG": 9.0, "carbG": 4.0, "fatG": 5.0, "fiberG": 0.0 },
     "measures": [
       { "unit": "bowl", "grams": 200, "spread": 0.3 },
       { "unit": "cup", "grams": 245, "spread": 0.2 }
     ],
-    "source": "USDA FDC 330137"
+    "source": "USDA FDC 171304"
   },
   {
-    "id": "fdc:171287b",
+    "id": "fdc:170889",
     "name": "Yogurt, fruit, lowfat",
     "names": { "tr": "Meyveli yoğurt (az yağlı)" },
     "aliases": ["fruit yogurt", "meyveli yoğurt", "flavoured yogurt", "strawberry yogurt"],
     "group": "dairy",
     "state": "n/a",
-    "per100g": { "kcal": 99, "proteinG": 4.4, "carbG": 18.6, "fatG": 1.4, "fiberG": 0 },
+    "per100g": { "kcal": 99, "proteinG": 4.0, "carbG": 18.6, "fatG": 1.1, "fiberG": 0.0 },
     "measures": [{ "unit": "pot", "grams": 125, "spread": 0.1 }],
-    "source": "USDA FDC 171287"
+    "source": "USDA FDC 170889"
   },
   {
     "id": "tr:ayran",
@@ -345,12 +343,12 @@
     "aliases": ["ayran", "yogurt drink", "doogh", "salted yogurt drink"],
     "group": "beverage",
     "state": "n/a",
-    "per100g": { "kcal": 36, "proteinG": 1.7, "carbG": 2.6, "fatG": 2.0, "fiberG": 0 },
+    "per100g": { "kcal": 36, "proteinG": 1.7, "carbG": 2.6, "fatG": 2.0, "fiberG": 0.0 },
+    "densityGPerMl": 1.03,
     "measures": [
       { "unit": "glass", "grams": 200, "spread": 0.2 },
-      { "unit": "cup", "grams": 250, "spread": 0.15 }
+      { "unit": "cup", "grams": 250, "spread": 0.1 }
     ],
-    "densityGPerMl": 1.03,
     "source": "TÜBER 2022 reference composition"
   },
   {
@@ -360,9 +358,9 @@
     "aliases": ["feta", "beyaz peynir", "white cheese", "peynir", "ezine peyniri"],
     "group": "dairy",
     "state": "n/a",
-    "per100g": { "kcal": 264, "proteinG": 14.2, "carbG": 4.1, "fatG": 21.3, "fiberG": 0 },
+    "per100g": { "kcal": 265, "proteinG": 14.2, "carbG": 3.9, "fatG": 21.5, "fiberG": 0.0 },
     "measures": [
-      { "unit": "slice", "grams": 25, "spread": 0.25 },
+      { "unit": "slice", "grams": 25, "spread": 0.2 },
       { "unit": "piece", "grams": 30, "spread": 0.3 },
       { "unit": "matchbox", "grams": 30, "spread": 0.2 }
     ],
@@ -375,37 +373,36 @@
     "aliases": ["kaşar", "kasar", "kashkaval", "kaşar peyniri", "yellow cheese", "sarı peynir"],
     "group": "dairy",
     "state": "n/a",
-    "per100g": { "kcal": 350, "proteinG": 25.0, "carbG": 2.0, "fatG": 27.0, "fiberG": 0 },
-    "measures": [{ "unit": "slice", "grams": 20, "spread": 0.25 }],
+    "per100g": { "kcal": 350, "proteinG": 25.0, "carbG": 2.0, "fatG": 27.0, "fiberG": 0.0 },
+    "measures": [{ "unit": "slice", "grams": 20, "spread": 0.2 }],
     "source": "TÜBER 2022 reference composition"
   },
   {
-    "id": "fdc:173410",
+    "id": "fdc:170899",
     "name": "Cheese, cheddar",
     "names": { "tr": "Cheddar peyniri" },
     "aliases": ["cheddar", "cheddar cheese"],
     "group": "dairy",
     "state": "n/a",
-    "per100g": { "kcal": 403, "proteinG": 22.9, "carbG": 3.4, "fatG": 33.1, "fiberG": 0 },
+    "per100g": { "kcal": 410, "proteinG": 24.2, "carbG": 2.1, "fatG": 33.8, "fiberG": 0.0 },
     "measures": [{ "unit": "slice", "grams": 28, "spread": 0.2 }],
-    "source": "USDA FDC 173410"
+    "source": "USDA FDC 170899"
   },
   {
-    "id": "fdc:173430",
+    "id": "fdc:173410",
     "name": "Butter, salted",
     "names": { "tr": "Tereyağı" },
     "aliases": ["butter", "tereyağı", "salted butter"],
     "group": "fat",
     "state": "n/a",
-    "per100g": { "kcal": 717, "proteinG": 0.85, "carbG": 0.06, "fatG": 81.1, "fiberG": 0 },
+    "per100g": { "kcal": 717, "proteinG": 0.8, "carbG": 0.1, "fatG": 81.1, "fiberG": 0.0 },
     "measures": [
-      { "unit": "tbsp", "grams": 14, "spread": 0.15 },
+      { "unit": "tbsp", "grams": 14, "spread": 0.1 },
       { "unit": "tsp", "grams": 5, "spread": 0.2 },
       { "unit": "pat", "grams": 5, "spread": 0.2 }
     ],
-    "source": "USDA FDC 173430"
+    "source": "USDA FDC 173410"
   },
-
   {
     "id": "fdc:171413",
     "name": "Olive oil",
@@ -413,13 +410,13 @@
     "aliases": ["olive oil", "zeytinyağı", "extra virgin olive oil", "cooking oil", "yağ", "sıvı yağ"],
     "group": "fat",
     "state": "n/a",
-    "per100g": { "kcal": 884, "proteinG": 0, "carbG": 0, "fatG": 100.0, "fiberG": 0 },
+    "per100g": { "kcal": 884, "proteinG": 0.0, "carbG": 0.0, "fatG": 100.0, "fiberG": 0.0 },
+    "densityGPerMl": 0.918,
     "measures": [
       { "unit": "tbsp", "grams": 13.5, "spread": 0.2 },
-      { "unit": "tsp", "grams": 4.5, "spread": 0.25 },
+      { "unit": "tsp", "grams": 4.5, "spread": 0.2 },
       { "unit": "drizzle", "grams": 7, "spread": 0.5 }
     ],
-    "densityGPerMl": 0.918,
     "source": "USDA FDC 171413"
   },
   {
@@ -429,7 +426,7 @@
     "aliases": ["black olives", "siyah zeytin", "zeytin", "olives"],
     "group": "fat",
     "state": "n/a",
-    "per100g": { "kcal": 115, "proteinG": 0.84, "carbG": 6.3, "fatG": 10.9, "fiberG": 3.2 },
+    "per100g": { "kcal": 116, "proteinG": 0.8, "carbG": 6.0, "fatG": 10.9, "fiberG": 1.6 },
     "measures": [
       { "unit": "piece", "grams": 4, "spread": 0.3 },
       { "unit": "handful", "grams": 30, "spread": 0.5 }
@@ -437,15 +434,15 @@
     "source": "USDA FDC 169094"
   },
   {
-    "id": "fdc:169095",
+    "id": "fdc:169096",
     "name": "Olives, green, pickled",
     "names": { "tr": "Yeşil zeytin" },
     "aliases": ["green olives", "yeşil zeytin"],
     "group": "fat",
     "state": "n/a",
-    "per100g": { "kcal": 145, "proteinG": 1.03, "carbG": 3.8, "fatG": 15.3, "fiberG": 3.3 },
+    "per100g": { "kcal": 145, "proteinG": 1.0, "carbG": 3.8, "fatG": 15.3, "fiberG": 3.3 },
     "measures": [{ "unit": "piece", "grams": 4, "spread": 0.3 }],
-    "source": "USDA FDC 169095"
+    "source": "USDA FDC 169096"
   },
   {
     "id": "fdc:170178",
@@ -468,9 +465,9 @@
     "aliases": ["almonds", "badem", "raw almonds"],
     "group": "nut",
     "state": "raw",
-    "per100g": { "kcal": 579, "proteinG": 21.2, "carbG": 21.6, "fatG": 49.9, "fiberG": 12.5 },
+    "per100g": { "kcal": 579, "proteinG": 21.1, "carbG": 21.6, "fatG": 49.9, "fiberG": 12.5 },
     "measures": [
-      { "unit": "handful", "grams": 28, "spread": 0.45 },
+      { "unit": "handful", "grams": 28, "spread": 0.5 },
       { "unit": "piece", "grams": 1.2, "spread": 0.2 }
     ],
     "source": "USDA FDC 170567"
@@ -483,7 +480,7 @@
     "group": "nut",
     "state": "raw",
     "per100g": { "kcal": 654, "proteinG": 15.2, "carbG": 13.7, "fatG": 65.2, "fiberG": 6.7 },
-    "measures": [{ "unit": "handful", "grams": 28, "spread": 0.45 }],
+    "measures": [{ "unit": "handful", "grams": 28, "spread": 0.5 }],
     "source": "USDA FDC 170187"
   },
   {
@@ -493,64 +490,63 @@
     "aliases": ["peanut butter", "fıstık ezmesi"],
     "group": "nut",
     "state": "n/a",
-    "per100g": { "kcal": 588, "proteinG": 25.1, "carbG": 19.6, "fatG": 50.4, "fiberG": 6.0 },
+    "per100g": { "kcal": 598, "proteinG": 22.2, "carbG": 22.3, "fatG": 51.4, "fiberG": 5.0 },
     "measures": [{ "unit": "tbsp", "grams": 16, "spread": 0.3 }],
     "source": "USDA FDC 172470"
   },
   {
-    "id": "fdc:170554",
+    "id": "fdc:170191",
     "name": "Tahini (sesame paste)",
     "names": { "tr": "Tahin" },
     "aliases": ["tahini", "tahin", "sesame paste"],
     "group": "nut",
     "state": "n/a",
-    "per100g": { "kcal": 595, "proteinG": 17.0, "carbG": 21.2, "fatG": 53.8, "fiberG": 9.3 },
-    "measures": [{ "unit": "tbsp", "grams": 15, "spread": 0.25 }],
-    "source": "USDA FDC 170554"
+    "per100g": { "kcal": 586, "proteinG": 18.1, "carbG": 24.1, "fatG": 50.9, "fiberG": 5.5 },
+    "measures": [{ "unit": "tbsp", "grams": 15, "spread": 0.2 }],
+    "source": "USDA FDC 170191"
   },
-
   {
-    "id": "fdc:170026",
+    "id": "fdc:170440",
     "name": "Potato, boiled, without skin",
     "names": { "tr": "Haşlanmış patates" },
     "aliases": ["boiled potato", "haşlanmış patates", "potato", "patates"],
     "group": "vegetable",
     "state": "boiled",
-    "per100g": { "kcal": 87, "proteinG": 1.9, "carbG": 20.1, "fatG": 0.1, "fiberG": 1.8 },
+    "per100g": { "kcal": 86, "proteinG": 1.7, "carbG": 20.0, "fatG": 0.1, "fiberG": 1.8 },
     "measures": [
-      { "unit": "medium", "grams": 150, "spread": 0.25 },
-      { "unit": "portion", "grams": 180, "spread": 0.35 }
+      { "unit": "medium", "grams": 150, "spread": 0.2 },
+      { "unit": "portion", "grams": 180, "spread": 0.3 }
     ],
-    "source": "USDA FDC 170026"
+    "source": "USDA FDC 170440"
   },
   {
-    "id": "fdc:170032",
+    "id": "fdc:170698",
     "name": "Potato, french fried",
     "names": { "tr": "Patates kızartması" },
     "aliases": ["french fries", "fries", "patates kızartması", "chips", "kızarmış patates"],
     "group": "vegetable",
     "state": "fried",
-    "per100g": { "kcal": 312, "proteinG": 3.4, "carbG": 41.4, "fatG": 15.0, "fiberG": 3.8 },
+    "per100g": { "kcal": 312, "proteinG": 3.4, "carbG": 41.4, "fatG": 14.7, "fiberG": 3.8 },
     "measures": [
       { "unit": "portion", "grams": 150, "spread": 0.4 },
-      { "unit": "small", "grams": 100, "spread": 0.25 },
+      { "unit": "small", "grams": 100, "spread": 0.2 },
       { "unit": "large", "grams": 200, "spread": 0.3 }
     ],
-    "source": "USDA FDC 170032"
+    "source": "USDA FDC 170698"
   },
   {
-    "id": "fdc:170093",
+    "id": "fdc:170457",
     "name": "Tomato, red, raw",
     "names": { "tr": "Domates" },
     "aliases": ["tomato", "domates", "tomatoes"],
     "group": "vegetable",
     "state": "raw",
-    "per100g": { "kcal": 18, "proteinG": 0.88, "carbG": 3.9, "fatG": 0.2, "fiberG": 1.2 },
+    "per100g": { "kcal": 18, "proteinG": 0.9, "carbG": 3.9, "fatG": 0.2, "fiberG": 1.2 },
     "measures": [
-      { "unit": "medium", "grams": 123, "spread": 0.25 },
+      { "unit": "medium", "grams": 123, "spread": 0.2 },
       { "unit": "piece", "grams": 123, "spread": 0.3 }
     ],
-    "source": "USDA FDC 170093"
+    "source": "USDA FDC 170457"
   },
   {
     "id": "fdc:168409",
@@ -559,35 +555,34 @@
     "aliases": ["cucumber", "salatalık", "hıyar"],
     "group": "vegetable",
     "state": "raw",
-    "per100g": { "kcal": 15, "proteinG": 0.65, "carbG": 3.6, "fatG": 0.11, "fiberG": 0.5 },
-    "measures": [{ "unit": "medium", "grams": 200, "spread": 0.25 }],
+    "per100g": { "kcal": 15, "proteinG": 0.7, "carbG": 3.6, "fatG": 0.1, "fiberG": 0.5 },
+    "measures": [{ "unit": "medium", "grams": 200, "spread": 0.2 }],
     "source": "USDA FDC 168409"
   },
   {
-    "id": "fdc:170108",
+    "id": "fdc:170427",
     "name": "Pepper, green, sweet, raw",
     "names": { "tr": "Yeşil biber" },
     "aliases": ["green pepper", "yeşil biber", "bell pepper", "biber"],
     "group": "vegetable",
     "state": "raw",
-    "per100g": { "kcal": 20, "proteinG": 0.86, "carbG": 4.6, "fatG": 0.17, "fiberG": 1.7 },
-    "measures": [{ "unit": "medium", "grams": 119, "spread": 0.25 }],
-    "source": "USDA FDC 170108"
+    "per100g": { "kcal": 20, "proteinG": 0.9, "carbG": 4.6, "fatG": 0.2, "fiberG": 1.7 },
+    "measures": [{ "unit": "medium", "grams": 119, "spread": 0.2 }],
+    "source": "USDA FDC 170427"
   },
   {
-    "id": "fdc:169975",
+    "id": "fdc:170000",
     "name": "Onion, raw",
     "names": { "tr": "Soğan" },
     "aliases": ["onion", "soğan"],
     "group": "vegetable",
     "state": "raw",
     "per100g": { "kcal": 40, "proteinG": 1.1, "carbG": 9.3, "fatG": 0.1, "fiberG": 1.7 },
-    "measures": [{ "unit": "medium", "grams": 110, "spread": 0.25 }],
-    "source": "USDA FDC 169975"
+    "measures": [{ "unit": "medium", "grams": 110, "spread": 0.2 }],
+    "source": "USDA FDC 170000"
   },
-
   {
-    "id": "fdc:173727",
+    "id": "fdc:172421",
     "name": "Lentils, red, cooked",
     "names": { "tr": "Kırmızı mercimek (haşlanmış)" },
     "aliases": ["red lentils", "lentils", "mercimek", "kırmızı mercimek"],
@@ -595,7 +590,7 @@
     "state": "boiled",
     "per100g": { "kcal": 116, "proteinG": 9.0, "carbG": 20.1, "fatG": 0.4, "fiberG": 7.9 },
     "measures": [{ "unit": "cup", "grams": 198, "spread": 0.2 }],
-    "source": "USDA FDC 173727"
+    "source": "USDA FDC 172421"
   },
   {
     "id": "fdc:173757",
@@ -615,11 +610,10 @@
     "aliases": ["hummus", "humus", "hommus"],
     "group": "legume",
     "state": "n/a",
-    "per100g": { "kcal": 166, "proteinG": 7.9, "carbG": 14.3, "fatG": 9.6, "fiberG": 6.0 },
-    "measures": [{ "unit": "tbsp", "grams": 15, "spread": 0.25 }],
+    "per100g": { "kcal": 237, "proteinG": 7.8, "carbG": 15.0, "fatG": 17.8, "fiberG": 5.5 },
+    "measures": [{ "unit": "tbsp", "grams": 15, "spread": 0.2 }],
     "source": "USDA FDC 174289"
   },
-
   {
     "id": "fdc:173944",
     "name": "Banana, raw",
@@ -627,12 +621,12 @@
     "aliases": ["banana", "muz"],
     "group": "fruit",
     "state": "raw",
-    "per100g": { "kcal": 89, "proteinG": 1.1, "carbG": 22.8, "fatG": 0.33, "fiberG": 2.6 },
+    "per100g": { "kcal": 89, "proteinG": 1.1, "carbG": 22.8, "fatG": 0.3, "fiberG": 2.6 },
     "measures": [
-      { "unit": "medium", "grams": 118, "spread": 0.22 },
+      { "unit": "medium", "grams": 118, "spread": 0.2 },
       { "unit": "large", "grams": 136, "spread": 0.2 },
       { "unit": "small", "grams": 101, "spread": 0.2 },
-      { "unit": "piece", "grams": 118, "spread": 0.28 }
+      { "unit": "piece", "grams": 118, "spread": 0.3 }
     ],
     "source": "USDA FDC 173944"
   },
@@ -643,50 +637,49 @@
     "aliases": ["apple", "elma"],
     "group": "fruit",
     "state": "raw",
-    "per100g": { "kcal": 52, "proteinG": 0.26, "carbG": 13.8, "fatG": 0.17, "fiberG": 2.4 },
+    "per100g": { "kcal": 52, "proteinG": 0.3, "carbG": 13.8, "fatG": 0.2, "fiberG": 2.4 },
     "measures": [
-      { "unit": "medium", "grams": 182, "spread": 0.25 },
+      { "unit": "medium", "grams": 182, "spread": 0.2 },
       { "unit": "piece", "grams": 182, "spread": 0.3 }
     ],
     "source": "USDA FDC 171688"
   },
   {
-    "id": "fdc:169910",
+    "id": "fdc:169097",
     "name": "Orange, raw",
     "names": { "tr": "Portakal" },
     "aliases": ["orange", "portakal"],
     "group": "fruit",
     "state": "raw",
-    "per100g": { "kcal": 47, "proteinG": 0.94, "carbG": 11.8, "fatG": 0.12, "fiberG": 2.4 },
-    "measures": [{ "unit": "medium", "grams": 131, "spread": 0.25 }],
-    "source": "USDA FDC 169910"
+    "per100g": { "kcal": 47, "proteinG": 0.9, "carbG": 11.8, "fatG": 0.1, "fiberG": 2.4 },
+    "measures": [{ "unit": "medium", "grams": 131, "spread": 0.2 }],
+    "source": "USDA FDC 169097"
   },
   {
-    "id": "fdc:173946",
+    "id": "fdc:167762",
     "name": "Strawberries, raw",
     "names": { "tr": "Çilek" },
     "aliases": ["strawberries", "çilek", "strawberry"],
     "group": "fruit",
     "state": "raw",
-    "per100g": { "kcal": 32, "proteinG": 0.67, "carbG": 7.7, "fatG": 0.3, "fiberG": 2.0 },
-    "measures": [{ "unit": "cup", "grams": 152, "spread": 0.25 }],
-    "source": "USDA FDC 173946"
+    "per100g": { "kcal": 32, "proteinG": 0.7, "carbG": 7.7, "fatG": 0.3, "fiberG": 2.0 },
+    "measures": [{ "unit": "cup", "grams": 152, "spread": 0.2 }],
+    "source": "USDA FDC 167762"
   },
-
   {
-    "id": "fdc:173175",
+    "id": "fdc:173227",
     "name": "Tea, brewed, unsweetened",
     "names": { "tr": "Çay (şekersiz)" },
     "aliases": ["tea", "çay", "black tea", "brewed tea", "turkish tea"],
     "group": "beverage",
     "state": "n/a",
-    "per100g": { "kcal": 1, "proteinG": 0, "carbG": 0.3, "fatG": 0, "fiberG": 0 },
+    "per100g": { "kcal": 1, "proteinG": 0.0, "carbG": 0.3, "fatG": 0.0, "fiberG": 0.0 },
+    "densityGPerMl": 1,
     "measures": [
       { "unit": "glass", "grams": 110, "spread": 0.2 },
       { "unit": "cup", "grams": 240, "spread": 0.2 }
     ],
-    "densityGPerMl": 1.0,
-    "source": "USDA FDC 173175"
+    "source": "USDA FDC 173227"
   },
   {
     "id": "fdc:171890",
@@ -695,54 +688,54 @@
     "aliases": ["coffee", "black coffee", "kahve", "filtre kahve", "americano", "türk kahvesi"],
     "group": "beverage",
     "state": "n/a",
-    "per100g": { "kcal": 2, "proteinG": 0.12, "carbG": 0, "fatG": 0.02, "fiberG": 0 },
+    "per100g": { "kcal": 1, "proteinG": 0.1, "carbG": 0.0, "fatG": 0.0, "fiberG": 0.0 },
+    "densityGPerMl": 1,
     "measures": [{ "unit": "cup", "grams": 240, "spread": 0.2 }],
-    "densityGPerMl": 1.0,
     "source": "USDA FDC 171890"
   },
   {
-    "id": "fdc:cafe_latte",
+    "id": "derived:cafe_latte",
     "name": "Latte, with whole milk",
     "names": { "tr": "Latte (tam yağlı sütlü)" },
     "aliases": ["latte", "cafe latte", "sütlü kahve", "flat white", "caffe latte"],
     "group": "beverage",
     "state": "n/a",
-    "per100g": { "kcal": 55, "proteinG": 2.9, "carbG": 4.3, "fatG": 3.0, "fiberG": 0 },
+    "per100g": { "kcal": 55, "proteinG": 2.9, "carbG": 4.3, "fatG": 3.0, "fiberG": 0.0 },
+    "densityGPerMl": 1.02,
     "measures": [
-      { "unit": "medium", "grams": 350, "spread": 0.15 },
-      { "unit": "small", "grams": 240, "spread": 0.15 },
-      { "unit": "large", "grams": 470, "spread": 0.15 },
+      { "unit": "medium", "grams": 350, "spread": 0.1 },
+      { "unit": "small", "grams": 240, "spread": 0.1 },
+      { "unit": "large", "grams": 470, "spread": 0.1 },
       { "unit": "cup", "grams": 350, "spread": 0.3 }
     ],
-    "densityGPerMl": 1.02,
-    "source": "Derived: 240 ml whole milk per 350 ml drink + espresso"
+    "source": "Derived: espresso + whole milk, from the rows in this file"
   },
   {
-    "id": "fdc:175040",
+    "id": "fdc:174852",
     "name": "Cola, carbonated, regular",
     "names": { "tr": "Kola (normal)" },
     "aliases": ["cola", "coke", "kola", "soda", "gazoz"],
     "group": "beverage",
     "state": "n/a",
-    "per100g": { "kcal": 42, "proteinG": 0, "carbG": 10.6, "fatG": 0, "fiberG": 0 },
+    "per100g": { "kcal": 42, "proteinG": 0.0, "carbG": 10.4, "fatG": 0.2, "fiberG": 0.0 },
+    "densityGPerMl": 1.04,
     "measures": [
-      { "unit": "can", "grams": 330, "spread": 0.05 },
+      { "unit": "can", "grams": 330, "spread": 0.1 },
       { "unit": "glass", "grams": 250, "spread": 0.2 }
     ],
-    "densityGPerMl": 1.04,
-    "source": "USDA FDC 175040"
+    "source": "USDA FDC 174852"
   },
   {
-    "id": "fdc:175041",
+    "id": "fdc:174850",
     "name": "Cola, carbonated, diet",
     "names": { "tr": "Kola (diyet)" },
     "aliases": ["diet cola", "diet coke", "coke zero", "diyet kola", "cola light", "zero sugar cola", "kola zero"],
     "group": "beverage",
     "state": "n/a",
-    "per100g": { "kcal": 0.3, "proteinG": 0.1, "carbG": 0.03, "fatG": 0, "fiberG": 0 },
-    "measures": [{ "unit": "can", "grams": 330, "spread": 0.05 }],
-    "densityGPerMl": 1.0,
-    "source": "USDA FDC 175041"
+    "per100g": { "kcal": 1, "proteinG": 0.1, "carbG": 0.1, "fatG": 0.0, "fiberG": 0.0 },
+    "densityGPerMl": 1,
+    "measures": [{ "unit": "can", "grams": 330, "spread": 0.1 }],
+    "source": "USDA FDC 174850"
   },
   {
     "id": "fdc:169098",
@@ -752,35 +745,34 @@
     "group": "beverage",
     "state": "n/a",
     "per100g": { "kcal": 45, "proteinG": 0.7, "carbG": 10.4, "fatG": 0.2, "fiberG": 0.2 },
-    "measures": [{ "unit": "glass", "grams": 200, "spread": 0.2 }],
     "densityGPerMl": 1.04,
+    "measures": [{ "unit": "glass", "grams": 200, "spread": 0.2 }],
     "source": "USDA FDC 169098"
   },
-
   {
-    "id": "fdc:169640",
+    "id": "fdc:169655",
     "name": "Sugar, granulated",
     "names": { "tr": "Toz şeker" },
     "aliases": ["sugar", "şeker", "toz şeker", "white sugar"],
     "group": "sweet",
     "state": "n/a",
-    "per100g": { "kcal": 387, "proteinG": 0, "carbG": 100.0, "fatG": 0, "fiberG": 0 },
+    "per100g": { "kcal": 387, "proteinG": 0.0, "carbG": 100.0, "fatG": 0.0, "fiberG": 0.0 },
     "measures": [
-      { "unit": "tsp", "grams": 4.2, "spread": 0.15 },
+      { "unit": "tsp", "grams": 4.2, "spread": 0.1 },
       { "unit": "cube", "grams": 3, "spread": 0.1 },
-      { "unit": "tbsp", "grams": 12.5, "spread": 0.15 }
+      { "unit": "tbsp", "grams": 12.5, "spread": 0.1 }
     ],
-    "source": "USDA FDC 169640"
+    "source": "USDA FDC 169655"
   },
   {
-    "id": "fdc:169640b",
+    "id": "fdc:169640",
     "name": "Honey",
     "names": { "tr": "Bal" },
     "aliases": ["honey", "bal"],
     "group": "sweet",
     "state": "n/a",
-    "per100g": { "kcal": 304, "proteinG": 0.3, "carbG": 82.4, "fatG": 0, "fiberG": 0.2 },
-    "measures": [{ "unit": "tbsp", "grams": 21, "spread": 0.25 }],
+    "per100g": { "kcal": 304, "proteinG": 0.3, "carbG": 82.4, "fatG": 0.0, "fiberG": 0.2 },
+    "measures": [{ "unit": "tbsp", "grams": 21, "spread": 0.2 }],
     "source": "USDA FDC 169640"
   },
   {
@@ -795,7 +787,7 @@
     "source": "TÜBER 2022 reference composition"
   },
   {
-    "id": "fdc:170273",
+    "id": "fdc:167587",
     "name": "Chocolate, milk",
     "names": { "tr": "Sütlü çikolata" },
     "aliases": ["milk chocolate", "chocolate", "çikolata", "sütlü çikolata"],
@@ -803,12 +795,11 @@
     "state": "n/a",
     "per100g": { "kcal": 535, "proteinG": 7.7, "carbG": 59.4, "fatG": 29.7, "fiberG": 3.4 },
     "measures": [
-      { "unit": "bar", "grams": 45, "spread": 0.25 },
+      { "unit": "bar", "grams": 45, "spread": 0.2 },
       { "unit": "square", "grams": 6, "spread": 0.2 }
     ],
-    "source": "USDA FDC 170273"
+    "source": "USDA FDC 167587"
   },
-
   {
     "id": "tr:menemen",
     "name": "Menemen (eggs with tomato and pepper)",
@@ -819,12 +810,12 @@
     "per100g": { "kcal": 118, "proteinG": 6.4, "carbG": 4.2, "fatG": 8.6, "fiberG": 0.9 },
     "measures": [
       { "unit": "portion", "grams": 250, "spread": 0.3 },
-      { "unit": "pan", "grams": 300, "spread": 0.35 }
+      { "unit": "pan", "grams": 300, "spread": 0.3 }
     ],
     "composedOf": [
       { "foodId": "fdc:171287", "gramsPer100g": 40 },
-      { "foodId": "fdc:170093", "gramsPer100g": 38 },
-      { "foodId": "fdc:170108", "gramsPer100g": 14 },
+      { "foodId": "fdc:170457", "gramsPer100g": 38 },
+      { "foodId": "fdc:170427", "gramsPer100g": 14 },
       { "foodId": "fdc:171413", "gramsPer100g": 8 }
     ],
     "source": "Composite: TÜBER recipe ratios over USDA component rows"
@@ -839,13 +830,13 @@
     "per100g": { "kcal": 72, "proteinG": 3.5, "carbG": 10.6, "fatG": 1.9, "fiberG": 2.1 },
     "measures": [
       { "unit": "bowl", "grams": 250, "spread": 0.3 },
-      { "unit": "cup", "grams": 240, "spread": 0.25 },
+      { "unit": "cup", "grams": 240, "spread": 0.2 },
       { "unit": "portion", "grams": 250, "spread": 0.3 }
     ],
     "composedOf": [
-      { "foodId": "fdc:173727", "gramsPer100g": 45 },
-      { "foodId": "fdc:169975", "gramsPer100g": 8 },
-      { "foodId": "fdc:173430", "gramsPer100g": 2 }
+      { "foodId": "fdc:172421", "gramsPer100g": 45 },
+      { "foodId": "fdc:170000", "gramsPer100g": 8 },
+      { "foodId": "fdc:173410", "gramsPer100g": 2 }
     ],
     "source": "Composite: TÜBER recipe ratios over USDA component rows"
   },
@@ -859,7 +850,7 @@
     "per100g": { "kcal": 300, "proteinG": 9.5, "carbG": 30.0, "fatG": 16.0, "fiberG": 1.5 },
     "measures": [
       { "unit": "slice", "grams": 120, "spread": 0.3 },
-      { "unit": "piece", "grams": 120, "spread": 0.35 }
+      { "unit": "piece", "grams": 120, "spread": 0.3 }
     ],
     "source": "TÜBER 2022 reference composition"
   },
@@ -875,20 +866,17 @@
     "source": "TÜBER 2022 reference composition"
   },
   {
-    "id": "fdc:170070",
+    "id": "fdc:169247",
     "name": "Salad, mixed greens, undressed",
     "names": { "tr": "Yeşil salata (sossuz)" },
-    "aliases": [
-      "salad", "green salad", "salata", "mixed greens", "yeşillik",
-      "lettuce", "lettuce leaf", "marul", "kıvırcık", "greens", "leafy greens", "rocket", "roka"
-    ],
+    "aliases": ["salad", "green salad", "salata", "mixed greens", "yeşillik", "lettuce", "lettuce leaf", "marul", "kıvırcık", "greens", "leafy greens", "rocket", "roka"],
     "group": "vegetable",
     "state": "raw",
-    "per100g": { "kcal": 17, "proteinG": 1.4, "carbG": 3.3, "fatG": 0.2, "fiberG": 1.8 },
+    "per100g": { "kcal": 17, "proteinG": 1.2, "carbG": 3.3, "fatG": 0.3, "fiberG": 2.1 },
     "measures": [
       { "unit": "bowl", "grams": 100, "spread": 0.4 },
       { "unit": "portion", "grams": 85, "spread": 0.4 }
     ],
-    "source": "USDA FDC 170070"
+    "source": "USDA FDC 169247"
   }
 ]

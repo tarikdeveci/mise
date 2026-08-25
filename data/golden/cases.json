@@ -3,7 +3,7 @@
     "id": "E01",
     "stratum": "easy",
     "input": { "text": "2 slices of white bread", "locale": "en-US" },
-    "expected": [{ "foodId": "fdc:172687", "grams": 56 }],
+    "expected": [{ "foodId": "fdc:174924", "grams": 56 }],
     "probes": "Explicit count x household measure.",
     "risks": ["E4_PORTION"]
   },
@@ -27,7 +27,7 @@
     "id": "E04",
     "stratum": "easy",
     "input": { "text": "200ml whole milk", "locale": "en-US" },
-    "expected": [{ "foodId": "fdc:171284", "grams": 206 }],
+    "expected": [{ "foodId": "fdc:171265", "grams": 206 }],
     "probes": "Volume must go through density, not be treated as grams.",
     "risks": ["E5_UNIT"]
   },
@@ -43,7 +43,7 @@
     "id": "E06",
     "stratum": "easy",
     "input": { "text": "1 bardak çay", "locale": "tr-TR" },
-    "expected": [{ "foodId": "fdc:173175", "grams": 110 }],
+    "expected": [{ "foodId": "fdc:173227", "grams": 110 }],
     "probes": "Turkish measure word 'bardak' = tea glass (110ml), not a 240ml cup.",
     "risks": ["E5_UNIT", "E10_LOCALE"]
   },
@@ -51,7 +51,7 @@
     "id": "E07",
     "stratum": "easy",
     "input": { "text": "100g cooked white rice", "locale": "en-US" },
-    "expected": [{ "foodId": "fdc:169756", "grams": 100 }],
+    "expected": [{ "foodId": "fdc:168878", "grams": 100 }],
     "probes": "Cooked state stated explicitly.",
     "risks": ["E6_PREPARATION"]
   },
@@ -67,7 +67,7 @@
     "id": "E09",
     "stratum": "easy",
     "input": { "text": "a can of coke", "locale": "en-US" },
-    "expected": [{ "foodId": "fdc:175040", "grams": 330 }],
+    "expected": [{ "foodId": "fdc:174852", "grams": 330 }],
     "probes": "Packaged item with a standard size.",
     "risks": ["E7_BRAND"]
   },
@@ -83,7 +83,7 @@
     "id": "E11",
     "stratum": "easy",
     "input": { "text": "150 gram somon", "locale": "tr-TR" },
-    "expected": [{ "foodId": "fdc:175167", "grams": 150 }],
+    "expected": [{ "foodId": "fdc:175168", "grams": 150 }],
     "probes": "Turkish 'gram' spelling of the unit.",
     "risks": ["E5_UNIT", "E10_LOCALE"]
   },
@@ -91,7 +91,7 @@
     "id": "E12",
     "stratum": "easy",
     "input": { "text": "1 kutu ton balığı", "locale": "tr-TR" },
-    "expected": [{ "foodId": "fdc:173730", "grams": 142 }],
+    "expected": [{ "foodId": "fdc:171986", "grams": 142 }],
     "probes": "Turkish 'kutu' = can.",
     "risks": ["E5_UNIT", "E10_LOCALE"]
   },
@@ -100,7 +100,7 @@
     "id": "A01",
     "stratum": "ambiguous",
     "input": { "text": "yogurt", "locale": "en-US" },
-    "expected": [{ "foodId": "fdc:171304", "grams": 200 }],
+    "expected": [{ "foodId": "fdc:171284", "grams": 200 }],
     "probes": "Bare 'yogurt' must default to PLAIN, not Greek and not fruit. The three differ by 60% in kcal.",
     "risks": ["E1_WRONG_FOOD"]
   },
@@ -109,9 +109,9 @@
     "stratum": "ambiguous",
     "input": { "text": "2 dilim ekmek yanında peynir ve çay", "locale": "tr-TR" },
     "expected": [
-      { "foodId": "fdc:172687", "grams": 56 },
+      { "foodId": "fdc:174924", "grams": 56 },
       { "foodId": "fdc:173420", "grams": 30 },
-      { "foodId": "fdc:173175", "grams": 110 }
+      { "foodId": "fdc:173227", "grams": 110 }
     ],
     "probes": "Multi-item Turkish sentence; 'peynir' unqualified should resolve to beyaz peynir (feta), the Turkish default.",
     "risks": ["E2_MISSING_ITEM", "E1_WRONG_FOOD", "E10_LOCALE"]
@@ -122,7 +122,7 @@
     "input": { "text": "chicken and rice", "locale": "en-US" },
     "expected": [
       { "foodId": "fdc:171477", "grams": 150 },
-      { "foodId": "fdc:169756", "grams": 180 }
+      { "foodId": "fdc:168878", "grams": 180 }
     ],
     "probes": "No quantities at all — both items fall back to default portions with wide spread.",
     "risks": ["E4_PORTION"]
@@ -147,7 +147,7 @@
     "id": "A06",
     "stratum": "ambiguous",
     "input": { "text": "biraz patates", "locale": "tr-TR" },
-    "expected": [{ "foodId": "fdc:170026", "grams": 180 }],
+    "expected": [{ "foodId": "fdc:170440", "grams": 180 }],
     "probes": "Unqualified potato defaults to boiled (87 kcal/100g), not fried (312). 3.6x swing.",
     "risks": ["E6_PREPARATION"]
   },
@@ -156,7 +156,7 @@
     "stratum": "ambiguous",
     "input": { "text": "tost", "locale": "tr-TR" },
     "expected": [
-      { "foodId": "fdc:172687", "grams": 56 },
+      { "foodId": "fdc:174924", "grams": 56 },
       { "foodId": "tr:kasar", "grams": 40 }
     ],
     "probes": "Turkish 'tost' is a composite the DB has no row for — must decompose into bread + kaşar, and must NOT double-count the bread.",
@@ -166,7 +166,7 @@
     "id": "A08",
     "stratum": "ambiguous",
     "input": { "text": "büyük boy latte", "locale": "tr-TR" },
-    "expected": [{ "foodId": "fdc:cafe_latte", "grams": 470 }],
+    "expected": [{ "foodId": "derived:cafe_latte", "grams": 470 }],
     "probes": "Turkish size adjective must select the 'large' measure row.",
     "risks": ["E4_PORTION", "E10_LOCALE"]
   },
@@ -208,7 +208,7 @@
     "input": { "text": "simit ve çay", "locale": "tr-TR" },
     "expected": [
       { "foodId": "tr:simit", "grams": 110 },
-      { "foodId": "fdc:173175", "grams": 110 }
+      { "foodId": "fdc:173227", "grams": 110 }
     ],
     "probes": "Two items joined by 've'; both use default measures.",
     "risks": ["E2_MISSING_ITEM"]
@@ -218,7 +218,7 @@
     "stratum": "ambiguous",
     "input": { "text": "oatmeal with banana and peanut butter", "locale": "en-US" },
     "expected": [
-      { "foodId": "fdc:171592", "grams": 240 },
+      { "foodId": "fdc:173905", "grams": 240 },
       { "foodId": "fdc:173944", "grams": 118 },
       { "foodId": "fdc:172470", "grams": 16 }
     ],
@@ -229,7 +229,7 @@
     "id": "A15",
     "stratum": "ambiguous",
     "input": { "text": "bir tabak makarna", "locale": "tr-TR" },
-    "expected": [{ "foodId": "fdc:169738", "grams": 250 }],
+    "expected": [{ "foodId": "fdc:169737", "grams": 250 }],
     "probes": "'tabak' (plate) is the widest-spread measure we have — interval must be wide.",
     "risks": ["E4_PORTION"]
   },
@@ -237,7 +237,7 @@
     "id": "A16",
     "stratum": "ambiguous",
     "input": { "text": "salata", "locale": "tr-TR" },
-    "expected": [{ "foodId": "fdc:170070", "grams": 85 }],
+    "expected": [{ "foodId": "fdc:169247", "grams": 85 }],
     "probes": "Undressed salad baseline. Dressing is invisible in text AND in photos — a known systematic under-count.",
     "risks": ["E2_MISSING_ITEM"]
   },
@@ -257,7 +257,7 @@
     "id": "X02",
     "stratum": "adversarial",
     "input": { "text": "diet coke", "locale": "en-US" },
-    "expected": [{ "foodId": "fdc:175041", "grams": 330 }],
+    "expected": [{ "foodId": "fdc:174850", "grams": 330 }],
     "probes": "Regular vs diet is 42 vs 0.3 kcal/100g — a 140 kcal error on one can.",
     "risks": ["E7_BRAND"]
   },
@@ -265,7 +265,7 @@
     "id": "X03",
     "stratum": "adversarial",
     "input": { "text": "greek yogurt", "locale": "en-US" },
-    "expected": [{ "foodId": "fdc:330137", "grams": 200 }],
+    "expected": [{ "foodId": "fdc:171304", "grams": 200 }],
     "probes": "Must NOT collapse to plain yogurt. Paired with A01 to test that the resolver separates them in both directions.",
     "risks": ["E1_WRONG_FOOD"]
   },
@@ -273,7 +273,7 @@
     "id": "X04",
     "stratum": "adversarial",
     "input": { "text": "fried chicken", "locale": "en-US" },
-    "expected": [{ "foodId": "fdc:171123", "grams": 90 }],
+    "expected": [{ "foodId": "fdc:173346", "grams": 90 }],
     "probes": "Breaded+fried is 290 kcal/100g vs 165 for grilled breast. Preparation must survive resolution.",
     "risks": ["E6_PREPARATION"]
   },
@@ -281,7 +281,7 @@
     "id": "X05",
     "stratum": "adversarial",
     "input": { "text": "100g çiğ pirinç", "locale": "tr-TR" },
-    "expected": [{ "foodId": "fdc:169708", "grams": 100 }],
+    "expected": [{ "foodId": "fdc:168877", "grams": 100 }],
     "probes": "Raw rice is 365 kcal/100g, cooked is 130. The single largest state-driven error in the DB.",
     "risks": ["E6_PREPARATION"]
   },
@@ -322,8 +322,8 @@
     "stratum": "adversarial",
     "input": { "text": "2 eggs fried in butter", "locale": "en-US" },
     "expected": [
-      { "foodId": "fdc:172183", "grams": 92 },
-      { "foodId": "fdc:173430", "grams": 14 }
+      { "foodId": "fdc:173423", "grams": 92 },
+      { "foodId": "fdc:173410", "grams": 14 }
     ],
     "probes": "The cooking-fat problem. Butter is stated here; in a photo it is invisible. Missing it costs ~100 kcal.",
     "risks": ["E2_MISSING_ITEM", "E6_PREPARATION"]
@@ -332,7 +332,7 @@
     "id": "X11",
     "stratum": "adversarial",
     "input": { "text": "sütlü kahve", "locale": "tr-TR" },
-    "expected": [{ "foodId": "fdc:cafe_latte", "grams": 350 }],
+    "expected": [{ "foodId": "derived:cafe_latte", "grams": 350 }],
     "probes": "Turkish for 'coffee with milk' must resolve to latte, while bare 'kahve' (A05) must NOT. Tests that the resolver is sensitive to the modifier, not just the head noun.",
     "risks": ["E1_WRONG_FOOD", "E10_LOCALE"]
   },
@@ -340,7 +340,7 @@
     "id": "X12",
     "stratum": "adversarial",
     "input": { "text": "patates kızartması büyük boy", "locale": "tr-TR" },
-    "expected": [{ "foodId": "fdc:170032", "grams": 200 }],
+    "expected": [{ "foodId": "fdc:170698", "grams": 200 }],
     "probes": "Fried potato + Turkish size adjective. Paired with A06 to test the boiled/fried split in both directions.",
     "risks": ["E6_PREPARATION", "E4_PORTION"]
   },
@@ -349,8 +349,8 @@
     "stratum": "adversarial",
     "input": { "text": "tam buğday ekmeği 2 dilim üzerine tereyağı", "locale": "tr-TR" },
     "expected": [
-      { "foodId": "fdc:172686", "grams": 64 },
-      { "foodId": "fdc:173430", "grams": 14 }
+      { "foodId": "fdc:172688", "grams": 64 },
+      { "foodId": "fdc:173410", "grams": 14 }
     ],
     "probes": "Whole-wheat vs white bread, plus a spread that is easy to omit.",
     "risks": ["E1_WRONG_FOOD", "E2_MISSING_ITEM"]
@@ -367,7 +367,7 @@
     "id": "X15",
     "stratum": "adversarial",
     "input": { "text": "2 slices of bread and 2 slices of bread", "locale": "en-US" },
-    "expected": [{ "foodId": "fdc:172687", "grams": 112 }],
+    "expected": [{ "foodId": "fdc:174924", "grams": 112 }],
     "probes": "Repeated phrasing must sum to 4 slices, not dedupe to 2 and not double-log as separate items.",
     "risks": ["E9_DUPLICATE"]
   },
@@ -376,8 +376,8 @@
     "stratum": "adversarial",
     "input": { "text": "çayın yanında 2 küp şeker", "locale": "tr-TR" },
     "expected": [
-      { "foodId": "fdc:173175", "grams": 110 },
-      { "foodId": "fdc:169640", "grams": 6 }
+      { "foodId": "fdc:173227", "grams": 110 },
+      { "foodId": "fdc:169655", "grams": 6 }
     ],
     "probes": "Sugar cubes: 3g each, trivially small but a real habit-level signal. Tests small-mass precision.",
     "risks": ["E4_PORTION", "E5_UNIT"]

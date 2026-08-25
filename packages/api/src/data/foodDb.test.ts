@@ -24,12 +24,12 @@ describe('food database', () => {
 
   it('keeps the ambiguity pairs the golden set depends on genuinely distinct', () => {
     const pairs: Array<[string, string]> = [
-      ['fdc:171304', 'fdc:330137'],  // plain vs Greek yogurt
-      ['fdc:170026', 'fdc:170032'],  // boiled vs fried potato
-      ['fdc:169756', 'fdc:169708'],  // cooked vs raw rice
-      ['fdc:171284', 'fdc:170859'],  // milk vs cream
-      ['fdc:175040', 'fdc:175041'],  // regular vs diet cola
-      ['fdc:171477', 'fdc:171123'],  // grilled vs fried chicken
+      ['fdc:171284', 'fdc:171304'],  // plain vs Greek yogurt
+      ['fdc:170440', 'fdc:170698'],  // boiled vs fried potato
+      ['fdc:168878', 'fdc:168877'],  // cooked vs raw rice
+      ['fdc:171265', 'fdc:170859'],  // milk vs cream
+      ['fdc:174852', 'fdc:174850'],  // regular vs diet cola
+      ['fdc:171477', 'fdc:173346'],  // grilled vs fried chicken
     ];
     for (const [a, b] of pairs) {
       const fa = db.byId(a);

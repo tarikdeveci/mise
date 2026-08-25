@@ -6,8 +6,8 @@ import { estimatePortion } from './index.js';
 import type { PortionContext } from './types.js';
 
 const db = loadFoodDb();
-const bread = db.byId('fdc:172687')!;   // 28 g per slice
-const milk = db.byId('fdc:171284')!;    // 1.03 g/ml
+const bread = db.byId('fdc:174924')!;   // 28 g per slice
+const milk = db.byId('fdc:171265')!;    // 1.03 g/ml
 const chicken = db.byId('fdc:171477')!; // default piece 120 g
 
 let aliases: AliasStore;
@@ -31,7 +31,7 @@ const width = (p: { gramsMin: number; gramsMax: number; gramsLikely: number }) =
 
 describe('portion ladder order', () => {
   it('a stated mass beats everything below it', () => {
-    aliases.record('u1', 'ekmek', 'fdc:172687', 999);
+    aliases.record('u1', 'ekmek', 'fdc:174924', 999);
     const p = estimatePortion(ctx({ phrase: 'ekmek', quantity: 180, unit: 'g' }));
     expect(p.method).toBe('stated_mass');
     expect(p.gramsLikely).toBe(180);

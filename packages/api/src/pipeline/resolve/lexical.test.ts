@@ -19,26 +19,26 @@ describe('lexical retrieval', () => {
   });
 
   it('separates the preparation-state pairs', () => {
-    expect(top('french fries')).toBe('fdc:170032');
-    expect(top('haşlanmış patates')).toBe('fdc:170026');
-    expect(top('fried chicken')).toBe('fdc:171123');
-    expect(top('çiğ pirinç')).toBe('fdc:169708');
+    expect(top('french fries')).toBe('fdc:170698');
+    expect(top('haşlanmış patates')).toBe('fdc:170440');
+    expect(top('fried chicken')).toBe('fdc:173346');
+    expect(top('çiğ pirinç')).toBe('fdc:168877');
   });
 
   it('separates the brand/variant pairs', () => {
-    expect(top('diet coke')).toBe('fdc:175041');
-    expect(top('greek yogurt')).toBe('fdc:330137');
+    expect(top('diet coke')).toBe('fdc:174850');
+    expect(top('greek yogurt')).toBe('fdc:171304');
   });
 
   it('handles Turkish morphology via trigrams', () => {
     // "ekmeği" is the possessive form; no alias lists it verbatim.
-    expect(top('tam buğday ekmeği')).toBe('fdc:172686');
+    expect(top('tam buğday ekmeği')).toBe('fdc:172688');
     expect(top('kaşar peyniri')).toBe('tr:kasar');
   });
 
   it('surfaces the right food even when the head noun is generic', () => {
     expect(top('tavuk göğsü')).toBe('fdc:171477');
-    expect(top('tavuk but')).toBe('fdc:171479');
+    expect(top('tavuk but')).toBe('fdc:172388');
   });
 
   it('reports a SMALL margin on genuinely ambiguous input — this is the escalation signal', () => {
