@@ -1,0 +1,1239 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>mise · Konuşmacı Kitapçığı</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+
+<style>
+:root{
+  --ground:#ECEEF1;
+  --paper:#F6F8FA;
+  --raise:#FFFFFF;
+  --ink:#191B21;
+  --ink-mid:#4A515C;
+  --ink-soft:#78808C;
+  --line:#D2D7DE;
+  --line-soft:#E3E7EC;
+  --accent:#A8730C;
+  --accent-ink:#7E5606;
+  --accent-wash:#F4E9D2;
+  --sure:#2C6A4B;
+  --sure-wash:#DDEBE3;
+  --stop:#A33B38;
+  --stop-wash:#F5E1E0;
+  --shadow:0 1px 2px rgba(25,27,33,.06);
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --ground:#0F1215; --paper:#171B20; --raise:#1E232A;
+    --ink:#E6E9ED; --ink-mid:#A5ADB8; --ink-soft:#7B838E;
+    --line:#2B323A; --line-soft:#222830;
+    --accent:#E0A94A; --accent-ink:#F0C173; --accent-wash:#2C2314;
+    --sure:#6DBE93; --sure-wash:#152720;
+    --stop:#E08A84; --stop-wash:#2D1B1A;
+    --shadow:0 1px 2px rgba(0,0,0,.5);
+  }
+}
+:root[data-theme="dark"]{
+  --ground:#0F1215; --paper:#171B20; --raise:#1E232A;
+  --ink:#E6E9ED; --ink-mid:#A5ADB8; --ink-soft:#7B838E;
+  --line:#2B323A; --line-soft:#222830;
+  --accent:#E0A94A; --accent-ink:#F0C173; --accent-wash:#2C2314;
+  --sure:#6DBE93; --sure-wash:#152720;
+  --stop:#E08A84; --stop-wash:#2D1B1A;
+  --shadow:0 1px 2px rgba(0,0,0,.5);
+}
+
+*{box-sizing:border-box;margin:0}
+body{
+  background:var(--ground); color:var(--ink);
+  font-family:"IBM Plex Sans",system-ui,sans-serif;
+  font-size:16px; line-height:1.6;
+  -webkit-font-smoothing:antialiased;
+}
+.wrap{max-width:820px;margin:0 auto;padding:32px 18px 80px}
+@media(min-width:760px){ .wrap{padding:52px 28px 100px} }
+
+/* ---------- başlık ---------- */
+.top{border-bottom:2px solid var(--ink);padding-bottom:20px;margin-bottom:26px}
+.kicker{
+  font-family:"IBM Plex Mono",monospace;font-size:11px;letter-spacing:.14em;
+  text-transform:uppercase;color:var(--accent-ink);margin-bottom:10px;
+}
+h1{
+  font-family:"Fraunces",Georgia,serif;font-variation-settings:"opsz" 144;
+  font-size:clamp(30px,6vw,46px);font-weight:700;line-height:1.05;
+  letter-spacing:-.02em;margin-bottom:12px;
+}
+.sub{font-size:clamp(15px,2.2vw,18px);color:var(--ink-mid);max-width:56ch}
+
+/* ---------- kutular ---------- */
+.panel{
+  background:var(--raise);border:1px solid var(--line);border-radius:6px;
+  padding:18px 20px;margin:22px 0;box-shadow:var(--shadow);
+}
+.panel h2{
+  font-family:"IBM Plex Mono",monospace;font-size:11px;letter-spacing:.13em;
+  text-transform:uppercase;color:var(--ink-soft);font-weight:500;margin-bottom:12px;
+}
+.panel p{color:var(--ink-mid);margin-bottom:9px}
+.panel p:last-child{margin-bottom:0}
+.panel strong{color:var(--ink);font-weight:600}
+
+/* ---------- süre tablosu ---------- */
+table{border-collapse:collapse;width:100%;font-size:14.5px;margin-top:4px}
+th,td{text-align:left;padding:7px 10px 7px 0;border-bottom:1px solid var(--line-soft)}
+th{
+  font-family:"IBM Plex Mono",monospace;font-size:10.5px;letter-spacing:.1em;
+  text-transform:uppercase;color:var(--ink-soft);font-weight:500;
+}
+td.t{font-family:"IBM Plex Mono",monospace;color:var(--accent-ink);white-space:nowrap;text-align:right}
+tr:last-child td{border-bottom:0}
+tfoot td{font-weight:600;border-top:1px solid var(--line);border-bottom:0;padding-top:9px}
+
+/* ---------- slayt kartı ---------- */
+.card{
+  background:var(--raise);border:1px solid var(--line);border-radius:6px;
+  margin:14px 0;box-shadow:var(--shadow);overflow:hidden;
+}
+.card > summary{
+  list-style:none;cursor:pointer;padding:14px 18px;
+  display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;
+}
+.card > summary::-webkit-details-marker{display:none}
+.card > summary:hover{background:var(--paper)}
+.no{
+  font-family:"IBM Plex Mono",monospace;font-size:12px;font-weight:500;
+  color:var(--accent-ink);background:var(--accent-wash);
+  padding:2px 8px;border-radius:3px;flex:none;
+}
+.ttl{
+  font-family:"Fraunces",Georgia,serif;font-variation-settings:"opsz" 96;
+  font-size:17px;font-weight:600;line-height:1.25;flex:1 1 240px;
+}
+.sec{
+  font-family:"IBM Plex Mono",monospace;font-size:10.5px;letter-spacing:.08em;
+  text-transform:uppercase;color:var(--ink-soft);
+}
+.dur{
+  font-family:"IBM Plex Mono",monospace;font-size:12.5px;
+  color:var(--ink-soft);margin-left:auto;white-space:nowrap;
+}
+.body{padding:2px 18px 18px;border-top:1px solid var(--line-soft)}
+
+.blk{margin-top:14px}
+.blk:first-child{margin-top:12px}
+.lbl{
+  font-family:"IBM Plex Mono",monospace;font-size:10.5px;letter-spacing:.12em;
+  text-transform:uppercase;font-weight:500;margin-bottom:6px;
+  display:flex;align-items:center;gap:8px;
+}
+.lbl::after{content:"";flex:1;height:1px;background:var(--line-soft)}
+.lbl.say{color:var(--accent-ink)}
+.lbl.point{color:var(--sure)}
+.lbl.ask{color:var(--ink-soft)}
+.lbl.warn{color:var(--stop)}
+
+.say-txt{
+  border-left:3px solid var(--accent);padding-left:14px;
+  font-size:16.5px;line-height:1.62;color:var(--ink);
+}
+.say-txt p{margin-bottom:10px}
+.say-txt p:last-child{margin-bottom:0}
+.blk p{color:var(--ink-mid);font-size:15px}
+.blk.point-b p{color:var(--ink-mid)}
+.warn-b{background:var(--stop-wash);border-radius:4px;padding:10px 13px}
+.warn-b p{color:var(--ink);font-size:14.5px}
+.qa{margin-bottom:9px;font-size:14.5px;color:var(--ink-mid)}
+.qa:last-child{margin-bottom:0}
+.qa b{color:var(--ink);font-weight:600;display:block;margin-bottom:1px}
+code,.mono{
+  font-family:"IBM Plex Mono",monospace;font-size:.9em;
+  background:var(--paper);border:1px solid var(--line-soft);
+  border-radius:3px;padding:1px 5px;
+}
+
+.divider-note{
+  background:var(--paper);border:1px dashed var(--line);
+  border-radius:6px;padding:12px 18px;margin:14px 0;
+  display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;
+}
+.divider-note .no{background:transparent;padding:2px 0}
+.divider-note p{color:var(--ink-mid);font-size:14.5px;flex:1 1 260px}
+
+h3.grp{
+  font-family:"IBM Plex Mono",monospace;font-size:11px;letter-spacing:.14em;
+  text-transform:uppercase;color:var(--ink-soft);font-weight:500;
+  margin:34px 0 10px;padding-top:16px;border-top:1px solid var(--line);
+}
+
+.ctrl{
+  display:flex;gap:10px;margin:18px 0 4px;flex-wrap:wrap;
+}
+.ctrl button{
+  font:inherit;font-size:13px;font-family:"IBM Plex Mono",monospace;
+  background:var(--raise);color:var(--ink);border:1px solid var(--line);
+  border-radius:4px;padding:6px 12px;cursor:pointer;
+}
+.ctrl button:hover{background:var(--paper)}
+
+@media print{
+  body{background:#fff}
+  .ctrl{display:none}
+  .card{break-inside:avoid;box-shadow:none}
+  .body{display:block !important}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<div class="top">
+  <p class="kicker">mise · EatBetter vaka çalışması</p>
+  <h1>Konuşmacı kitapçığı</h1>
+  <p class="sub">
+    Her slaytta ne söyleyeceğiniz, neyi göstereceğiniz, ne sorulursa ne
+    cevaplayacağınız. Slaytın üstündeki metin dinleyici için; buradaki metin
+    sizin için. <strong>Söyle</strong> bloklarındaki cümleler doğrudan
+    söylenmek üzere yazıldı.
+  </p>
+</div>
+
+<div class="panel">
+  <h2>Baştan sona tek bir cümle anlatıyorsunuz</h2>
+  <p>
+    <strong>"Bu projeyi ayıran şey seçtiğim model değil, modele neyi
+    yaptırmadığım."</strong>
+  </p>
+  <p>
+    Her slayt bu cümlenin bir parçası. Bir yerde kaybolursanız, oraya dönün.
+    Kapanışta da aynı cümleyi tekrar edeceksiniz — dinleyici o an "ha, baştan
+    beri bunu anlatıyormuş" diyecek.
+  </p>
+</div>
+
+<div class="panel">
+  <h2>Yirmi dakikayı nasıl bölüyorsunuz</h2>
+  <table>
+    <thead>
+      <tr><th>Bölüm</th><th>Slaytlar</th><th style="text-align:right">Süre</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>01 · Problem</td><td>1–5</td><td class="t">3 dk 45 sn</td></tr>
+      <tr><td>02 · Mimari</td><td>6–12</td><td class="t">7 dk 30 sn</td></tr>
+      <tr><td>03 · Kanıt</td><td>13–16</td><td class="t">3 dk 45 sn</td></tr>
+      <tr><td>04 · Sırada ne var</td><td>17–22</td><td class="t">4 dk 00 sn</td></tr>
+      <tr><td>Kapanış</td><td>23</td><td class="t">40 sn</td></tr>
+    </tbody>
+    <tfoot>
+      <tr><td>Toplam</td><td>23 slayt</td><td class="t">19 dk 40 sn</td></tr>
+    </tfoot>
+  </table>
+  <p style="margin-top:12px">
+    Yirmi saniye payı var, o kadar. <strong>Sunum sıkışırsa 14 ve 19'u
+    atlayın</strong> — ikisi de destekleyici, argümanı taşımıyor. 4, 12 ve
+    16'yı asla kısaltmayın; sunum onların üstünde duruyor.
+  </p>
+</div>
+
+<div class="ctrl">
+  <button onclick="document.querySelectorAll('.card').forEach(function(d){d.open=true})">Hepsini aç</button>
+  <button onclick="document.querySelectorAll('.card').forEach(function(d){d.open=false})">Hepsini kapat</button>
+</div>
+
+<!-- ══════════════════ 01 PROBLEM ══════════════════ -->
+<h3 class="grp">01 · Problem</h3>
+
+<details class="card" open>
+  <summary>
+    <span class="no">1</span>
+    <span class="ttl">Bilmediğini bilen bir yemek günlüğü</span>
+    <span class="dur">35 sn</span>
+  </summary>
+  <div class="body">
+    <div class="blk">
+      <p class="lbl say">Söyle</p>
+      <div class="say-txt">
+        <p>
+          Önümüzdeki yirmi dakikada EatBetter için yaptığım vaka çalışmasını
+          anlatacağım. Adı mise. Bir yemek günlüğü: ne yediğinizi yazıyorsunuz
+          ya da fotoğrafını çekiyorsunuz, o da kaloriyi çıkarıyor.
+        </p>
+        <p>
+          Ama size anlatacağım şey kalori hesabı değil. Anlatacağım şey şu: bu
+          sistem <em>bilmediği</em> bir şeyle karşılaştığında ne yapıyor. Çünkü
+          zor olan yiyeceği tanımak değil; tanıyamadığını fark edip
+          susabilmek.
+        </p>
+      </div>
+    </div>
+    <div class="blk point-b">
+      <p class="lbl point">Göster</p>
+      <p>
+        Künyedeki <span class="mono">215 test · sonuçları açık eval</span>
+        satırına bir saniye parmak basın. Anlatacağınız her sayının arkasında
+        çalıştırılabilir bir şey olduğunu baştan söylemiş olursunuz.
+      </p>
+    </div>
+    <div class="blk">
+      <p class="lbl warn">Dikkat</p>
+      <div class="warn-b">
+        <p>
+          Teknoloji yığınını burada saymayın — künyede zaten yazıyor, ve
+          okumaya başlarsanız kırk saniyede kapağı geçemezsiniz.
+        </p>
+      </div>
+    </div>
+  </div>
+</details>
+
+<div class="divider-note">
+  <span class="no">2</span>
+  <p>
+    Ayraç. <strong>Durmayın.</strong> Geçerken tek cümle: "Önce problemin ne
+    olduğunu netleştireyim, çünkü herkes aynı yerde tökezliyor."
+  </p>
+  <span class="dur">10 sn</span>
+</div>
+
+<details class="card">
+  <summary>
+    <span class="no">3</span>
+    <span class="ttl">Tek bir problem değil, dört ayrı problem</span>
+    <span class="dur">55 sn</span>
+  </summary>
+  <div class="body">
+    <div class="blk">
+      <p class="lbl say">Söyle</p>
+      <div class="say-txt">
+        <p>
+          Bir öğünü kaydetmek tek bir zor problem değil. Dört ayrı problem, ve
+          dördü birbirinden bağımsız çuvallıyor.
+        </p>
+        <p>
+          Hangi yiyecek bu? "Yoğurt" dediğinizde sade de olabilir, Yunan da,
+          meyveli de — yüz gramda altmış bir ile doksan dokuz kalori arası. Ne
+          kadar var? Kalori hatasının neredeyse tamamı buradan geliyor. Nasıl
+          pişmiş? Haşlanmış patates seksen yedi kalori, kızarmışı üç yüz on
+          iki — aynı yiyecek, üç buçuk katı. Ve dördüncüsü: bilmediğini
+          bilmek. Fark ettiğinde de emin bir sayı basmamak.
+        </p>
+        <p>
+          Şunu özellikle söylemek istiyorum: bunlardan "ne kadar?" sorusunu
+          kamera <em>yapısı gereği</em> çözemez. Tavadaki yağı göremez,
+          sostaki şekeri göremez, kâsenin ne kadar derin olduğunu göremez.
+        </p>
+      </div>
+    </div>
+    <div class="blk point-b">
+      <p class="lbl point">Göster</p>
+      <p>
+        Dört satırı sırayla gösterin, ama <strong>"Ne kadar?" satırında
+        durun</strong> ve elinizi orada bırakın. Sunumun geri kalanı o satıra
+        bağlanıyor.
+      </p>
+    </div>
+    <div class="blk">
+      <p class="lbl ask">Sorarlarsa</p>
+      <p class="qa">
+        <b>"Bunları iyi bir model çözmez mi?"</b>
+        Literatür dördünde de ayrı ayrı kötü. Genel amaçlı görsel modeller
+        yiyecek tanımada ~%60 isabet tutturuyor; önde gelen bir modelin
+        kaymağı süt okuyup 380 kalorilik hata yaptığı belgelenmiş.
+      </p>
+    </div>
+    <div class="blk">
+      <p class="lbl warn">Dikkat</p>
+      <div class="warn-b">
+        <p>
+          Dördünü eşit ağırlıkta anlatmayın. Asıl mesele ikincisi; diğer üçü
+          onu kurmak için var.
+        </p>
+      </div>
+    </div>
+  </div>
+</details>
+
+<details class="card">
+  <summary>
+    <span class="no">4</span>
+    <span class="ttl">Diyetisyenler %41 yanılıyor</span>
+    <span class="dur">85 sn</span>
+  </summary>
+  <div class="body">
+    <div class="blk">
+      <p class="lbl say">Söyle</p>
+      <div class="say-txt">
+        <p>
+          Bu projeyi şekillendiren tek bir bulgu var. Eğitimli diyetisyenler
+          bir fotoğrafa bakıp porsiyon tahmin ederken ortalama yüzde kırk bir
+          hata yapıyor. Nutrition5k çalışmasından.
+        </p>
+        <p>
+          Bir düşünün: insanın tavanı buysa, ekrana "beş yüz otuz yedi kalori"
+          yazan her uygulama olmayan bir kesinliği varmış gibi gösteriyor
+          demektir.
+        </p>
+        <p>
+          Aynı çalışmada iki sayı daha var, ve bence sunumun en önemli iki
+          sayısı bunlar. Aynı model, <em>bir gramın</em> kaç kalori olduğunu
+          yüzde dokuz buçuk hatayla biliyor. Ama <em>toplam</em> kaloriyi
+          tahmin ederken yüzde yirmi altı yanılıyor. Sebebi de basit: toplam
+          kalori gram ile çarpılarak bulunuyor, yani porsiyondaki hata
+          doğrudan sonuca biniyor.
+        </p>
+        <p>
+          Yani "bu ne?" sorusu büyük ölçüde çözülmüş durumda. Çözülmemiş olan
+          "ne kadar?".
+        </p>
+      </div>
+    </div>
+    <div class="blk point-b">
+      <p class="lbl point">Göster</p>
+      <p>
+        Üç kutuyu soldan sağa gösterin. <strong>9,5 ile 26,1 arasında elinizle
+        bir aralık çizin</strong> — anlatmak istediğiniz şey o boşluk, sayıların
+        kendisi değil.
+      </p>
+    </div>
+    <div class="blk">
+      <p class="lbl ask">Sorarlarsa</p>
+      <p class="qa">
+        <b>"Sizin kendi ölçümünüz ne diyor?"</b>
+        Aynı yeri gösteriyor. Bir fotoğrafı dört kez çalıştırdım: yiyecekler
+        her seferinde aynı tanındı, porsiyon %84 oynadı.
+      </p>
+      <p class="qa">
+        <b>"41% biraz yüksek değil mi?"</b>
+        Eğitimli diyetisyenlerin, sadece fotoğrafa bakarak. Elinde kap, kaşık,
+        tartı olan biri değil.
+      </p>
+    </div>
+    <div class="blk">
+      <p class="lbl warn">Dikkat</p>
+      <div class="warn-b">
+        <p>
+          Burada acele etmeyin — bu slayt, mimarideki en büyük yatırımın neden
+          porsiyon tarafında olduğunu açıklıyor. Sekizinci slaytta "neden iki
+          merdiven?" diye sorarlarsa cevap buradadır.
+        </p>
+      </div>
+    </div>
+  </div>
+</details>
+
+<details class="card">
+  <summary>
+    <span class="no">5</span>
+    <span class="ttl">Tek sayı yerine aralık gösteriyoruz</span>
+    <span class="dur">40 sn</span>
+  </summary>
+  <div class="body">
+    <div class="blk">
+      <p class="lbl say">Söyle</p>
+      <div class="say-txt">
+        <p>
+          Buradan çıkan karar şu oldu: tek sayı yazmayacağız.
+        </p>
+        <p>
+          Ekranda aynı fotoğrafın iki çalıştırması var. Üstte kategorinin
+          yaptığı şey: iki sonuç arasında yüz yirmi dokuz kalorilik bir fark
+          var ve ekranda bunu açıklayan hiçbir şey yok. Altta bizim yaptığımız:
+          her sonuç, diğerinin gösterdiği bandın içinde kalıyor.
+        </p>
+        <p>
+          Dikkat edin — oynamayı ortadan kaldırmadık. Gösterdiğimiz aralığın
+          dışına çıkmamasını sağladık. Ölçtüğümüz metrik de bu.
+        </p>
+      </div>
+    </div>
+    <div class="blk point-b">
+      <p class="lbl point">Göster</p>
+      <p>
+        Üstteki iki noktayı, sonra alttaki iki bandı gösterin. Bantların
+        <strong>üst üste bindiği yeri</strong> parmağınızla işaret edin — slaydın
+        bütün mesajı orada.
+      </p>
+    </div>
+    <div class="blk">
+      <p class="lbl ask">Sorarlarsa</p>
+      <p class="qa">
+        <b>"Yani daha belirsiz bir ürün mü satıyorsunuz?"</b>
+        Bu slaydın en çok alacağı itiraz bu, hazırlıklı olun. Cevap: hayır,
+        belirsizlik aynı belirsizlik — sadece görünür. Rakip tek sayı
+        yazdığında belirsizlik yok olmuyor, kullanıcıdan saklanıyor.
+      </p>
+    </div>
+  </div>
+</details>
+
+<!-- ══════════════════ 02 MİMARİ ══════════════════ -->
+<h3 class="grp">02 · Mimari</h3>
+
+<div class="divider-note">
+  <span class="no">6</span>
+  <p>
+    Ayraç, ama bu sefer <strong>bir saniye durun</strong>: ekranda bölümün
+    kelimeleri yazıyor. "Birkaç terim kullanacağım, hepsi burada" deyip geçin.
+    Tek tek okumayın.
+  </p>
+  <span class="dur">20 sn</span>
+</div>
+
+<details class="card">
+  <summary>
+    <span class="no">7</span>
+    <span class="ttl">Bir öğün, iki ayrı soru</span>
+    <span class="dur">55 sn</span>
+  </summary>
+  <div class="body">
+    <div class="blk">
+      <p class="lbl say">Söyle</p>
+      <div class="say-txt">
+        <p>
+          Mimarinin tamamı tek bir ayrımdan çıkıyor. Bir öğün geldiğinde iki
+          ayrı soru soruyoruz: bu hangi yiyecek, ve bundan ne kadar var. İkisi
+          birbirinden bağımsız, ayrı ayrı çözülüyor, sonunda birleşiyor.
+        </p>
+        <p>
+          Neden ayırmak önemli: bir kalemde kimlik kesin ama miktar belirsiz
+          olabilir — barkodlu bir ürünün yarısını yemişsinizdir. Ya da tam
+          tersi. Tek bir güven skoru bu ikisini birbirine karıştırır ve size
+          kullanıcıya <em>ne soracağınızı</em> söyleyemez. Ayrı tuttuğumuz
+          için hangi soruyu soracağımızı biliyoruz.
+        </p>
+      </div>
+    </div>
+    <div class="blk point-b">
+      <p class="lbl point">Göster</p>
+      <p>
+        İki kolu gösterip birleştikleri yerdeki üç sayıyı işaret edin:
+        <span class="mono">134 – 149 – 164</span>. "Bir kalemin en az, en olası
+        ve en çok kalorisi" deyin — sonraki slaytlarda bu üçlü tekrar gelecek.
+      </p>
+    </div>
+    <div class="blk">
+      <p class="lbl warn">Dikkat</p>
+      <div class="warn-b">
+        <p>
+          Fonksiyon adlarını (<span class="mono">resolvePhrase()</span>,
+          <span class="mono">runLadder()</span>) sesli okumayın. Ekranda
+          duruyorlar, kodu açmak isteyen bakar.
+        </p>
+      </div>
+    </div>
+  </div>
+</details>
+
+<details class="card">
+  <summary>
+    <span class="no">8</span>
+    <span class="ttl">İlk kesin cevabı veren basamak merdiveni durduruyor</span>
+    <span class="dur">85 sn</span>
+  </summary>
+  <div class="body">
+    <div class="blk">
+      <p class="lbl say">Söyle</p>
+      <div class="say-txt">
+        <p>
+          "Bu hangi yiyecek?" sorusunu sekiz basamaklı bir merdiven cevaplıyor.
+          Basamaklar yukarıdan aşağı sırayla deneniyor. Bir basamak kesin
+          cevabı verdiği anda merdiven duruyor — altındaki basamaklar hiç
+          çalışmıyor, parası da ödenmiyor.
+        </p>
+        <p>
+          Yukarıda kullanıcının kendi düzeltmesi var, sıfır milisaniye. Sonra
+          küresel varsayılan, birebir isim eşleşmesi, arama. Beşinci basamağa
+          kadar model yok. Beşinci basamak doğrulayıcı, ve orada sekiz yüz
+          milisaniyeye çıkıyoruz.
+        </p>
+        <p>
+          Tipik bir metin öğünü üçüncü basamakta çıkıyor. Yani modelin
+          üstündeki dört basamak, trafiğin yüzde doksan altı buçuğunu tek
+          başına karşılıyor.
+        </p>
+        <p>
+          Bu üç şeyi birden çözüyor: maliyet, çünkü çağrıların yüzde doksan
+          altısında model çalışmıyor. Determinizm, çünkü ilk dört basamak saf
+          fonksiyon — aynı girdi her zaman aynı çıktı. Ve denetlenebilirlik,
+          çünkü hangi basamağın cevapladığı hem kayıtta hem arayüzde duruyor.
+        </p>
+      </div>
+    </div>
+    <div class="blk point-b">
+      <p class="lbl point">Göster</p>
+      <p>
+        Elinizi merdivende <strong>yukarıdan aşağı kaydırın</strong>, sonra
+        beşinci basamakta durdurun ve sağdaki <span class="mono">~800 ms</span>
+        etiketini gösterin. Maliyet farkını sözle değil, elinizle anlatın.
+      </p>
+    </div>
+    <div class="blk">
+      <p class="lbl ask">Sorarlarsa</p>
+      <p class="qa">
+        <b>"Porsiyon tarafı da böyle mi?"</b>
+        Evet, aynı şekle sahip: yedi basamak, tartılmış kütleden model
+        tahminine. Bir sonraki slayt zaten o.
+      </p>
+      <p class="qa">
+        <b>"İlk basamak kullanıcı düzeltmesi — başka kullanıcıya sızıyor mu?"</b>
+        Hayır, ve bunun testi var: bir kullanıcının düzeltmesi diğerine
+        ulaşmıyor.
+      </p>
+    </div>
+  </div>
+</details>
+
+<details class="card">
+  <summary>
+    <span class="no">9</span>
+    <span class="ttl">Porsiyon merdiveninde her basamak farklı bir şey söylüyor</span>
+    <span class="dur">85 sn</span>
+  </summary>
+  <div class="body">
+    <div class="blk">
+      <p class="lbl say">Söyle</p>
+      <div class="say-txt">
+        <p>
+          İkinci merdiven "ne kadar?" sorusunu cevaplıyor, ve burada bir şey
+          daha var: her basamak sadece farklı bir yöntem değil, farklı bir
+          <em>hata payı</em> da getiriyor. Tartılmış bir gram ile fotoğrafa
+          bakıp yapılan tahmin aynı şey değil; o yüzden aynı hata payını da
+          taşımıyorlar.
+        </p>
+        <p>
+          En üstte kullanıcı gramı yazmışsa artı eksi yüzde iki — tahmin yok,
+          düz çarpma. En altta model tahmini, artı eksi yüzde kırk. Aradaki
+          fark bu kadar büyük, ve biz bunu kullanıcıdan saklamıyoruz: hangi
+          basamağın cevapladığı uygulamada satırın altında yazıyor.
+        </p>
+        <p>
+          Beşinci satırı özellikle göstermek istiyorum. Kullanıcı kareye düz
+          bir kredi kartı koyduğunda iki boyutlu fotoğraf porsiyon hatası
+          yüzde otuz dörtten yüzde on sekize iniyor. Bu LiDAR'a yakın bir
+          sonuç, sıfır donanım maliyetiyle. Ve neredeyse hiçbir uygulama
+          kullanıcıdan bunu istemiyor.
+        </p>
+      </div>
+    </div>
+    <div class="blk point-b">
+      <p class="lbl point">Göster</p>
+      <p>
+        Sağdaki hata payı sütununu yukarıdan aşağı gösterin (±%2 → ±%40). Sonra
+        <strong>beşinci satırda durun</strong> — bu slaydın en kolay satılan
+        fikri o.
+      </p>
+    </div>
+    <div class="blk">
+      <p class="lbl ask">Sorarlarsa</p>
+      <p class="qa">
+        <b>"Altıncı satır neden ±%5–50, sıra bozuluyor?"</b>
+        Sıranın tek istisnası o, ekranda da öyle yazıyor: ekmek dilimi çok az
+        oynuyor, kâse çok oynuyor. Ev ölçüsünün genişliği ölçünün kendisine
+        bağlı.
+      </p>
+    </div>
+  </div>
+</details>
+
+<details class="card">
+  <summary>
+    <span class="no">10</span>
+    <span class="ttl">Model beş karttan birini seçiyor, başkasını diyemiyor</span>
+    <span class="dur">70 sn</span>
+  </summary>
+  <div class="body">
+    <div class="blk">
+      <p class="lbl say">Söyle</p>
+      <div class="say-txt">
+        <p>
+          Şimdi sunumun en önemli slaydına geldik: modelin eli tam olarak
+          nereye kadar uzanıyor.
+        </p>
+        <p>
+          Modele "bu ne?" diye açık uçlu bir soru sormuyoruz. Kod önce beş
+          aday seçiyor — feta, parmesan, lor, ricotta, kaşar. Modele bu beş
+          kartı gösterip "hangisi, yoksa hiçbiri mi?" diye soruyoruz. Model de
+          bir sıra numarası döndürüyor, ya da eksi bir.
+        </p>
+        <p>
+          Dönen cevap bir kapıdan geçiyor. Listede olmayan bir şey döndürürse
+          onu düzeltmeye <em>çalışmıyoruz</em> — atıyoruz ve kullanıcıya
+          soruyoruz. Yani halüsinasyon burada yasak değil; yapısı gereği
+          mümkün değil.
+        </p>
+        <p>
+          Bir de "fail closed" ilkesi var: doğrulayıcıya ulaşılamıyorsa
+          otomatik eşleşme de yok. Ulaşılamayan bir doğrulayıcı sessizce
+          "onaylandı"ya dönüşmüyor.
+        </p>
+      </div>
+    </div>
+    <div class="blk point-b">
+      <p class="lbl point">Göster</p>
+      <p>
+        Kapalı listeyi, sonra <span class="mono">kapı</span> kutusunu, sonra
+        aşağı giden "düşür" okunu gösterin. Sıra bu üçü —
+        <strong>kapıyı atlamayın</strong>, güvenlik sınırı orası.
+      </p>
+    </div>
+    <div class="blk">
+      <p class="lbl ask">Sorarlarsa</p>
+      <p class="qa">
+        <b>"Doğrulayıcı ele geçirilirse?"</b>
+        Listede olmayan bir id döndürebilir, ama kapıdan geçemez. Kapı gerçek
+        bir güven sınırı, temenni değil.
+      </p>
+      <p class="qa">
+        <b>"Beş aday nasıl seçiliyor?"</b>
+        Router seçiyor — sözcüksel ve vektör araması. Model o seçime hiç
+        karışmıyor.
+      </p>
+    </div>
+  </div>
+</details>
+
+<details class="card">
+  <summary>
+    <span class="no">11</span>
+    <span class="ttl">Her sayı tek bir işlemden geliyor</span>
+    <span class="dur">55 sn</span>
+  </summary>
+  <div class="body">
+    <div class="blk">
+      <p class="lbl say">Söyle</p>
+      <div class="say-txt">
+        <p>
+          Ekranda gördüğünüz her kalori tek bir satırdan geliyor: yüz gramdaki
+          değer, çarpı gram, bölü yüz. Başka hiçbir yerde kalori
+          hesaplanmıyor.
+        </p>
+        <p>
+          Model bir besin değeri yazamıyor, çünkü verebileceği cevabın
+          şablonunda öyle bir alan yok. Bir veritabanı satırını da kendisi
+          seçemiyor.
+        </p>
+        <p>
+          Ve bunu her öğünde, canlıda yeniden kontrol ediyoruz. Bir sayının
+          izi sürülemiyorsa kalem "çözümlenmedi"ye düşüyor ve o sayı
+          <em>gösterilmiyor</em>. Kullanıcının kendi düzeltmesi de bu
+          denetimden kaçamıyor.
+        </p>
+      </div>
+    </div>
+    <div class="blk point-b">
+      <p class="lbl point">Göster</p>
+      <p>
+        Önce formülü, sonra alttaki
+        <span class="mono">verifyTraceable</span> bloğunu gösterin. "Bu testte
+        değil, canlıda çalışıyor" cümlesini söylerken ikinci blokta durun.
+      </p>
+    </div>
+    <div class="blk">
+      <p class="lbl warn">Dikkat</p>
+      <div class="warn-b">
+        <p>
+          "Besin değeri uydurmuyoruz" cümlesini tek başına söylemeyin — herkes
+          söylüyor. Üç mekanizmayı sayın: şema izin vermiyor, aritmetik tek
+          yerde, ve bu söz her öğünde yeniden doğrulanıyor.
+        </p>
+      </div>
+    </div>
+  </div>
+</details>
+
+<details class="card">
+  <summary>
+    <span class="no">12</span>
+    <span class="ttl">Bir isteğin tam izi: model hiç çağrılmıyor</span>
+    <span class="dur">80 sn</span>
+  </summary>
+  <div class="body">
+    <div class="blk">
+      <p class="lbl say">Söyle</p>
+      <div class="say-txt">
+        <p>
+          Şimdi bütün bunları tek bir istekte çalışırken görelim. Girdi: "iki
+          dilim beyaz ekmek ve bir bardak çay".
+        </p>
+        <p>
+          Çıkarıcı bunu iki kaleme bölüyor — modelin bir şey yazdığı tek aşama
+          burası. Sonra iki kalem paralel çözülüyor. Ekmek için kimlik
+          merdiveni üçüncü basamakta duruyor, porsiyon merdiveni ev ölçüsünde:
+          iki dilim, elli altı gram. Çay ikinci basamakta çıkıyor, yani başka
+          bir basamak.
+        </p>
+        <p>
+          Sonuç: yüz otuz beş, yüz elli, yüz altmış beş kalori. Ve buraya
+          dikkat — model hiç çağrılmadı. Ağ trafiği sıfır, süre birkaç
+          milisaniye.
+        </p>
+        <p>
+          Bir şey daha: çayın kalorisi bir virgül bir. Bu kadar küçük bir
+          sayının bile aralığı var, çünkü bardak ölçüsünün kendi yayılımı var.
+          Sistem küçük sayılarda da abartmıyor.
+        </p>
+      </div>
+    </div>
+    <div class="blk point-b">
+      <p class="lbl point">Göster</p>
+      <p>
+        <strong>Yavaş gidin.</strong> Sırayla: iki <span class="mono">✓ DURDU</span>
+        işareti, sonra <span class="mono">── kalem 2 ──</span> satırındaki
+        "başka basamak" notu, sonra en alttaki
+        <span class="mono">// model hiç çağrılmadı</span> yorumu. Son satır
+        slaydın yumruğu.
+      </p>
+    </div>
+    <div class="blk">
+      <p class="lbl warn">Dikkat</p>
+      <div class="warn-b">
+        <p>
+          Bu slayt bütün mimariyi çalışırken gösteriyor; sunumun en yoğun
+          slaydı. Sıkıştıysanız <em>bunu değil</em>, 14 ile 19'u atlayın.
+        </p>
+      </div>
+    </div>
+  </div>
+</details>
+
+<!-- ══════════════════ 03 KANIT ══════════════════ -->
+<h3 class="grp">03 · Kanıt</h3>
+
+<div class="divider-note">
+  <span class="no">13</span>
+  <p>
+    Ayraç. Ekranda bölümün ölçü birimleri yazıyor. Tek cümle: "Şimdi sayılara
+    geleceğim, ama bu bölümün asıl konusu sayıların <strong>neden
+    okunmaması</strong> gerektiği."
+  </p>
+  <span class="dur">20 sn</span>
+</div>
+
+<details class="card">
+  <summary>
+    <span class="no">14</span>
+    <span class="ttl">Test edilen şey davranış, kaplama değil</span>
+    <span class="dur">35 sn</span>
+  </summary>
+  <div class="body">
+    <div class="blk">
+      <p class="lbl say">Söyle</p>
+      <div class="say-txt">
+        <p>
+          İki yüz on beş test, iki buçuk saniyede geçiyor. Anahtar yok, ağ yok
+          — klonlayıp çalıştırabilirsiniz.
+        </p>
+        <p>
+          Ama önemli olan sayı değil, neyin test edildiği. Determinizm: aynı
+          metni iki kez verince bayt bayt aynı sonuç. Kullanıcı izolasyonu:
+          bir kullanıcının düzeltmesi diğerine ulaşmıyor. Ve prompt
+          enjeksiyonu. Bunlar davranış testleri, kaplama testleri değil.
+        </p>
+      </div>
+    </div>
+    <div class="blk">
+      <p class="lbl warn">Dikkat</p>
+      <div class="warn-b">
+        <p>
+          Dosya adlarını okumayın. Sunum sıkıştıysa <strong>atlanacak ilk
+          slayt bu</strong> — argümanı taşımıyor, sadece destekliyor.
+        </p>
+      </div>
+    </div>
+  </div>
+</details>
+
+<details class="card">
+  <summary>
+    <span class="no">15</span>
+    <span class="ttl">Her sayı tek komutla yeniden üretiliyor</span>
+    <span class="dur">65 sn</span>
+  </summary>
+  <div class="body">
+    <div class="blk">
+      <p class="lbl say">Söyle</p>
+      <div class="say-txt">
+        <p>
+          Bu tablodaki her sayı tek bir komutla yeniden üretilebiliyor. Kırk
+          altı etiketli vaka, kural katmanı, model yok.
+        </p>
+        <p>
+          Doğruluk tarafında kalori medyan hatası sıfır. Dürüstlük tarafında
+          asıl bakmanızı istediğim iki satır var: gerçek toplam, gösterdiğimiz
+          aralığın içinde kalıyor mu — yüzde yüz. Ve halüsinasyon oranı sıfır.
+          Bu ikincisinin sıfır olmaması zaten kabul edilemezdi.
+        </p>
+        <p>
+          Alttaki üç satır vaka gruplarını gösteriyor. "Adversarial" grubu
+          sistemi kasten kırmak için yazıldı: kaymak–süt tuzağı, çiğ ve pişmiş
+          pirinç — ki aralarında üç yüz altmış beşe yüz otuz kalori fark var —
+          yiyecek olmayan girdi, ve prompt enjeksiyonu.
+        </p>
+      </div>
+    </div>
+    <div class="blk point-b">
+      <p class="lbl point">Göster</p>
+      <p>
+        <span class="mono">HONESTY</span> bloğundaki iki satırı gösterin.
+        Doğruluk bloğunu okumayın — bir sonraki slaytta zaten onu
+        çürüteceksiniz.
+      </p>
+    </div>
+    <div class="blk">
+      <p class="lbl ask">Sorarlarsa</p>
+      <p class="qa">
+        <b>"Vektör araması açık mıydı?"</b>
+        Bu koşuda değildi — gömü modeli indirilemedi, sistem sessizce sözcüksel
+        moda düştü, sonuç yine %100. <strong>Bunu kendiniz söyleyin</strong>:
+        sistemin bozulduğunda nasıl davrandığı tam orada görülüyor.
+      </p>
+    </div>
+  </div>
+</details>
+
+<details class="card">
+  <summary>
+    <span class="no">16</span>
+    <span class="ttl">Bu %100'ler başarı değil, uyarı</span>
+    <span class="dur">105 sn</span>
+  </summary>
+  <div class="body">
+    <div class="blk">
+      <p class="lbl say">Söyle</p>
+      <div class="say-txt">
+        <p>
+          Şimdi az önce gösterdiğim tabloyu kendim çürüteceğim. Çünkü bunu ben
+          söylemezsem, soran siz olursunuz.
+        </p>
+        <p>
+          Eval aracının kendisi bu uyarıyı basıyor: kıyaslama doymuş. Her vaka
+          geçiyor, dolayısıyla bu set artık iyi bir sistemle kötüsünü
+          ayırt edemez.
+        </p>
+        <p>
+          Dört tane somut zayıflık var. Bir: kontaminasyon — veritabanı takma
+          adlarını da test vakalarını da ben yazdım. İki: fotoğraftan porsiyon
+          hiç ölçülmedi; tartılmış referans yok, ve gözle etiketleyenin hatası
+          da yüzde kırk bir, yani ölçmek istediğimiz şeyden büyük. Üç:
+          kalibrasyon hatası sıfır virgül iki — sistem kendine olduğundan az
+          güveniyor, yani söylediğinden daha sık haklı çıkıyor; bedeli de
+          kullanıcıya boşuna sorulan soru. Dört: kapsam yüz yirmi bir satır;
+          arkasında on üç bin USDA satırı var ama chimichurri de kebap da
+          şavarma da ikisinde yok.
+        </p>
+        <p>
+          Bunları anlatmamın sebebi şu: sorulmadan söylenen bir zayıflık, geri
+          kalan her sözü daha inanılır kılar.
+        </p>
+      </div>
+    </div>
+    <div class="blk point-b">
+      <p class="lbl point">Göster</p>
+      <p>
+        Önce sarı uyarı kutusunu gösterin ve "bunu ben yazmadım, araç kendisi
+        basıyor" deyin. Sonra dört maddeyi tek tek.
+      </p>
+    </div>
+    <div class="blk">
+      <p class="lbl ask">Sorarlarsa</p>
+      <p class="qa">
+        <b>"Peki bu tabloya neden inanalım?"</b>
+        İnanmayın; çalıştırın. Zaten bu yüzden yayımladım. Ve kategoride bir
+        yerde ±%0,9 MAPE iddiası gördüm, kullanmadım — kamera yağı göremez,
+        diyetisyen %41 yanılır.
+      </p>
+    </div>
+    <div class="blk">
+      <p class="lbl warn">Dikkat</p>
+      <div class="warn-b">
+        <p>
+          Bu slayt bilinçli olarak sunumun <em>ortasında</em>, sonunda değil.
+          Sebebi: kalan her şeyi bu çerçeveden dinlesinler. Özür diler gibi
+          değil, hâkim gibi anlatın.
+        </p>
+      </div>
+    </div>
+  </div>
+</details>
+
+<!-- ══════════════════ 04 SIRADA NE VAR ══════════════════ -->
+<h3 class="grp">04 · Sırada ne var</h3>
+
+<div class="divider-note">
+  <span class="no">17</span>
+  <p>
+    Ayraç. Geçerken: "Son dört dakikada iki şey var — neyi hızlandırırım, ve
+    fine-tuning gerçekten nereye dokunur."
+  </p>
+  <span class="dur">15 sn</span>
+</div>
+
+<details class="card">
+  <summary>
+    <span class="no">18</span>
+    <span class="ttl">Yavaşlık her yerde değil, tek bir yolda</span>
+    <span class="dur">40 sn</span>
+  </summary>
+  <div class="body">
+    <div class="blk">
+      <p class="lbl say">Söyle</p>
+      <div class="say-txt">
+        <p>
+          Süre konusunda tek bir sayı vermek yanıltıcı olur, çünkü problem her
+          yerde değil. Metin tarafında kural katmanı iki milisaniye — ağa hiç
+          çıkmıyor. Fotoğraf tarafında on dört ile otuz yedi saniye arası.
+        </p>
+        <p>
+          Çözümlemelerin yüzde doksan altı buçuğu modele hiç uğramıyor. Yani
+          yavaşlık sadece fotoğraf yolunda, ve doğru yeri hızlandırmak için
+          önce bu ayrımı görmek gerekiyor.
+        </p>
+        <p>
+          Bir de şunu eklemek isterim: kullanıcıya birkaç saniyeden pahalıya
+          patlayan şey, boşuna sorulan sorudur.
+        </p>
+      </div>
+    </div>
+    <div class="blk">
+      <p class="lbl ask">Sorarlarsa</p>
+      <p class="qa">
+        <b>"Otomatik kayıt oranı neden sadece %43?"</b>
+        Çünkü sistem kendine olduğundan az güveniyor. Model katmanıyla bu oran
+        %97,8'e çıkıyor (v1.3.0 bake-off; aynı koşuda kural katmanı %39,1).
+        Yani modelin satın aldığı şey doğruluk değil, kendine güven.
+      </p>
+    </div>
+  </div>
+</details>
+
+<details class="card">
+  <summary>
+    <span class="no">19</span>
+    <span class="ttl">Doğrulayıcı boş yere iki kez çağrılıyor</span>
+    <span class="dur">50 sn</span>
+  </summary>
+  <div class="body">
+    <div class="blk">
+      <p class="lbl say">Söyle</p>
+      <div class="say-txt">
+        <p>
+          Kodu okurken bir şey buldum, README'de yazmıyor. Tanınmayan bir
+          yiyecek şu anda doğrulayıcıya arka arkaya iki kez gidiyor: önce
+          küratörlü kısa listeyle, çekimser kalırsa korpus listesiyle yeniden.
+        </p>
+        <p>
+          Korpus katmanı gelince fotoğraf süresinin ikiye katlanmasının sebebi
+          tam olarak bu. Önerim tek tura indirmek: iki listeyi birleştirip her
+          adayı katman etiketiyle göndermek. Korunması gereken iki şey var —
+          küratörlü katman korpusun önünde kalmalı, ve korpustan gelen bir
+          cevap sıfır virgül altmış güven tavanını aşmamalı. İkisi de seçilen
+          adayın etiketine bakarak uygulanabiliyor. Bir iki günlük iş.
+        </p>
+      </div>
+    </div>
+    <div class="blk point-b">
+      <p class="lbl point">Göster</p>
+      <p>
+        Üstteki iki ardışık oku, sonra alttaki tek oku gösterin. Fark
+        görselden anlaşılıyor, anlatmayın.
+      </p>
+    </div>
+    <div class="blk">
+      <p class="lbl warn">Dikkat</p>
+      <div class="warn-b">
+        <p>
+          Sıkıştıysanız atlanacak ikinci slayt bu. Ama <strong>atlarsanız
+          bile</strong> "kodu okurken bir performans hatası buldum" cümlesini
+          22. slaytta söyleyin — o cümle sizin lehinize çalışıyor.
+        </p>
+      </div>
+    </div>
+  </div>
+</details>
+
+<details class="card">
+  <summary>
+    <span class="no">20</span>
+    <span class="ttl">Fine-tuning hataların yarısına dokunabiliyor</span>
+    <span class="dur">50 sn</span>
+  </summary>
+  <div class="body">
+    <div class="blk">
+      <p class="lbl say">Söyle</p>
+      <div class="say-txt">
+        <p>
+          Fine-tuning'e gelirsek — cevabım "evet" ya da "hayır" değil, bu.
+        </p>
+        <p>
+          Sistem cevaplayamadığı her şeyi bir deftere yazıyor, ve her kaydı iki
+          kovadan birine koyuyor: bunu ancak veri ve küratörlük düzeltir, ya da
+          bunu gerçekten fine-tune düzeltir. On hata türünden beşi ikinci
+          kovada. Yani sistem, fine-tuning'in ne kadarını düzeltebileceğini
+          kendisi sayıyor.
+        </p>
+        <p>
+          Ve dışa aktarma komutu zaten yazılmış durumda — yalnızca etiketli
+          kayıtları veriyor. Fine-tune'un veri hattı hazır.
+        </p>
+      </div>
+    </div>
+    <div class="blk point-b">
+      <p class="lbl point">Göster</p>
+      <p>
+        Ortadaki <strong>besin değeri</strong> kutusunu gösterin: iki kovaya da
+        kapalı. "Ürünün ana sözü bu" deyin.
+      </p>
+    </div>
+    <div class="blk">
+      <p class="lbl ask">Sorarlarsa</p>
+      <p class="qa">
+        <b>"Kalorileri neden fine-tune ile öğretemiyoruz?"</b>
+        Kinoanın kalorisi gradyan inişiyle öğretilemez, çünkü bu mimaride sayı
+        alıntılanabilir bir satırdan gelmek zorunda. Ama bileşik bir yemeği
+        yanlış bölen bir çıkarıcı gerçek bir model hatası — ve o örnek kendi
+        cevabıyla birlikte geliyor.
+      </p>
+    </div>
+  </div>
+</details>
+
+<details class="card">
+  <summary>
+    <span class="no">21</span>
+    <span class="ttl">Üç yerde kâr eder, üç yerde etmez</span>
+    <span class="dur">40 sn</span>
+  </summary>
+  <div class="body">
+    <div class="blk">
+      <p class="lbl say">Söyle</p>
+      <div class="say-txt">
+        <p>
+          Nerede kâr eder: küçük bir modele damıtmakta — aynı bake-off
+          koşusunda kural katmanı yüzde otuz dokuz otomatik kayıt yapıyor,
+          Gemini yüzde doksan sekiz, ama beş bin katı gecikmeyle. Doğrulukta
+          ise berabereler. İkincisi Türkçe için çıkarıcı. Üçüncüsü doğrulayıcı
+          — beş seçenekli kapalı bir küme, serbest üretimden çok daha kolay
+          bir iş.
+        </p>
+        <p>
+          Nerede etmez: besin değerlerinde asla, çünkü şema izin vermiyor ve
+          girerse ürünün bütün sözü düşer. Kapsamda etmez, o bir veri
+          ortaklığı meselesi. Ve fotoğraftan porsiyonda etmez — tartılmış
+          referans yokken, ölçmek istediğinizden daha hatalı etiketlerle
+          eğitmiş olursunuz.
+        </p>
+        <p>
+          Asıl engel de veri değil, ölçüm: eval seti doyduğu için bir
+          fine-tune'un işe yaradığını bugün gösteremeyiz.
+        </p>
+      </div>
+    </div>
+  </div>
+</details>
+
+<details class="card">
+  <summary>
+    <span class="no">22</span>
+    <span class="ttl">Neyi önce fonlarsınız</span>
+    <span class="dur">45 sn</span>
+  </summary>
+  <div class="body">
+    <div class="blk">
+      <p class="lbl say">Söyle</p>
+      <div class="say-txt">
+        <p>
+          Sıralamam şu. İlk üçü toplam bir haftadan az ve hiçbiri model
+          gerektirmiyor: doğrulayıcıyı tek tura indirmek, çağrıları toplamak,
+          takma ad terfi kuyruğunu açmak. Sonra bağımsız bir held-out set —
+          her ölçümün ve kalibrasyonun önünü o açıyor. Sonra tartılmış fotoğraf
+          seti. Fine-tune en sonda.
+        </p>
+        <p>
+          Sebebi de şu: dördüncüsü olmadan altıncısını yapmak, sonucunu
+          göremeyeceğiniz bir harcama.
+        </p>
+      </div>
+    </div>
+    <div class="blk">
+      <p class="lbl warn">Dikkat</p>
+      <div class="warn-b">
+        <p>
+          Burada <strong>duraksayın ve tartışmayı davet edin</strong>: "sıralama
+          tartışmaya açık". Karşı taraf "biz zaten trafik üzerinde oturuyoruz"
+          derse, bu tam olarak sizin lehinize — kapanışta oraya bağlayın.
+        </p>
+      </div>
+    </div>
+  </div>
+</details>
+
+<!-- ══════════════════ KAPANIŞ ══════════════════ -->
+<h3 class="grp">Kapanış</h3>
+
+<details class="card" open>
+  <summary>
+    <span class="no">23</span>
+    <span class="ttl">Bu projeyi ayıran şey seçtiği model değil</span>
+    <span class="dur">40 sn</span>
+  </summary>
+  <div class="body">
+    <div class="blk">
+      <p class="lbl say">Söyle</p>
+      <div class="say-txt">
+        <p>
+          Başta bir cümle söylemiştim, şimdi ona dönüyorum. Bu projeyi ayıran
+          şey seçtiğim model değil — modele neyi yaptırmadığım.
+        </p>
+        <p>
+          Sekiz basamaklı bir kimlik merdiveni, yedi basamaklı bir porsiyon
+          merdiveni, ve ikisinin de en altında aynı cümle duruyor: bilmiyorsan
+          sor.
+        </p>
+        <p>
+          Sıfır uydurulmuş besin değeri. Gerçek değer yüzde yüz oranında
+          gösterdiğimiz aralığın içinde. Ve çözümlerin yüzde doksan altı buçuğu
+          modele hiç uğramadan bitiyor.
+        </p>
+      </div>
+    </div>
+    <div class="blk">
+      <p class="lbl ask">Fine-tuning sorusu gelirse — ezberleyin</p>
+      <div class="say-txt">
+        <p>
+          "Fine-tuning'e karşı değilim; mise fine-tuning'i satın alınabilir
+          hâle getiren şey. Bir fine-tune üç şey ister: etiketli örnek,
+          iyileşmeyi ölçecek bir yöntem, ve modelin bir kalori uyduramayacağı
+          sınırlı bir yer. Sizde trafik var, bende o trafiği eğitim verisine
+          çeviren altyapı."
+        </p>
+      </div>
+    </div>
+  </div>
+</details>
+
+<div class="panel" style="margin-top:34px">
+  <h2>Kapanmadan önce — üç hatırlatma</h2>
+  <p>
+    <strong>Bilmediğiniz bir sayı sorulursa uydurmayın.</strong> Doğru cevap
+    "ölçmedim, ölçerim". Bu sunumun tamamı zaten o cümlenin üstüne kurulu;
+    orada uydurursanız her şeyi kaybedersiniz.
+  </p>
+  <p>
+    <strong>Slaytları sesli okumayın.</strong> Ekrandaki metin dinleyicinin,
+    buradaki metin sizin. İkisini aynı anda yaparsanız ikisi de kaybeder.
+  </p>
+  <p>
+    <strong>16. slayttan sonra tempo düşer.</strong> Zayıflıkları saydıktan
+    sonra oda sessizleşir; bu normal. Oradan sonrasını daha hızlı ve daha
+    iddialı anlatın.
+  </p>
+</div>
+
+</div>
+</body>
+</html>
