@@ -1,0 +1,1035 @@
+<title>mise'in İki Merdiveni</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700;800&family=IBM+Plex+Mono:wght@400;500&family=Spectral:ital,wght@0,400;0,600;1,400&display=swap">
+
+<style>
+/* ───────── tokens · light is the base ───────── */
+:root{
+  --ground:#EDEEF1;
+  --paper:#F7F8FA;
+  --raise:#FFFFFF;
+  --ink:#15181D;
+  --ink-mid:#474D57;
+  --ink-soft:#727A85;
+  --line:#D5D9DF;
+  --line-soft:#E3E6EA;
+  --accent:#2D48D8;
+  --accent-ink:#1E33A8;
+  --accent-wash:#E2E6FA;
+  --amber:#A8701A;
+  --amber-wash:#F4E9D5;
+  --stop:#A33B38;
+  --stop-wash:#F5E1DF;
+  --good:#256B4C;
+  --good-wash:#DDEBE3;
+  --shadow:0 1px 2px rgba(21,24,29,.05);
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --ground:#101317;
+    --paper:#171B21;
+    --raise:#1D222A;
+    --ink:#E5E8EC;
+    --ink-mid:#A6AEB9;
+    --ink-soft:#7C858F;
+    --line:#2C333C;
+    --line-soft:#232932;
+    --accent:#8296FF;
+    --accent-ink:#A3B2FF;
+    --accent-wash:#1C2340;
+    --amber:#DFA451;
+    --amber-wash:#2C2415;
+    --stop:#E08A84;
+    --stop-wash:#2E1B1A;
+    --good:#6CBE96;
+    --good-wash:#16281F;
+    --shadow:0 1px 2px rgba(0,0,0,.4);
+  }
+}
+:root[data-theme="dark"]{
+  --ground:#101317;
+  --paper:#171B21;
+  --raise:#1D222A;
+  --ink:#E5E8EC;
+  --ink-mid:#A6AEB9;
+  --ink-soft:#7C858F;
+  --line:#2C333C;
+  --line-soft:#232932;
+  --accent:#8296FF;
+  --accent-ink:#A3B2FF;
+  --accent-wash:#1C2340;
+  --amber:#DFA451;
+  --amber-wash:#2C2415;
+  --stop:#E08A84;
+  --stop-wash:#2E1B1A;
+  --good:#6CBE96;
+  --good-wash:#16281F;
+  --shadow:0 1px 2px rgba(0,0,0,.4);
+}
+
+*,*::before,*::after{box-sizing:border-box}
+
+body{
+  background:var(--ground);
+  color:var(--ink);
+  font-family:"Spectral","Iowan Old Style",Georgia,serif;
+  font-size:17.5px;
+  line-height:1.66;
+  margin:0;
+  -webkit-font-smoothing:antialiased;
+  -webkit-text-size-adjust:100%;
+}
+
+h1,h2,h3,.ui{
+  font-family:"Archivo","Helvetica Neue",Arial,sans-serif;
+  text-wrap:balance;
+  letter-spacing:-.014em;
+}
+.mono,code,.num{
+  font-family:"IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+  font-variant-numeric:tabular-nums;
+}
+code{font-size:.86em;background:var(--paper);border:1px solid var(--line-soft);border-radius:3px;padding:1px 5px}
+
+a{color:var(--accent-ink);text-decoration-thickness:1px;text-underline-offset:2px}
+:focus-visible{outline:2px solid var(--accent);outline-offset:3px;border-radius:3px}
+
+/* ───────── shell ───────── */
+.page{max-width:680px;margin:0 auto;padding:0 20px 72px}
+@media(min-width:720px){.page{padding:0 32px 96px}}
+
+/* ───────── hero ───────── */
+.hero{padding:56px 0 32px}
+.eyebrow{
+  font-family:"IBM Plex Mono",monospace;
+  font-size:11px;letter-spacing:.14em;text-transform:uppercase;
+  color:var(--accent);margin:0 0 16px;
+}
+h1{
+  font-size:clamp(32px,8.4vw,52px);
+  font-weight:800;line-height:1.03;margin:0 0 20px;
+}
+.deck{
+  font-size:clamp(18px,4.4vw,21px);
+  line-height:1.55;color:var(--ink-mid);margin:0;
+}
+.deck strong{color:var(--ink);font-weight:600}
+
+/* ───────── nav ───────── */
+.jump{
+  margin:32px 0 0;border-top:1px solid var(--line);border-bottom:1px solid var(--line);
+  padding:6px 0;
+}
+.jump>summary{
+  font-family:"Archivo",sans-serif;font-size:13.5px;font-weight:600;
+  color:var(--ink-mid);cursor:pointer;list-style:none;
+  padding:12px 2px;display:flex;justify-content:space-between;align-items:center;
+}
+.jump>summary::-webkit-details-marker{display:none}
+.jump>summary::after{content:"+";font-family:"IBM Plex Mono",monospace;color:var(--accent);font-size:16px}
+.jump[open]>summary::after{content:"−"}
+.jump ol{list-style:none;margin:0 0 14px;padding:0;display:flex;flex-direction:column;gap:1px}
+.jump ol a{
+  display:block;padding:9px 2px;font-family:"Archivo",sans-serif;font-size:15px;
+  color:var(--ink-mid);text-decoration:none;border-top:1px solid var(--line-soft);
+}
+.jump ol li:first-child a{border-top:0}
+.jump ol a:hover{color:var(--accent-ink)}
+
+/* ───────── sections ───────── */
+section{padding:44px 0 4px;border-top:1px solid var(--line);margin-top:40px}
+section:first-of-type{border-top:0;margin-top:0}
+h2{font-size:clamp(24px,5.6vw,31px);font-weight:700;line-height:1.14;margin:0 0 14px}
+h3{font-family:"Archivo",sans-serif;font-size:17px;font-weight:700;margin:32px 0 10px;letter-spacing:0}
+section p{margin:0 0 16px}
+.lede{color:var(--ink-mid);font-size:18px}
+
+/* ───────── fact strip ───────── */
+.facts{
+  display:grid;grid-template-columns:repeat(2,1fr);gap:1px;
+  background:var(--line);border:1px solid var(--line);border-radius:4px;
+  overflow:hidden;margin:28px 0 0;
+}
+@media(min-width:600px){.facts{grid-template-columns:repeat(3,1fr)}}
+.fact{background:var(--paper);padding:15px 14px}
+.fact b{
+  font-family:"Archivo",sans-serif;font-size:25px;font-weight:700;line-height:1.05;
+  display:block;font-variant-numeric:tabular-nums;
+}
+.fact span{
+  display:block;margin-top:6px;font-family:"IBM Plex Mono",monospace;
+  font-size:10.5px;line-height:1.4;letter-spacing:.04em;color:var(--ink-soft);text-transform:uppercase;
+}
+
+/* ───────── plain cards ───────── */
+.card{
+  background:var(--paper);border:1px solid var(--line);border-radius:5px;
+  padding:18px 18px 4px;margin:20px 0;box-shadow:var(--shadow);
+}
+.card h3{margin-top:0}
+.card p:last-child{margin-bottom:16px}
+
+.key{
+  border-left:3px solid var(--accent);background:var(--accent-wash);
+  padding:16px 18px 2px;border-radius:0 5px 5px 0;margin:22px 0;
+}
+.key .t{
+  font-family:"Archivo",sans-serif;font-weight:700;font-size:14px;
+  color:var(--accent-ink);margin:0 0 8px;letter-spacing:.01em;
+}
+.key p{color:var(--ink-mid);font-size:16.5px}
+
+.warn{
+  border-left:3px solid var(--stop);background:var(--stop-wash);
+  padding:16px 18px 2px;border-radius:0 5px 5px 0;margin:22px 0;
+}
+.warn .t{font-family:"Archivo",sans-serif;font-weight:700;font-size:14px;color:var(--stop);margin:0 0 8px}
+.warn p{color:var(--ink-mid);font-size:16.5px}
+
+/* ───────── the ladder ───────── */
+.ladder{list-style:none;margin:24px 0;padding:0 0 0 34px;position:relative}
+.ladder::before{
+  content:"";position:absolute;left:11px;top:10px;bottom:22px;
+  width:2px;background:var(--line);
+}
+.rung{position:relative;margin-bottom:20px}
+.rung::before{
+  content:attr(data-n);position:absolute;left:-34px;top:1px;
+  width:24px;height:24px;border-radius:50%;
+  background:var(--raise);border:2px solid var(--line);
+  font-family:"IBM Plex Mono",monospace;font-size:11.5px;font-weight:500;
+  color:var(--ink-soft);display:flex;align-items:center;justify-content:center;
+}
+.rung.hit::before{border-color:var(--accent);color:var(--accent);}
+.rung.ask::before{border-color:var(--stop);color:var(--stop)}
+.rung .rt{
+  font-family:"Archivo",sans-serif;font-weight:700;font-size:16.5px;
+  display:block;margin-bottom:4px;line-height:1.3;
+}
+.rung p{margin:0 0 9px;font-size:16.5px;color:var(--ink-mid)}
+
+/* meter */
+.meter{display:flex;align-items:center;gap:9px;margin:0 0 2px}
+.meter .track{
+  flex:1;height:6px;background:var(--line);border-radius:4px;overflow:hidden;max-width:170px;
+}
+.meter i{display:block;height:100%;background:var(--accent);border-radius:4px}
+.meter.warm i{background:var(--amber)}
+.meter .lab{
+  font-family:"IBM Plex Mono",monospace;font-size:11.5px;color:var(--ink-soft);white-space:nowrap;
+}
+
+/* chips */
+.chip{
+  display:inline-block;font-family:"IBM Plex Mono",monospace;
+  font-size:10px;letter-spacing:.05em;text-transform:uppercase;
+  padding:2px 6px;border-radius:3px;white-space:nowrap;vertical-align:1px;
+  margin-left:6px;font-weight:500;
+}
+.c-det{background:var(--good-wash);color:var(--good)}
+.c-mod{background:var(--amber-wash);color:var(--amber)}
+.c-ask{background:var(--stop-wash);color:var(--stop)}
+
+/* ───────── stacked rows (tables, unstacked) ───────── */
+.rows{display:flex;flex-direction:column;gap:1px;background:var(--line);border:1px solid var(--line);border-radius:5px;overflow:hidden;margin:22px 0}
+.row{background:var(--paper);padding:14px 16px}
+.row .rh{
+  display:flex;flex-wrap:wrap;align-items:baseline;gap:8px;margin-bottom:5px;
+}
+.row .rk{font-family:"Archivo",sans-serif;font-weight:700;font-size:15.5px}
+.row .rv{
+  font-family:"IBM Plex Mono",monospace;font-size:15px;font-weight:500;color:var(--accent-ink);
+  margin-left:auto;
+}
+.row p{margin:0;font-size:16px;color:var(--ink-mid);line-height:1.5}
+
+/* ───────── lists ───────── */
+ul.plain{margin:16px 0;padding-left:1.15em}
+ul.plain li{margin-bottom:11px}
+ul.plain li::marker{color:var(--accent)}
+ul.plain strong{font-weight:600}
+
+/* ───────── details ───────── */
+details.more{
+  border:1px dashed var(--line);border-radius:5px;margin:22px 0;background:var(--raise);
+}
+details.more>summary{
+  font-family:"Archivo",sans-serif;font-size:13.5px;font-weight:600;color:var(--ink-soft);
+  cursor:pointer;list-style:none;padding:14px 16px;
+  display:flex;justify-content:space-between;align-items:center;gap:10px;
+}
+details.more>summary::-webkit-details-marker{display:none}
+details.more>summary::after{content:"göster";font-family:"IBM Plex Mono",monospace;font-size:11px;color:var(--accent)}
+details.more[open]>summary::after{content:"gizle"}
+details.more[open]>summary{border-bottom:1px dashed var(--line)}
+.more-body{padding:4px 16px 2px;font-size:16px;color:var(--ink-mid)}
+.more-body p{margin:12px 0}
+.more-body .rows{margin:12px 0}
+.src{
+  font-family:"IBM Plex Mono",monospace;font-size:11.5px;color:var(--ink-soft);
+  display:block;margin-top:6px;
+}
+.src b{color:var(--accent-ink);font-weight:500}
+
+pre{
+  background:var(--raise);border:1px solid var(--line);border-radius:4px;
+  padding:13px 14px;overflow-x:auto;margin:14px 0;
+  font-family:"IBM Plex Mono",monospace;font-size:12.5px;line-height:1.62;color:var(--ink);
+}
+pre .c{color:var(--ink-soft)}
+pre .k{color:var(--accent-ink)}
+
+footer{
+  margin-top:52px;padding-top:26px;border-top:1px solid var(--line);
+  font-family:"IBM Plex Mono",monospace;font-size:12px;line-height:1.7;color:var(--ink-soft);
+}
+</style>
+
+<div class="page">
+
+<header class="hero">
+  <p class="eyebrow">mise · proje özeti</p>
+  <h1>Ne yaptık,<br>niçin yaptık</h1>
+  <p class="deck">
+    mise bir yemek günlüğü: ne yediğini yazıyorsun, fotoğrafını çekiyorsun ya da
+    barkodu okutuyorsun — o da kaloriyi çıkarıyor. Farkı şu:
+    <strong>tek bir sayı söylemiyor, bir aralık söylüyor.</strong> Ve emin
+    olmadığı yerde uydurmak yerine <strong>sana soruyor.</strong>
+  </p>
+
+  <div class="facts">
+    <div class="fact"><b>%96,5</b><span>yapay zekâ hiç çalışmadan çözülen</span></div>
+    <div class="fact"><b>%0</b><span>uydurulmuş kalori</span></div>
+    <div class="fact"><b>%100</b><span>gerçek değerin aralığın içinde kalması</span></div>
+    <div class="fact"><b>8+7</b><span>iki merdivenin basamakları</span></div>
+    <div class="fact"><b>7.880</b><span>alıntılanabilir yiyecek satırı</span></div>
+    <div class="fact"><b>14.450</b><span>satır kod · api + mobil</span></div>
+  </div>
+
+  <details class="jump">
+    <summary>İçindekiler</summary>
+    <ol>
+      <li><a href="#problem">Problem: fotoğraf porsiyonu söyleyemez</a></li>
+      <li><a href="#karar">Üç kararımız</a></li>
+      <li><a href="#ne">"Ne yedin?" nasıl bulunuyor</a></li>
+      <li><a href="#kadar">"Ne kadar yedin?" nasıl bulunuyor</a></li>
+      <li><a href="#model">Modelin eli nereye kadar uzanıyor</a></li>
+      <li><a href="#soru">Emin değilse ne oluyor</a></li>
+      <li><a href="#kanit">Gerçekten çalışıyor mu</a></li>
+      <li><a href="#hata">Hangi hatalardan öğrendik</a></li>
+      <li><a href="#zayif">Neyi hâlâ yapamıyoruz</a></li>
+      <li><a href="#sunum">Sunumda anlatım sırası</a></li>
+      <li><a href="#harita">Kodun haritası</a></li>
+    </ol>
+  </details>
+</header>
+
+<main>
+
+<!-- ─────────── problem ─────────── -->
+<section id="problem">
+  <h2>Problem: fotoğraf porsiyonu söyleyemez</h2>
+  <p class="lede">
+    Başlamadan önce cevaplanması gereken soru şuydu: bir öğünü kaydetmek neden
+    zor? Dört ayrı yerde, birbirinden bağımsız olarak zor.
+  </p>
+
+  <ul class="plain">
+    <li><strong>Hangi yiyecek bu?</strong> "Yoğurt" sade de olabilir, Yunan da, meyveli de — 100 gramda 61 ile 99 kalori arası.</li>
+    <li><strong>Ne kadar var?</strong> Kalori hatasının neredeyse tamamı burada. Kamera tavadaki yağı, sostaki şekeri, kâsenin derinliğini göremiyor.</li>
+    <li><strong>Nasıl pişmiş?</strong> Haşlanmış patates 87 kcal/100 g, kızarmış 312. Aynı yiyecek, <strong>3,6 katı.</strong></li>
+    <li><strong>Bilmediğini bilmek.</strong> Ve bunu fark ettiğinde, kendinden emin bir sayı basmak yerine işe yarar bir şey yapmak.</li>
+  </ul>
+
+  <div class="key">
+    <p class="t">Bu projeyi şekillendiren tek bulgu</p>
+    <p>
+      Eğitimli diyetisyenler bir fotoğrafa bakıp porsiyon tahmin ederken
+      <strong>ortalama %41 hata</strong> yapıyor (Nutrition5k çalışması). İnsan
+      tavanı buysa, ekrana "537 kcal" yazan her uygulama <em>sahip olmadığı bir
+      kesinliği</em> iddia ediyor demektir.
+    </p>
+    <p>
+      Biz de o sayıyı yazmamaya karar verdik. mise "410–690 kcal, en olası 537"
+      diyor — ve aralığın <em>neden</em> bu kadar geniş olduğunu da söylüyor.
+    </p>
+  </div>
+
+  <p>
+    Literatürün geri kalanı da cesaret verici değil: genel amaçlı görsel modeller
+    yiyecek tanımada ortalama %60 isabet tutturuyor; önde gelen bir model
+    kaymağı süt olarak okuyup <strong>380 kalorilik</strong> bir hata yapmış
+    olarak belgelenmiş. 180 öğünlük bağımsız bir doğrulama, elle giriş + barkod
+    akışlarının sadece-fotoğraf yapay zekâ uygulamalarını <em>bir sınıf olarak</em>
+    yendiğini bulmuş.
+  </p>
+  <p>
+    Yani mise fotoğraf sihri satmıyor. <strong>Hızlı, dürüst ve düzeltilebilir</strong>
+    olmaya çalışıyor.
+  </p>
+</section>
+
+<!-- ─────────── kararlar ─────────── -->
+<section id="karar">
+  <h2>Üç kararımız</h2>
+  <p class="lede">
+    Kodun tamamı bu üç karardan türüyor. Gerisi detay.
+  </p>
+
+  <div class="card">
+    <h3>1 · Model asla bir sayı yazamaz</h3>
+    <p>
+      Yapay zekâ modelinin görevi sadece <em>"tabakta ne görüyorum"</em> diye
+      kelimelerle anlatmak. Kalori yazması, makro yazması, veritabanından bir
+      satır seçmesi <strong>teknik olarak mümkün değil</strong> — izin verilen
+      cevap şablonunda böyle bir alan yok.
+    </p>
+    <p>
+      Ekranda gördüğün her sayı tek bir işlemden geliyor:
+    </p>
+    <pre>kalori = <span class="k">veritabanı satırı</span> × <span class="k">gram</span> ÷ 100</pre>
+    <p>
+      Bu yüzden "uydurulmuş besin değeri" bizde nadir bir hata değil,
+      <strong>yapısal olarak imkânsız.</strong>
+    </p>
+  </div>
+
+  <div class="card">
+    <h3>2 · Ucuz ve kesin olan önce dener</h3>
+    <p>
+      Bir öğün aslında iki ayrı soru: <em>bu ne?</em> ve <em>bundan ne kadar?</em>
+      Her ikisi de bir <strong>merdiven</strong> olarak kurulmuş. En alt basamak
+      en ucuz ve en kesin olan; ilk kesin cevap veren basamak durduruyor,
+      üstündekiler hiç çalışmıyor.
+    </p>
+    <p>
+      Sonuç: trafiğin <strong>%96,5'inde yapay zekâ hiç çağrılmıyor.</strong> Hem
+      ucuz, hem hızlı, hem de aynı girdi her zaman aynı çıktıyı veriyor.
+    </p>
+  </div>
+
+  <div class="card">
+    <h3>3 · Bilmiyorsak soruyoruz</h3>
+    <p>
+      Her merdivenin son basamağı "bilmiyorum". Bu bir çıkmaz değil — kullanıcıya
+      sorulacak <strong>tek bir soruya</strong> dönüşüyor. En fazla iki soru
+      soruluyor ve önce <em>cevabı kaloriyi en çok oynatan</em> soru geliyor.
+    </p>
+    <p>
+      Kullanıcının dikkati bir kaynak olarak modellenmiş ve en yüksek getirili
+      yere harcanıyor.
+    </p>
+  </div>
+
+  <div class="key">
+    <p class="t">Sunumda kullanabileceğin cümle</p>
+    <p>
+      "Bu uygulamanın zor kısmı yiyeceği tanımak değil. Zor kısmı, tanıyamadığı
+      anı fark edip <em>susmak.</em> Kod tabanının yarısı bunun için yazılmış."
+    </p>
+  </div>
+</section>
+
+<!-- ─────────── kimlik merdiveni ─────────── -->
+<section id="ne">
+  <h2>"Ne yedin?" nasıl bulunuyor</h2>
+  <p class="lede">
+    Sekiz basamak. Yukarıdan aşağı okuyacaksın: 1 en ucuz ve en kesin,
+    8 ise pes etme noktası. İlk cevap veren durduruyor.
+  </p>
+
+  <ul class="ladder">
+    <li class="rung hit" data-n="1">
+      <span class="rt">Senin kendi düzeltmen <span class="chip c-det">anında</span></span>
+      <p>Bu kişi bu ifadeyi daha önce düzeltmiş. Bir daha sorulmuyor.</p>
+      <div class="meter"><span class="track"><i style="width:2%"></i></span><span class="lab">~0 ms</span></div>
+    </li>
+    <li class="rung hit" data-n="2">
+      <span class="rt">Herkes için geçerli varsayılan <span class="chip c-det">anında</span></span>
+      <p>Bilinen belirsiz terimler için elle konmuş karşılık: çıplak "yoğurt" → sade yoğurt.</p>
+      <div class="meter"><span class="track"><i style="width:2%"></i></span><span class="lab">~0 ms</span></div>
+    </li>
+    <li class="rung hit" data-n="3">
+      <span class="rt">Birebir isim eşleşmesi <span class="chip c-det">anında</span></span>
+      <p>Yazdığın şey veritabanındaki bir adla tam olarak aynı.</p>
+      <div class="meter"><span class="track"><i style="width:3%"></i></span><span class="lab">~1 ms</span></div>
+    </li>
+    <li class="rung hit" data-n="4">
+      <span class="rt">İki arama motoru birlikte <span class="chip c-det">modelsiz</span></span>
+      <p>
+        Biri kelimelere bakıyor, diğeri anlama. "Kuskus" kelime olarak
+        "couscous"a benzemez ama anlam uzayında komşusudur; "tam buğday
+        ekmeği"nde tersi geçerli. Aralarında <em>net bir fark</em> varsa burada
+        biter.
+      </p>
+      <div class="meter"><span class="track"><i style="width:9%"></i></span><span class="lab">~15 ms</span></div>
+    </li>
+    <li class="rung" data-n="5">
+      <span class="rt">Modele doğrulatma <span class="chip c-mod">model</span></span>
+      <p>
+        İki aday çekişiyorsa devreye giriyor. Ama modele açık uçlu soru
+        sorulmuyor: elimizdeki beş kart gösterilip <strong>"hangisi, yoksa
+        hiçbiri mi?"</strong> deniyor. Kartların dışından cevap üretmesi mümkün değil.
+      </p>
+      <div class="meter"><span class="track"><i style="width:70%"></i></span><span class="lab">~800 ms</span></div>
+    </li>
+    <li class="rung" data-n="6">
+      <span class="rt">Geniş referans kütüphanesi <span class="chip c-mod">model</span></span>
+      <p>
+        Elle hazırladığımız 87 satırda yoksa, 7.793 satırlık USDA korpusuna
+        bakılıyor. Burada <strong>doğrulama zorunlu</strong> — çünkü ham
+        eşleştirme "üzüm"e üzüm çekirdeği yağı cevabını verebiliyor, ki gerçek
+        kalorinin 10 katı.
+      </p>
+      <div class="meter"><span class="track"><i style="width:70%"></i></span><span class="lab">~800 ms</span></div>
+    </li>
+    <li class="rung" data-n="7">
+      <span class="rt">Seçenekleri göster, hiçbirini kabul etme</span>
+      <p>Doğrulayıcı çalışamıyorsa liste kullanıcıya gösteriliyor ama otomatik kabul edilmiyor.</p>
+      <div class="meter"><span class="track"><i style="width:3%"></i></span><span class="lab">~1 ms</span></div>
+    </li>
+    <li class="rung ask" data-n="8">
+      <span class="rt">Çekimser kal <span class="chip c-ask">soru sor</span></span>
+      <p>Hiçbir basamak cevap veremedi. Sayı gösterilmiyor, soru soruluyor.</p>
+    </li>
+  </ul>
+
+  <div class="key">
+    <p class="t">Buradaki en önemli kural</p>
+    <p>
+      <strong>Ulaşılamayan bir doğrulayıcı asla onaylayıcıya dönüşmez.</strong>
+      Doğrulama servisi çökerse sistem "herhâlde doğrudur" demiyor, soruyor.
+      Kodda bunun gerekçesi olarak iki gerçek hata yazılı: "susam" bir kâse
+      erişteye tahin olarak eklenmişti, "ıspanaklı peynirli iç harç" böreğin
+      kendisi sanılmıştı.
+    </p>
+  </div>
+
+  <details class="more">
+    <summary>Detay: eşikler ve dosyalar</summary>
+    <div class="more-body">
+      <div class="rows">
+        <div class="row">
+          <div class="rh"><span class="rk">Kararlılık payı</span><span class="rv">0,18</span></div>
+          <p>En iyi adayla ikincisi arasındaki fark bunun altındaysa "iki yiyecek eşit derecede olası" demektir — doğrulayıcının parasını hak ettiği ve kullanıcıyı rahatsız etmeye değdiği tek an.</p>
+          <span class="src"><b>resolve/router.ts</b> · satır 37</span>
+        </div>
+        <div class="row">
+          <div class="rh"><span class="rk">"Apaçık" eşiği</span><span class="rv">0,72</span></div>
+          <p>Keyfî değil, ölçülmüş: gerçek yiyecekler 0,727–1,000 arası puan alıyor, alakasız girdiler 0,460–0,556. Aralar çakışmıyor.</p>
+          <span class="src"><b>resolve/router.ts</b> · satır 52</span>
+        </div>
+        <div class="row">
+          <div class="rh"><span class="rk">İki arama motorunu birleştirme</span></div>
+          <p>skor = min(1, en_iyi + 0,15 × diğeri). Ortalama alınmıyor — ortalama, yalnızca bir motorun görebildiği yiyeceği cezalandırırdı. Formül en iyi kanıtı alıp ikincisini küçük bir onay primi olarak ekliyor.</p>
+          <span class="src"><b>resolve/router.ts</b> · 100–136</span>
+        </div>
+        <div class="row">
+          <div class="rh"><span class="rk">Vektör araması yerelde</span></div>
+          <p><code>multilingual-e5-small</code> cihazda çalışıyor, ağa çıkmıyor. Model yüklenemezse katman sessizce kapanıp sadece kelime aramasına düşüyor.</p>
+          <span class="src"><b>resolve/vector.ts</b> · 131 satır</span>
+        </div>
+      </div>
+    </div>
+  </details>
+</section>
+
+<!-- ─────────── porsiyon merdiveni ─────────── -->
+<section id="kadar">
+  <h2>"Ne kadar yedin?" nasıl bulunuyor</h2>
+  <p class="lede">
+    Yedi basamak — ve bu sefer önemli olan hız değil, <strong>hata payı.</strong>
+    Her basamak farklı türde bir iddia: tartılmış bir kütle ile fotoğraftan
+    yapılan tahmin aynı sayı değildir, o yüzden aynı güveni de almıyorlar.
+  </p>
+
+  <ul class="ladder">
+    <li class="rung hit" data-n="1">
+      <span class="rt">Kullanıcı gramı yazmış</span>
+      <p>"180 g tavuk" — tahmin edilecek bir şey yok, sadece çarpma işlemi.</p>
+      <div class="meter warm"><span class="track"><i style="width:5%"></i></span><span class="lab">±%2</span></div>
+    </li>
+    <li class="rung hit" data-n="2">
+      <span class="rt">Hacim yazmış</span>
+      <p>"1,5 litre süt" — yiyeceğin kendi yoğunluğu üzerinden grama çevriliyor.</p>
+      <div class="meter warm"><span class="track"><i style="width:12%"></i></span><span class="lab">±%5</span></div>
+    </li>
+    <li class="rung hit" data-n="3">
+      <span class="rt">Barkod etiketi</span>
+      <p>Paket porsiyonu yazıyor. Yine de sıfır değil: "bir porsiyon yedim" bir gerçek değil, bir iddia.</p>
+      <div class="meter warm"><span class="track"><i style="width:20%"></i></span><span class="lab">±%8</span></div>
+    </li>
+    <li class="rung hit" data-n="4">
+      <span class="rt">Bu kişinin geçmişi</span>
+      <p>Bu kullanıcı bu yiyeceğin porsiyonunu daha önce onaylamış.</p>
+      <div class="meter warm"><span class="track"><i style="width:25%"></i></span><span class="lab">±%10</span></div>
+    </li>
+    <li class="rung" data-n="5">
+      <span class="rt">Karedeki referans nesne</span>
+      <p>Fotoğrafta kart ya da madenî para varsa ölçek çıkarılabiliyor. Literatürde kalori hatasını %34'ten %18'e indiriyor.</p>
+      <div class="meter warm"><span class="track"><i style="width:45%"></i></span><span class="lab">±%18</span></div>
+    </li>
+    <li class="rung" data-n="6">
+      <span class="rt">Ev ölçüsü</span>
+      <p>"2 dilim", "bir kase". Bant yiyeceğe göre değişiyor: ekmek dilimi çorba kâsesinden çok daha az oynar.</p>
+      <div class="meter warm"><span class="track"><i style="width:60%"></i></span><span class="lab">±%5–50</span></div>
+    </li>
+    <li class="rung ask" data-n="7">
+      <span class="rt">Model tahmini <span class="chip c-ask">en zayıf</span></span>
+      <p>Fotoğraf var, referans yok, miktar yazılmamış. En zor durum — ve en geniş aralık.</p>
+      <div class="meter warm"><span class="track"><i style="width:100%"></i></span><span class="lab">±%40</span></div>
+    </li>
+  </ul>
+
+  <div class="key">
+    <p class="t">Bu merdivenin var oluş sebebi</p>
+    <p>
+      Kendi testimizde aynı fotoğrafı dört kez çalıştırdık:
+      <strong>yiyecekler her seferinde aynı tanındı, porsiyon %84 oynadı.</strong>
+    </p>
+    <p>
+      Yani "bu ne?" büyük ölçüde çözülmüş bir problem; kalori hatasının neredeyse
+      tamamı "ne kadar?"dan geliyor. Yedi basamak bu tek bulgunun mimari
+      karşılığı.
+    </p>
+  </div>
+
+  <p>
+    Hangi basamağın cevapladığı <strong>uygulamada satırın altında yazıyor.</strong>
+    Kullanıcı ne tür bir sayıya baktığını biliyor: tartılmış mı, etiketten mi,
+    tahmin mi.
+  </p>
+
+  <details class="more">
+    <summary>Detay: iki incelik</summary>
+    <div class="more-body">
+      <div class="rows">
+        <div class="row">
+          <div class="rh"><span class="rk">Makullük sınırı</span><span class="rv">1.200 g</span></div>
+          <p>Tek bir kalem bunu aşarsa merdiven o cevabı reddediyor. Gerçek vaka: bir tabak dolma makarna "17 adet" okundu, adet başına 140 g varsayıldı ve sonuç <strong>2,4 kg makarna / 3.478 kcal</strong> oldu. Kullanıcının kendi yazdığı gram bu kuraldan muaf — 1,5 kg yazdıysa onu düzeltmek bizim işimiz değil.</p>
+          <span class="src"><b>portion/ladder.ts</b> · satır 59</span>
+        </div>
+        <div class="row">
+          <div class="rh"><span class="rk">Kullanıcının girdiği gram basamak değildir</span></div>
+          <p>Merdivenin bir basamağı olarak değil, <strong>merdivenin dışında ve üstünde</strong> modellenmiş. Sebep: listedeki tek sayı odur ki <em>yemeği yiyen kişi bu öğün hakkında</em> söylemiştir. Tahminlerin arasına konsaydı bir tahminle kıyaslanabilir hâle gelirdi.</p>
+          <span class="src"><b>portion/ladder.ts</b> · 390–401</span>
+        </div>
+      </div>
+    </div>
+  </details>
+</section>
+
+<!-- ─────────── model sınırı ─────────── -->
+<section id="model">
+  <h2>Modelin eli nereye kadar uzanıyor</h2>
+  <p class="lede">
+    Bu sunumun en güçlü teknik argümanı: model <em>tarif eder, iddia etmez.</em>
+  </p>
+
+  <p>Modelin doldurmasına izin verilen formda <strong>ne olmadığı</strong> önemli:</p>
+  <ul class="plain">
+    <li><strong>Kalori ve makro alanı yok.</strong> Model bir besin değeri yazamaz.</li>
+    <li><strong>Veritabanı kimliği alanı yok.</strong> Model bir satıra işaret edemez, sadece gördüğü şeyi kelimeyle söyler.</li>
+    <li><strong>Yardımsever ekleme yok.</strong> Görünmeyen yiyecek eklenemez — talimatında sekiz sert kural olarak yazılı.</li>
+  </ul>
+
+  <p>
+    Doğrulama aşamasında da aynı mantık: modele kapalı bir kısa liste veriliyor ve
+    dönebileceği tek şey <em>listedeki bir sıra numarası ya da −1</em>. Listede
+    olmayan hiçbir cevap kabul edilmiyor. <strong>Halüsinasyon burada yasak
+    değil — yapısal olarak imkânsız.</strong>
+  </p>
+
+  <div class="card">
+    <h3>Ve bunu üretimde her öğünde kontrol ediyoruz</h3>
+    <p>
+      Gösterilecek kalorinin gerçekten o veritabanı satırından türediği,
+      <strong>testte değil, canlıda, her öğünde</strong> yeniden hesaplanarak
+      doğrulanıyor. Tutmazsa sayı gösterilmiyor: kalem "çözümlenmedi"ye
+      düşürülüyor ve hata kaydına yazılıyor.
+    </p>
+    <p>
+      Kullanıcının kendi düzeltmesi de bu denetimden muaf değil.
+    </p>
+    <span class="src"><b>pipeline/nutrition.ts</b> · 73–93 · üretimde <b>pipeline/index.ts</b> 204–216</span>
+  </div>
+
+  <div class="key">
+    <p class="t">Teknik olmayan izleyici için üç benzetme</p>
+    <p>
+      <strong>Merdiven —</strong> bir soruyu önce en ucuz uzmana soruyorsun. O
+      bilmiyorsa bir üsttekine. En pahalıya ancak gerçekten gerekiyorsa
+      gidiyorsun; hiçbiri bilmiyorsa tahmin etmiyor, soruyorsun.
+    </p>
+    <p>
+      <strong>Kapalı liste —</strong> modele "bu ne?" diye açık uçlu sormuyoruz.
+      Beş kart gösterip "hangisi, yoksa hiçbiri mi?" diyoruz.
+    </p>
+    <p>
+      <strong>Makbuz —</strong> her sayının bir makbuzu var: hangi satır, hangi
+      porsiyon varsayımı, hangi çarpma, hangi kaynak. Uygulamada bir dokunuş
+      uzakta.
+    </p>
+  </div>
+</section>
+
+<!-- ─────────── soru ─────────── -->
+<section id="soru">
+  <h2>Emin değilse ne oluyor</h2>
+  <p class="lede">
+    Güven tek bir sayı değil, <strong>üçe ayrılmış</strong> — çünkü düşük bir
+    skorun işe yaraması için <em>hangi aşamanın</em> emin olmadığını bilmek gerek.
+  </p>
+
+  <div class="rows">
+    <div class="row">
+      <div class="rh"><span class="rk">Çıkarım</span><span class="rv">%25</span></div>
+      <p>Girdiden yiyecek ifadelerini doğru çıkardık mı?</p>
+    </div>
+    <div class="row">
+      <div class="rh"><span class="rk">Çözümleme</span><span class="rv">%40</span></div>
+      <p>O ifadeyi doğru veritabanı satırına bağladık mı?</p>
+    </div>
+    <div class="row">
+      <div class="rh"><span class="rk">Porsiyon</span><span class="rv">%35</span></div>
+      <p>Gram tahmini ne kadar sağlam bir yönteme dayanıyor?</p>
+    </div>
+  </div>
+
+  <p>
+    Üçü <strong>çarpımsal olarak</strong> birleşiyor: herhangi biri sıfırsa sonuç
+    da sıfır. Ortalama alsaydık bir aşamanın tamamen çökmüş olması diğer ikisinin
+    arkasına saklanabilirdi.
+  </p>
+
+  <p>
+    Sonra <strong>en zayıf halka soruyu seçiyor:</strong> kimlik zayıfsa
+    <em>"hangi yiyecek"</em>, porsiyon zayıfsa <em>"ne kadar"</em> soruluyor.
+  </p>
+
+  <div class="rows">
+    <div class="row">
+      <div class="rh"><span class="rk">En fazla 2 soru</span></div>
+      <p>Bir dikkat bütçesi. Üçüncü soru cevaplanmıyor, sadece formu form yapıyor.</p>
+    </div>
+    <div class="row">
+      <div class="rh"><span class="rk">Fotoğraf porsiyonuna tavan</span><span class="rv">0,50</span></div>
+      <p>Fotoğraftan gelen porsiyon asla yüksek güven alamıyor. Kaynağı somut bir ölçüm: aynı kahvaltı fotoğrafı iki çalıştırmada <strong>470 ve 866 kcal</strong> verdi.</p>
+    </div>
+    <div class="row">
+      <div class="rh"><span class="rk">Korpus satırına tavan</span><span class="rv">0,60</span></div>
+      <p>Gerçek bir alıntısı var ama Türkçe adı ve ev ölçüsü yok. <em>Doğru olabilir, ama "güvenilir" kadar iyi değil.</em></p>
+    </div>
+  </div>
+</section>
+
+<!-- ─────────── kanıt ─────────── -->
+<section id="kanit">
+  <h2>Gerçekten çalışıyor mu</h2>
+  <p class="lede">
+    Ölçülen sayılar. Bunları söylerken yanına konması gereken uyarıyı da aşağıda
+    yazdım — kod zaten kendi çıktısında basıyor.
+  </p>
+
+  <div class="rows">
+    <div class="row">
+      <div class="rh"><span class="rk">Aralık kapsaması</span><span class="rv">%100</span></div>
+      <p>Gerçek toplam, gösterdiğimiz aralığın içinde kaldı. <strong>Ürünün asıl iddiası bu.</strong></p>
+    </div>
+    <div class="row">
+      <div class="rh"><span class="rk">Uydurulmuş besin değeri</span><span class="rv">%0</span></div>
+      <p>Yapısal olarak imkânsız, ve her öğünde yeniden doğrulanıyor.</p>
+    </div>
+    <div class="row">
+      <div class="rh"><span class="rk">Modelsiz çözülen</span><span class="rv">%96,5</span></div>
+      <p>Yapay zekâ hiç çağrılmadan cevaplanan oran.</p>
+    </div>
+    <div class="row">
+      <div class="rh"><span class="rk">Tam geçiş oranı</span><span class="rv">%100</span></div>
+      <p>Test setinde hiçbir taksonomi hatası yok. <strong>Aynı zamanda setin doyduğu anlamına geliyor</strong> — aşağıya bak.</p>
+    </div>
+    <div class="row">
+      <div class="rh"><span class="rk">Otomatik kayıt</span><span class="rv">%97,8</span></div>
+      <p>Kullanıcıya hiç soru sormadan tamamlanan öğün oranı (Gemini ile; sadece kurallarla %43,5).</p>
+    </div>
+    <div class="row">
+      <div class="rh"><span class="rk">Kalibrasyon hatası</span><span class="rv">0,115</span></div>
+      <p>"0,9 güven" dediğimizde gerçekten %90 haklı mıyız? Bu metrik güven skorlarını <strong>yanlış olabilecek bir iddiaya</strong> çeviriyor.</p>
+    </div>
+    <div class="row">
+      <div class="rh"><span class="rk">Fotoğrafta uydurma</span><span class="rv">0</span></div>
+      <p>5 fotoğrafta 21–22 kalem, sıfır icat, 2 dürüst ret.</p>
+    </div>
+  </div>
+
+  <details class="more">
+    <summary>Detay: neden fotoğraf testi kaloriye puan vermiyor</summary>
+    <div class="more-body">
+      <p>
+        Bu fotoğrafların tartılmış bir gerçeği yok. Gözle porsiyon etiketleyen bir
+        insan ~%41 hata yapıyor — yani <em>ölçtüğümüzü iddia ettiğimiz
+        büyüklükten daha büyük bir hata.</em> Bir fotoğrafın kesin olarak
+        söyleyebildikleri şunlar, biz de sadece bunları puanlıyoruz:
+      </p>
+      <ul class="plain">
+        <li>Görünen yiyecekleri adlandırdı mı</li>
+        <li>Veritabanında olmayanları reddetti mi</li>
+        <li>Bir şey uydurdu mu — <strong>sıfır olmak zorunda</strong></li>
+        <li>Aralık ne kadar genişti ve merdiven dürüst yönlendirdi mi</li>
+      </ul>
+      <p>
+        Beklenen kalori de elle yazılmıyor: etiketlenmiş <em>(yiyecek, gram)</em>
+        çiftlerinden hesaplanıyor. Elle yazılmış bir beklenen değer, tarif ettiği
+        veritabanıyla çelişebilir — o zaman kıyas sistemi değil,
+        <em>etiketleyicinin aritmetiğini</em> ölçmüş olur.
+      </p>
+      <span class="src"><b>eval/photos.ts</b> · <b>eval/harness.ts</b> 41–51</span>
+    </div>
+  </details>
+</section>
+
+<!-- ─────────── hatalar ─────────── -->
+<section id="hata">
+  <h2>Hangi hatalardan öğrendik</h2>
+  <p class="lede">
+    Koddaki hemen her sabitin arkasında ölçülmüş bir hata var. Sunumda
+    "sertlik" bölümü olarak bunları anlatabilirsin — akılda kalan kısım burası.
+  </p>
+
+  <div class="rows">
+    <div class="row">
+      <div class="rh"><span class="rk">21,6 kilogram tavuk</span></div>
+      <p>Rakamla harf bitişik yazıldığında <code>180g</code> tek parça sayılıyordu ve miktar okunamıyordu. Ayırma adımı eklendi.</p>
+    </div>
+    <div class="row">
+      <div class="rh"><span class="rk">"beyaz"ın içindeki "az"</span></div>
+      <p>Belirsizlik sözcükleri kelime içinde de aranıyordu. <em>"2 dilim beyaz ekmek"</em> sessizce yarıya düşürülüyordu — hata mesajı yok, sadece yanlış sayı. En sinsi tür.</p>
+    </div>
+    <div class="row">
+      <div class="rh"><span class="rk">"tatlı patates" → patates</span></div>
+      <p>Çıplak "tatlı" bir ölçü takma adı olarak tanımlıydı ("tatlı kaşığı"). Atılınca geriye "patates" kalıyor ve düz patatesle <strong>tam eşleşiyordu.</strong></p>
+    </div>
+    <div class="row">
+      <div class="rh"><span class="rk">2,4 kilogram makarna</span></div>
+      <p>"17 adet" dolma makarna × 140 g bardak varsayılanı = 3.478 kcal. Makullük sınırı bu vakadan doğdu.</p>
+    </div>
+    <div class="row">
+      <div class="rh"><span class="rk">25 saniyelik fotoğraf</span></div>
+      <p>Asılı kalan bir çağrı, "şu an olmaz" diyen bir sunucuyla aynı sayılıp yeniden deneniyordu. Ayrım şu: <strong>hiçbir şey demeyen sunucu bütçeyi zaten harcamıştır.</strong></p>
+    </div>
+    <div class="row">
+      <div class="rh"><span class="rk">"kaydedildi" diye yalan söylemek</span></div>
+      <p>Telefondaki 15 saniyelik süre sınırı eski hıza göre ayarlanmıştı. "guacamole" yazmak 16,6 saniye sürünce: <strong>öğün kaydedildi, kullanıcıya başarısız olduğu söylendi.</strong> Artık her yol için ayrı süre var.</p>
+    </div>
+    <div class="row">
+      <div class="rh"><span class="rk">20–65 saniyelik öğünler</span></div>
+      <p>Altı yiyecekli bir tabakta her kalem sırayla doğrulanıyordu. Paralel hâle getirildi — burada paralellik bir optimizasyon değil, kullanılabilirlik eşiği.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ─────────── zayıf ─────────── -->
+<section id="zayif">
+  <h2>Neyi hâlâ yapamıyoruz</h2>
+  <p class="lede">
+    Sunumda bunları <em>sen</em> söylemelisin. Sorulmadan söylenen zayıflık, geri
+    kalan her iddiayı güçlendirir.
+  </p>
+
+  <ul class="plain">
+    <li>
+      <strong>Test seti doydu.</strong> Her vaka geçiyor, yani set artık ayırt
+      edici değil. Yukarıdaki %100'ler bu uyarıyla birlikte okunmalı.
+    </li>
+    <li>
+      <strong>Fotoğraf iki kez aynı sonucu vermiyor.</strong> Aynı JPEG iki
+      çalıştırmada 736 ve 865 kcal verdi. İddiamız "aynı sonuç" değil;
+      <em>"her sonuç diğerinin gösterdiği aralığın içinde"</em>.
+    </li>
+    <li>
+      <strong>Elle hazırlanmış set 87 satır</strong> — ve hep az kalacak. Gerçek
+      öğünlerde chimichurri, pide, edamame var. Korpus bunu alıntılanabilir bir
+      cevaba çeviriyor ama Türkçe adı ve ev ölçüsü olmadan.
+    </li>
+    <li>
+      <strong>Veriler bellekte tutuluyor.</strong> Gerçek dağıtım burada bir
+      veritabanı ister; kodda açıkça yazılı.
+    </li>
+    <li>
+      <strong>Kimlik doğrulama yok.</strong> Cihaz kapsamlı bir başlık kullanılıyor;
+      gerçek giriş sistemi vaka çalışmasının kapsamı dışında.
+    </li>
+  </ul>
+
+  <div class="card">
+    <h3>Peki sırada ne var — bunu nereden biliyoruz?</h3>
+    <p>
+      Test seti doyduğu için artık sıradakini söyleyemiyor. Onun yerine sistem
+      <strong>yapamadığı her şeyi bir deftere yazıyor</strong> ve bunları ikiye
+      ayırıyor:
+    </p>
+    <div class="rows">
+      <div class="row">
+        <div class="rh"><span class="rk">Küratörlük işi</span></div>
+        <p>Hiçbir model eğitimi bunu düzeltmez — eksik satır, eksik takma ad, eksik ev ölçüsü. <em>Kinoanın kalorisi gradyan inişiyle öğretilemez.</em></p>
+      </div>
+      <div class="row">
+        <div class="rh"><span class="rk">Model işi</span></div>
+        <p>Veri zaten oradayken modelin verdiği yanlış yargı. İnce ayara konacak örnekler.</p>
+      </div>
+    </div>
+    <p>
+      Defter kişiye karşı dikkatli: kullanıcı kimlikleri tuzlanmış özet olarak
+      saklanıyor, tuz diskten çıkmıyor, dışa aktarımlar hiç kimlik yaymıyor ve
+      tek bir ayarla tamamen kapatılabiliyor.
+    </p>
+  </div>
+</section>
+
+<!-- ─────────── sunum ─────────── -->
+<section id="sunum">
+  <h2>Sunumda anlatım sırası</h2>
+  <p class="lede">
+    Karma bir izleyiciye anlatırken kullanılacak yedi durak. Her durak bir
+    hikâye, ve her hikâyenin arkasında bir dosya var.
+  </p>
+
+  <ul class="ladder">
+    <li class="rung hit" data-n="1">
+      <span class="rt">Problem</span>
+      <p>"Fotoğraftan porsiyon tahmin eden diyetisyenler %41 hata yapıyor. O hâlde tek bir sayı yazan her uygulama sahip olmadığı bir kesinliği iddia ediyor."</p>
+    </li>
+    <li class="rung hit" data-n="2">
+      <span class="rt">Fikir</span>
+      <p>"İki merdiven. En ucuz ve en kesin basamak önce. İlk kesin cevap durdurur. Kimse cevaplayamazsa sorarız."</p>
+    </li>
+    <li class="rung hit" data-n="3">
+      <span class="rt">Sınır</span>
+      <p>"Model kalori yazamaz — form buna izin vermiyor. Doğrulayıcı da sadece kapalı bir listeden sıra numarası döndürebiliyor."</p>
+    </li>
+    <li class="rung hit" data-n="4">
+      <span class="rt">İspat</span>
+      <p>"Uydurulmuş besin değeri yapısal olarak imkânsız, ve bunu üretimde her öğünde yeniden doğruluyoruz."</p>
+    </li>
+    <li class="rung hit" data-n="5">
+      <span class="rt">Sertlik</span>
+      <p>"2,4 kilogram makarna. 21,6 kilogram tavuk. 'beyaz'ın içindeki 'az'. Her sabitin arkasında ölçülmüş bir hata var."</p>
+    </li>
+    <li class="rung hit" data-n="6">
+      <span class="rt">Alçakgönüllülük</span>
+      <p>"Aynı fotoğraf iki kez 736 ve 865 kcal verdi. Bunu düzeltmedik — <strong>gösterdiğimiz aralığın içinde kalmasını sağladık.</strong>"</p>
+    </li>
+    <li class="rung hit" data-n="7">
+      <span class="rt">Sonraki adım</span>
+      <p>"Test seti doydu, artık sırada ne olduğunu söyleyemiyor. Boşluk defteri söylüyor: şu kadarı küratörlük işi, şu kadarı model işi."</p>
+    </li>
+  </ul>
+
+  <div class="key">
+    <p class="t">Kapanış cümlesi</p>
+    <p>
+      "Bu kod tabanının ayırt edici özelliği kullandığı model değil.
+      <strong>Modele ne yaptırmadığı.</strong> Sekiz basamaklı bir kimlik
+      merdiveni, yedi basamaklı bir porsiyon merdiveni, ve ikisinin de sonunda
+      duran aynı cümle: <em>bilmiyorsan sor.</em>"
+    </p>
+  </div>
+</section>
+
+<!-- ─────────── harita ─────────── -->
+<section id="harita">
+  <h2>Kodun haritası</h2>
+  <p class="lede">
+    Buraya kadar okuduğun her şeyin nerede yaşadığı. Sunumda gerekmez —
+    soru gelirse diye burada.
+  </p>
+
+  <details class="more">
+    <summary>Sunucu tarafı · packages/api · 11.297 satır</summary>
+    <div class="more-body">
+      <div class="rows">
+        <div class="row">
+          <div class="rh"><span class="rk">pipeline/index.ts</span><span class="rv">474</span></div>
+          <p>Orkestratör. Barkod kısayolu → çıkarım → bileşik birleştirme → tarif açma → çöz/tart/hesapla/puanla → tekrarları birleştir.</p>
+        </div>
+        <div class="row">
+          <div class="rh"><span class="rk">resolve/router.ts</span><span class="rv">466</span></div>
+          <p>"Bu ne?" merdiveninin sekiz basamağı, tek dosyada.</p>
+        </div>
+        <div class="row">
+          <div class="rh"><span class="rk">portion/ladder.ts</span><span class="rv">425</span></div>
+          <p>"Ne kadar?" merdiveninin yedi basamağı ve her birinin hata bandı.</p>
+        </div>
+        <div class="row">
+          <div class="rh"><span class="rk">pipeline/normalize.ts</span><span class="rv">317</span></div>
+          <p>Türkçe katmanı. Diakritik katlama (ı/i, ğ/g, ş/s), muhafazakâr gövdeleme, miktar ve birim ayrıştırma. Türkçe burada çeviri değil, birinci sınıf giriş yolu.</p>
+        </div>
+        <div class="row">
+          <div class="rh"><span class="rk">extract/</span><span class="rv">~500</span></div>
+          <p>Dört çıkarıcı, tek arayüz: kurallar (ücretsiz, deterministik), Gemini, OpenAI, Anthropic. Sağlayıcı değiştirmek bir ayar değişikliği, refactor değil.</p>
+        </div>
+        <div class="row">
+          <div class="rh"><span class="rk">pipeline/confidence.ts</span><span class="rv">155</span></div>
+          <p>Üç parçalı güven, yöntem tavanları, en zayıf halkanın tespiti.</p>
+        </div>
+        <div class="row">
+          <div class="rh"><span class="rk">pipeline/nutrition.ts</span><span class="rv">93</span></div>
+          <p>Tek çarpma işlemi ve izlenebilirlik denetimi. Dosya başlığındaki cümle: <em>"Burada model yok, sezgisel kural yok, yargı yok — ki asıl mesele tam olarak bu."</em></p>
+        </div>
+        <div class="row">
+          <div class="rh"><span class="rk">http/server.ts</span><span class="rv">894</span></div>
+          <p>Uç noktalar. İkisi bir yemek günlüğünün ihtiyaç duymayacağı türden: <code>/trace</code> (her sayının makbuzu) ve <code>/gaps</code> (yapamadıklarımız).</p>
+        </div>
+        <div class="row">
+          <div class="rh"><span class="rk">gaps/ · eval/ · obs/</span><span class="rv">~1.400</span></div>
+          <p>Boşluk defteri, ölçüm koşum takımı, log kısıtlama ve metrikler. Öğün metni ve fotoğrafı sağlık verisi sayılıyor — ham veri asla bir log satırına ulaşmıyor.</p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <details class="more">
+    <summary>Uygulama tarafı · packages/mobile · 3.153 satır</summary>
+    <div class="more-body">
+      <p>Arayüzün işi tek: <strong>sunucunun dürüstlüğünü görünür kılmak.</strong></p>
+      <div class="rows">
+        <div class="row">
+          <div class="rh"><span class="rk">App.tsx</span><span class="rv">169</span></div>
+          <p>Üst çubukta günün toplamı ve <strong>yanında ± genişliği.</strong> Belirsizlik, Kaydet'e basınca ortaya çıkan bir sürpriz değil.</p>
+        </div>
+        <div class="row">
+          <div class="rh"><span class="rk">MealItem.tsx</span><span class="rv">206</span></div>
+          <p>Kapalıyken "ne ve ne kadar", açıkken <strong>"nereden biliyorsun"</strong>: hangi basamak cevapladı, hangi satır, birebir çarpma, değerlendirilen diğer adaylar.</p>
+        </div>
+        <div class="row">
+          <div class="rh"><span class="rk">PortionEditor.tsx</span><span class="rv">194</span></div>
+          <p>Aralığın kendisi bir kontrol. İki ucu birer dokunuş, kalori yazarken anlık değişiyor.</p>
+        </div>
+        <div class="row">
+          <div class="rh"><span class="rk">QuestionCard.tsx</span><span class="rv">151</span></div>
+          <p>Tek soru, cevapları hemen altında, ve <strong>cevaplamadan geçme yolu.</strong></p>
+        </div>
+        <div class="row">
+          <div class="rh"><span class="rk">FoodPicker.tsx</span><span class="rv">192</span></div>
+          <p>Doğrulanmış sözlükte arama. Serbest metin sadece bir sorgu; geri dönen değer her zaman gerçek bir veritabanı satırı.</p>
+        </div>
+        <div class="row">
+          <div class="rh"><span class="rk">HistoryScreen.tsx</span><span class="rv">190</span></div>
+          <p>Tek dokunuşla tekrarla — ürünün en ucuz doğru kaydı, çünkü takma adlar ve onaylanmış porsiyonlar aynen oynatılıyor.</p>
+        </div>
+      </div>
+    </div>
+  </details>
+</section>
+
+</main>
+
+<footer>
+  mise · yemek günlüğü · EatBetter vaka çalışması<br>
+  packages/api 11.297 satır · packages/mobile 3.153 satır<br>
+  pipeline v1.5.0 · prompt extract-2026-08-25.b
+</footer>
+
+</div>
