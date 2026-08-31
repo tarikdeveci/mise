@@ -363,19 +363,19 @@ figcaption{
   <p class="eyebrow">EatBetter · full stack vaka çalışması</p>
   <h1>Bilmediğini<br>bilen bir<br>yemek günlüğü</h1>
   <p class="lede">
-    Zor kısım yiyeceği tanımak değil. Zor kısım, tanıyamadığı anı fark edip
-    <strong>susmak.</strong>
+    Zor olan yiyeceği tanımak değil. Zor olan, tanıyamadığını fark edip
+    <strong>susabilmek.</strong>
   </p>
   <p class="byline">
     mise · Node.js + TypeScript API, Expo (React Native) uygulama<br>
-    14.450 satır · 215 test · yayımlanmış eval
+    14.450 satır · 215 test · sonuçları açık eval
   </p>
   <div class="notes">
     <b>Konuşmacı notu</b>
     20 dakika, dört bölüm: problem (4 dk), mimari (8 dk), kanıt (4 dk), yol
-    haritası ve fine-tuning (4 dk). Sunum boyunca tek bir iddia var ve sonunda
-    onu tekrar edeceğim: bu kod tabanının farkı kullandığı model değil, modele
-    ne yaptırmadığı.
+    haritası ve fine-tuning (4 dk). Baştan sona tek bir şey anlatıyorum, sonunda
+    da ona döneceğim: bu projeyi ayıran şey seçtiğim model değil, modele neyi
+    yaptırmadığım.
   </div>
 </section>
 
@@ -383,23 +383,23 @@ figcaption{
 <section class="slide divider" data-sec="1 · Problem">
   <p class="num disp">01</p>
   <h2>Problem</h2>
-  <p class="lede">Bir öğünü kaydetmek neden zor, ve neden herkes aynı yerde yanılıyor.</p>
+  <p class="lede">Bir öğünü kaydetmek neden zor, ve herkes neden aynı yerde tökezliyor.</p>
   <p class="mins">≈ 4 dakika</p>
 </section>
 
 <!-- ══════════ 3 ══════════ -->
 <section class="slide" data-sec="1 · Problem">
-  <h2>Dört ayrı yerde zor</h2>
-  <p class="lede">Ve dördü birbirinden bağımsız bozuluyor — biri düzelince diğeri düzelmiyor.</p>
+  <h2>Tek bir problem değil, dört ayrı problem</h2>
+  <p class="lede">Dördü birbirinden bağımsız çuvallıyor; birini çözmeniz diğerini çözmüyor.</p>
   <div class="rows">
     <div class="row"><span class="k">Hangi yiyecek?</span><span class="d">"Yoğurt" sade de olabilir, Yunan da, meyveli de</span><span class="v">61–99 kcal</span></div>
-    <div class="row"><span class="k">Ne kadar?</span><span class="d">Kalori hatasının neredeyse tamamı burada yaşıyor</span><span class="v">en zoru</span></div>
+    <div class="row"><span class="k">Ne kadar?</span><span class="d">Kalori hatasının neredeyse tamamı buradan geliyor</span><span class="v">en zoru</span></div>
     <div class="row"><span class="k">Nasıl pişmiş?</span><span class="d">Haşlanmış patates 87, kızarmış 312 kcal/100 g</span><span class="v">3,6×</span></div>
-    <div class="row"><span class="k">Bilmediğini bilmek</span><span class="d">Ve fark edince kendinden emin bir sayı basmamak</span><span class="v no">çözülmemiş</span></div>
+    <div class="row"><span class="k">Bilmediğini bilmek</span><span class="d">Fark ettiğinde de emin bir sayı basmamak</span><span class="v no">çözülmemiş</span></div>
   </div>
   <p>
-    Kamera bu dördünden <strong>"ne kadar?"</strong> sorusunu yapısal olarak çözemiyor:
-    tavadaki yağı, sostaki şekeri, kâsenin derinliğini göremez.
+    Bunlardan <strong>"ne kadar?"</strong> sorusunu kamera yapısı gereği çözemiyor:
+    tavadaki yağı, sostaki şekeri, kâsenin ne kadar derin olduğunu göremiyor.
   </p>
   <div class="notes">
     <b>Konuşmacı notu</b>
@@ -421,8 +421,8 @@ figcaption{
     <strong>%41 hata</strong> yapıyor. <span class="mono">(Nutrition5k)</span>
   </p>
   <p>
-    İnsan tavanı buysa, ekrana <strong>"537 kcal"</strong> yazan her uygulama
-    sahip olmadığı bir kesinliği iddia ediyor demektir.
+    İnsanın tavanı buysa, ekrana <strong>"537 kcal"</strong> yazan her uygulama
+    olmayan bir kesinliği varmış gibi gösteriyor demektir.
   </p>
   <div class="stat-row">
     <div class="stat"><b>9,5%</b><span>model · gram başına kalori hatası</span></div>
@@ -430,13 +430,13 @@ figcaption{
     <div class="stat"><b>41%</b><span>insan · diyetisyen, gözle</span></div>
   </div>
   <p>
-    İlk ikisi aynı modelin iki ayrı ölçümü, üçü de Nutrition5k'dan. Model
-    <em>1 gramın</em> kaç kalori olduğunu %9,5 hatayla biliyor; ama
-    <em>kaç gram</em> olduğunu bilmediği için toplamda %26,1 yanılıyor —
-    çünkü <span class="mono">toplam = gram × gram başına kalori</span>, yani
-    porsiyon hatası sonuca çarpım olarak giriyor.
-    <strong>Aradaki farkın tamamı porsiyon:</strong> "bu ne?" büyük ölçüde
-    çözülmüş, "ne kadar?" çözülmemiş.
+    Üç sayı da Nutrition5k'dan; ilk ikisi aynı modelin iki ayrı ölçümü. Model
+    <em>bir gramın</em> kaç kalori olduğunu %9,5 hatayla biliyor. Ama
+    <em>kaç gram</em> olduğunu bilemediği için toplamda %26,1 yanılıyor: toplam
+    kalori <span class="mono">gram ile çarpılarak</span> bulunuyor, dolayısıyla
+    porsiyondaki hata doğrudan sonuca biniyor.
+    <strong>Aradaki bütün fark porsiyondan geliyor.</strong> "Bu ne?" büyük
+    ölçüde çözülmüş durumda, "ne kadar?" çözülmemiş.
   </p>
   <div class="notes">
     <b>Konuşmacı notu</b>
@@ -454,7 +454,7 @@ figcaption{
 
 <!-- ══════════ 5 ══════════ -->
 <section class="slide" data-sec="1 · Problem">
-  <h2>Kararımız: nokta değil, aralık</h2>
+  <h2>Tek sayı yerine aralık gösteriyoruz</h2>
 
   <figure>
     <svg class="dg" viewBox="0 0 720 250" role="img" aria-label="Aynı fotoğrafın iki çalıştırması: tek sayı gösterildiğinde 129 kaloriyle açıklamasız kayıyor; aralık gösterildiğinde her sonuç diğerinin bandının içinde kalıyor.">
@@ -486,12 +486,13 @@ figcaption{
       <text x="660" y="182" class="sm" text-anchor="end">kcal →</text>
     </svg>
     <figcaption>
-      Aynı JPEG'in iki çalıştırması. Üstte her sonuç açıklanamayan bir sıçrama;
-      altta <strong>her sonuç diğerinin gösterdiği bandın içinde.</strong>
+      Aynı fotoğrafı iki kez çalıştırdık. Üstte iki sonuç arasındaki fark
+      açıklamasız bir sıçrama olarak kalıyor; altta
+      <strong>her sonuç diğerinin gösterdiği bandın içinde kalıyor.</strong>
     </figcaption>
   </figure>
 
-  <p class="pull">Değişkenliği düzeltmedik. <em>Gösterdiğimiz aralığın içinde kalmasını sağladık.</em></p>
+  <p class="pull">Oynamayı ortadan kaldırmadık. <em>Gösterdiğimiz aralığın dışına çıkmamasını sağladık.</em></p>
   <div class="notes">
     <b>Konuşmacı notu</b>
     Bu, sunumun en çok itiraz alacak slaytı — "yani daha belirsiz bir ürün mü?"
@@ -566,11 +567,12 @@ figcaption{
       <text x="304" y="150" text-anchor="middle" class="sm">iki merdiven birbirini beklemez</text>
     </svg>
     <figcaption>
-      <span class="mono">resolvePhrase()</span> kimliği, <span class="mono">runLadder()</span>
-      miktarı çözen fonksiyon; ikisi de kendi merdivenini yürütüyor. Sondaki üç
-      sayı bir kalemin <strong>en az – en olası – en çok</strong> kalorisi.
-      Mimarinin tamamı bu ayrımdan türüyor: kimlik ve miktar
-      <strong>bağımsız</strong> sorular, ayrı çözülüyor, sonra birleşiyor.
+      <span class="mono">resolvePhrase()</span> hangi yiyecek olduğunu, <span class="mono">runLadder()</span>
+      ne kadar olduğunu buluyor; her biri kendi merdivenini yürütüyor. Sondaki üç
+      sayı da bir kalemin <strong>en az, en olası ve en çok</strong> kalorisi.
+      Mimarinin tamamı bu ayrımdan çıkıyor: hangi yiyecek olduğu ile ne kadar
+      olduğu <strong>birbirinden bağımsız</strong> sorular; ayrı ayrı çözülüp
+      sonra birleşiyor.
     </figcaption>
   </figure>
   <div class="notes">
@@ -584,7 +586,7 @@ figcaption{
 
 <!-- ══════════ 8 ══════════ -->
 <section class="slide" data-sec="2 · Mimari">
-  <h2>Merdiven: ilk kesin cevap durdurur</h2>
+  <h2>İlk kesin cevabı veren basamak merdiveni durduruyor</h2>
 
   <figure>
     <svg class="dg" viewBox="0 0 720 400" role="img" aria-label="Sekiz basamaklı kimlik merdiveni. Basamaklar aşağı indikçe maliyet artıyor; tipik metin öğünü üçüncü basamakta çıkıyor, model yalnızca beşinci basamaktan sonra devreye giriyor.">
@@ -615,11 +617,11 @@ figcaption{
       <text x="12" y="376" class="sm">maliyet ↓</text>
     </svg>
     <figcaption>
-      Basamaklar yukarıdan aşağı sırayla deneniyor; bir basamak kesin cevap
-      verdiği anda merdiven duruyor ve <strong>altındaki basamaklar hiç
-      çalışmıyor</strong> — parası da ödenmiyor. Aşağı indikçe maliyet artıyor,
-      kesinlik azalıyor. Tipik bir metin öğünü 3. basamakta çıkıyor, yani
-      modelin üstündeki dört basamak trafiğin %96,5'ini karşılıyor.
+      Basamaklar yukarıdan aşağı sırayla deneniyor. Bir basamak kesin cevabı
+      verdiği anda merdiven duruyor; <strong>altındaki basamaklar hiç
+      çalışmıyor</strong>, parası da ödenmiyor. Aşağı indikçe maliyet artıyor,
+      kesinlik azalıyor. Tipik bir metin öğünü üçüncü basamakta çıkıyor: yani
+      modelin üstündeki dört basamak trafiğin %96,5'ini tek başına karşılıyor.
     </figcaption>
   </figure>
   <div class="notes">
@@ -633,23 +635,23 @@ figcaption{
 
 <!-- ══════════ 9 ══════════ -->
 <section class="slide" data-sec="2 · Mimari">
-  <h2>Porsiyon merdiveni: her basamak farklı bir iddia</h2>
+  <h2>Porsiyon merdiveninde her basamak farklı bir şey söylüyor</h2>
   <p class="lede">
-    Tartılmış bir kütle ile fotoğraftan yapılan tahmin aynı sayı değil — o yüzden
-    aynı hata payını da almıyorlar.
+    Tartılmış bir gram ile fotoğrafa bakıp yapılan tahmin aynı şey değil; o yüzden
+    aynı hata payını da taşımıyorlar.
   </p>
   <div class="rows">
-    <div class="row"><span class="k">1 · Kullanıcı gramı yazmış</span><span class="d">"180 g tavuk" — tahmin yok, sadece çarpma</span><span class="v ok">±2%</span></div>
+    <div class="row"><span class="k">1 · Kullanıcı gramı yazmış</span><span class="d">"180 g tavuk" yazmışsa tahmin yok, düz çarpma</span><span class="v ok">±2%</span></div>
     <div class="row"><span class="k">2 · Hacim yazmış</span><span class="d">Yiyeceğin kendi yoğunluğu üzerinden</span><span class="v ok">±5%</span></div>
-    <div class="row"><span class="k">3 · Barkod etiketi</span><span class="d">"Bir porsiyon yedim" bir gerçek değil, bir iddia</span><span class="v ok">±8%</span></div>
+    <div class="row"><span class="k">3 · Barkod etiketi</span><span class="d">"Bir porsiyon yedim" ölçüm değil, beyan</span><span class="v ok">±8%</span></div>
     <div class="row"><span class="k">4 · Bu kişinin geçmişi</span><span class="d">Daha önce onayladığı porsiyon</span><span class="v">±10%</span></div>
     <div class="row"><span class="k">5 · Karedeki referans</span><span class="d">Kart ya da madenî para — 2B fotoğraf porsiyon hatası %34'ten %18'e</span><span class="v">±18%</span></div>
     <div class="row"><span class="k">6 · Ev ölçüsü</span><span class="d">Sıranın tek istisnası: ekmek dilimi ±%5, kâse ±%50</span><span class="v">±5–50%</span></div>
-    <div class="row"><span class="k">7 · Model tahmini</span><span class="d">Referans yok, miktar yok — en zor durum</span><span class="v no">±40%</span></div>
+    <div class="row"><span class="k">7 · Model tahmini</span><span class="d">Ne referans var ne miktar; en zor durum</span><span class="v no">±40%</span></div>
   </div>
   <p>
     Hangi basamağın cevapladığı <strong>uygulamada satırın altında yazıyor.</strong>
-    Kullanıcı ne tür bir sayıya baktığını biliyor.
+    Kullanıcı, elindeki sayının nereden geldiğini görüyor.
   </p>
   <div class="notes">
     <b>Konuşmacı notu</b>
@@ -710,18 +712,18 @@ figcaption{
       <text x="360" y="256" text-anchor="middle" class="sm">listede olmayan cevap “düzeltilmez” — atılır, kullanıcıya sorulur</text>
     </svg>
     <figcaption>
-      Modele "bu ne?" diye açık uçlu sorulmuyor. Beş kart gösterilip
-      <strong>"hangisi, yoksa hiçbiri mi?"</strong> deniyor.
+      Modele "bu ne?" diye açık uçlu bir soru sormuyoruz. Önüne beş kart koyup
+      <strong>"hangisi — yoksa hiçbiri mi?"</strong> diye soruyoruz.
     </figcaption>
   </figure>
 
-  <p class="pull">Halüsinasyon burada yasak değil — <em>yapısal olarak imkânsız.</em></p>
+  <p class="pull">Halüsinasyon burada yasak değil; <em>yapısı gereği mümkün değil.</em></p>
   <div class="notes">
     <b>Konuşmacı notu</b>
     Bu kapı gerçek bir güven sınırı: bozuk ya da ele geçirilmiş bir doğrulayıcı
     listede olmayan bir id döndürürse cevabı düzeltmeye çalışmıyoruz, atıyoruz.
     Bir de "fail closed" ilkesi var: doğrulayıcıya ulaşılamıyorsa otomatik
-    eşleşme de yok. Ulaşılamayan bir doğrulayıcı asla onaylayıcıya dönüşmüyor.
+    eşleşme de yok. Ulaşılamayan bir doğrulayıcı, sessizce "onaylandı"ya dönüşmüyor.
   </div>
 </section>
 
@@ -732,11 +734,11 @@ figcaption{
 kalori = <span class="k">per100g</span> × <span class="k">gram</span> ÷ 100</pre>
 
   <p>
-    Model bir besin değeri <em>yazamıyor</em> — izin verilen cevap şablonunda
-    böyle bir alan yok. Model bir veritabanı satırına da işaret edemiyor.
+    Model bir besin değeri <em>yazamıyor</em>, çünkü verebileceği cevabın
+    şablonunda öyle bir alan yok. Bir veritabanı satırını da kendisi seçemiyor.
   </p>
 
-  <h3>Ve bunu üretimde her öğünde kontrol ediyoruz</h3>
+  <h3>Üstelik bunu her öğünde, canlıda yeniden kontrol ediyoruz</h3>
   <pre class="code"><span class="c">// pipeline/index.ts:204 — testte değil, canlıda</span>
 <span class="k">const</span> traceable = verifyTraceable(food, portion, nutrition);
 <span class="k">if</span> (!traceable.ok) {
@@ -746,14 +748,14 @@ kalori = <span class="k">per100g</span> × <span class="k">gram</span> ÷ 100</p
 }</pre>
 
   <p>
-    Kullanıcının kendi düzeltmesi de bu denetimden muaf değil
+    Kullanıcının kendi düzeltmesi de bu denetimden kaçamıyor
     (<span class="mono">correct.ts:88</span>).
   </p>
   <div class="notes">
     <b>Konuşmacı notu</b>
-    Buradaki argümanın gücü şu: "besin değeri uydurmuyoruz" bir pazarlama
+    Buradaki asıl güçlü nokta şu: "besin değeri uydurmuyoruz" bir pazarlama
     cümlesi değil, üç ayrı mekanizmanın sonucu. Şema izin vermiyor, aritmetik
-    tek yerde, ve iddia her öğünde yeniden doğrulanıyor. Bir hata kodumuz var —
+    tek yerde duruyor, ve bu söz her öğünde yeniden doğrulanıyor. Bir hata kodumuz var —
     E11 — ve taksonomide "yapısal olarak imkânsız" listesinde tek eleman o.
   </div>
 </section>
@@ -795,7 +797,7 @@ nutrition  1 kcal/100g × 110 g / 100 → <span class="a">0,88</span> · <span c
     Bu slaytta yavaş git — bütün mimari burada çalışırken görülüyor. Vurgulanacak
     iki nokta: (1) merdiven üçüncü basamakta bitti, model hiç çağrılmadı;
     (2) çayın kalorisi 1,1 kcal ve yine de aralığı var — çünkü bardak ölçüsünün
-    kendi yayılımı var. Sistem küçük sayılarda da dürüst.
+    kendi yayılımı var. Sistem küçük sayılarda da abartmıyor.
   </div>
 </section>
 
@@ -887,14 +889,15 @@ nutrition  1 kcal/100g × 110 g / 100 → <span class="a">0,88</span> · <span c
     <b>Konuşmacı notu</b>
     Dürüst bir detay: bu çalıştırmada vektör araması kapalıydı — gömü modeli
     indirilemedi, sistem sessizce sözcüksel moda düştü ve sonuç yine %100.
-    Bozulmuş mod tasarımının kendisi burada görünüyor. Söylersen güven kazanırsın.
+    Sistemin bozulduğunda nasıl davrandığı tam burada görülüyor. Bunu kendin
+    söylersen güven kazanırsın.
   </div>
 </section>
 
 <!-- ══════════ 16 ══════════ -->
 <section class="slide" data-sec="3 · Kanıt">
   <p class="eyebrow">bunu ben söylemezsem soran onlar olur</p>
-  <h2>%100'ü sonuç değil, uyarı olarak okuyun</h2>
+  <h2>Bu %100'ler başarı değil, uyarı</h2>
 
   <div class="term">
     <div class="term-bar"><b>⚠</b> eval çıktısının kendi bastığı uyarı</div>
@@ -907,17 +910,17 @@ nutrition  1 kcal/100g × 110 g / 100 → <span class="a">0,88</span> · <span c
 
   <ul class="plain">
     <li><strong>Kontaminasyon.</strong> Veritabanı takma adlarını da test vakalarını da ben yazdım.</li>
-    <li><strong>Fotoğraf porsiyonu ölçülmemiş.</strong> Tartılmış gerçek yok — ve gözle etiketleyen insan %41 hata yapıyor, yani ölçmeye çalıştığımız büyüklükten daha büyük.</li>
-    <li><strong>ECE 0,2066, her kova eksik güvenli.</strong> Sistem iddia ettiğinden daha sık haklı. Kullanıcıya maliyeti: gereksiz sorulan soru.</li>
+    <li><strong>Fotoğraftan porsiyon hiç ölçülmedi.</strong> Tartılmış referans yok; gözle etiketleyenin hatası da %41, yani ölçmek istediğimiz şeyden büyük.</li>
+    <li><strong>ECE 0,2066.</strong> Sistem kendine olduğundan az güveniyor: söylediğinden daha sık haklı çıkıyor. Bedeli, boşuna sorulan soru.</li>
     <li><strong>Kapsam 121 satır.</strong> Arkasında 13.339 USDA satırı var ama chimichurri, kebap, şavarma ikisinde de yok.</li>
   </ul>
 
-  <p class="pull">Sorulmadan söylenen zayıflık, <em>geri kalan her iddiayı güçlendirir.</em></p>
+  <p class="pull">Sorulmadan söylenen bir zayıflık, <em>geri kalan her sözü daha inanılır kılar.</em></p>
   <div class="notes">
     <b>Konuşmacı notu</b>
     Bu slayt bilinçli olarak sunumun ortasında, sonunda değil. Sebebi: kalan
     her şeyi bu çerçeveden dinlesinler. Eğer sadece iyi haber verirsem
-    kategorinin geri kalanı gibi görünürüm — kategori doğrulanamaz doğruluk
+    kategorinin geri kalanı gibi görünürüm; ortalık doğrulanamaz doğruluk
     iddialarıyla dolu. Bir yerde ±%0,9 MAPE iddiası gördüm ve kullanmadım:
     kamera yağı göremez, diyetisyen %41 yanılır.
   </div>
@@ -940,18 +943,18 @@ nutrition  1 kcal/100g × 110 g / 100 → <span class="a">0,88</span> · <span c
 
 <!-- ══════════ 18 ══════════ -->
 <section class="slide" data-sec="4 · Sırada ne var">
-  <h2>Süre: problem evrensel değil</h2>
+  <h2>Yavaşlık her yerde değil, tek bir yolda</h2>
   <div class="rows">
     <div class="row"><span class="k">Metin · kural katmanı</span><span class="d">Trafiğin çoğunluğu, ağa hiç çıkmıyor</span><span class="v ok">2 ms</span></div>
-    <div class="row"><span class="k">Metin · model katmanı</span><span class="d">Bilinmeyen yiyecek en yavaş metin vakası</span><span class="v">10.303 ms</span></div>
+    <div class="row"><span class="k">Metin · model katmanı</span><span class="d">Tanınmayan bir yiyecek, metin tarafının en yavaş hâli</span><span class="v">10.303 ms</span></div>
     <div class="row"><span class="k">Fotoğraf</span><span class="d">Korpus katmanı geldiğinde 12–16 s'den yükseldi</span><span class="v no">14–37 s</span></div>
   </div>
   <p>
-    Çözümlemelerin <strong>%96,5'i modele hiç gitmiyor.</strong> Yani süre sorunu
-    fotoğraf yoluna özgü — ve doğru yeri optimize etmek için bu ayrımı yapmak
+    Çözümlemelerin <strong>%96,5'i modele hiç uğramıyor.</strong> Yani yavaşlık
+    sadece fotoğraf yolunda; doğru yeri hızlandırmak için önce bu ayrımı görmek
     gerekiyor.
   </p>
-  <p class="pull">Kullanıcı için birkaç saniyeden pahalı olan şey, <em>gereksiz sorulan sorudur.</em></p>
+  <p class="pull">Kullanıcıya birkaç saniyeden pahalıya patlayan şey, <em>boşuna sorulan sorudur.</em></p>
   <div class="notes">
     <b>Konuşmacı notu</b>
     Buradaki ince nokta: ECE eksik güvenli olduğu için sistem haklı olduğu
@@ -965,7 +968,7 @@ nutrition  1 kcal/100g × 110 g / 100 → <span class="a">0,88</span> · <span c
 
 <!-- ══════════ 19 ══════════ -->
 <section class="slide" data-sec="4 · Sırada ne var">
-  <h2>Bulgu: doğrulayıcı iki kez çağrılıyor</h2>
+  <h2>Doğrulayıcı boş yere iki kez çağrılıyor</h2>
 
   <figure>
     <svg class="dg" viewBox="0 0 720 300" role="img" aria-label="Şu anki akışta bilinmeyen bir yiyecek için doğrulayıcı önce küratörlü listeyle, sonra korpus listesiyle ardışık iki kez çağrılıyor. Önerilen akışta iki liste katman etiketiyle birleştirilip tek çağrı yapılıyor.">
@@ -1019,7 +1022,7 @@ nutrition  1 kcal/100g × 110 g / 100 → <span class="a">0,88</span> · <span c
       <text x="296" y="278" text-anchor="middle" class="mo">1 × ağ gecikmesi</text>
     </svg>
     <figcaption>
-      Bilinmeyen bir yiyecek şu an doğrulayıcıya <strong>ardışık iki kez</strong>
+      Tanınmayan bir yiyecek şu anda doğrulayıcıya <strong>arka arkaya iki kez</strong>
       gidiyor. Fotoğraf süresinin korpus katmanıyla iki katına çıkmasının
       mekanizması bu.
     </figcaption>
@@ -1036,9 +1039,9 @@ nutrition  1 kcal/100g × 110 g / 100 → <span class="a">0,88</span> · <span c
     Bunu kodu okurken buldum, README'de yazmıyor. router.ts:304 küratörlü kısa
     listeyle çağırıyor; çekimser kalırsa resolveFromCorpus:435 korpus listesiyle
     yeniden çağırıyor. İkinci iyileştirme: doğrulayıcı çağrılarını toplu yap.
-    Kalemler zaten paralel olduğu için bu p50'yi değil p95'i düzeltir — N ağır
-    kuyruklu örneğin maksimumu tek örnekten çok daha kötüdür. 623 saniyelik
-    vaka tam olarak buydu.
+    Kalemler zaten paralel gittiği için bu p50'yi değil p95'i düzeltir: ağır
+    kuyruklu bir dağılımdan N örnek çekince en kötüsü, tek örnekten çok daha
+    kötü çıkıyor. 623 saniyelik vaka tam olarak buydu.
   </div>
 </section>
 
@@ -1087,9 +1090,9 @@ nutrition  1 kcal/100g × 110 g / 100 → <span class="a">0,88</span> · <span c
       <text x="660" y="168" class="mo">5 / 5</text>
     </svg>
     <figcaption>
-      <span class="mono">gaps/types.ts</span> her başarısızlığı bu iki kovadan
-      birine yazıyor. Yani sistem, <strong>fine-tuning'in ne kadarını
-      düzeltebileceğini kendi kendine sayıyor.</strong>
+      <span class="mono">gaps/types.ts</span>, sistemin cevaplayamadığı her şeyi
+      bu iki kovadan birine yazıyor. Yani sistem, <strong>fine-tuning'in ne
+      kadarını düzeltebileceğini kendisi sayıyor.</strong>
     </figcaption>
   </figure>
 
@@ -1116,19 +1119,19 @@ nutrition  1 kcal/100g × 110 g / 100 → <span class="a">0,88</span> · <span c
   <div class="rows">
     <div class="row"><span class="k">Küçük modele damıtma</span><span class="d">Aynı bake-off koşusu: kural %39,1 otomatik kayıt, Gemini %97,8 — ama 5.000× gecikme. Doğrulukta beraberler.</span><span class="v ok">gecikme + maliyet</span></div>
     <div class="row"><span class="k">Çıkarıcı, Türkçe için</span><span class="d">Bileşik yemekler, ek ayrıştırma, porsiyon sözcükleri — ikisi otomatik etiketli</span><span class="v ok">gerçek hata</span></div>
-    <div class="row"><span class="k">Doğrulayıcı</span><span class="d">5 seçenekli kapalı küme — açık üretimden çok daha kolay bir görev</span><span class="v ok">en büyük kazanç</span></div>
+    <div class="row"><span class="k">Doğrulayıcı</span><span class="d">Beş seçenekli kapalı bir küme; serbest üretimden çok daha kolay bir iş</span><span class="v ok">en büyük kazanç</span></div>
   </div>
 
   <h3>Etmez</h3>
   <div class="rows">
-    <div class="row"><span class="k">Besin değerleri</span><span class="d">Şema yasaklıyor; girerse ürünün ana iddiası düşer</span><span class="v no">asla</span></div>
+    <div class="row"><span class="k">Besin değerleri</span><span class="d">Şema izin vermiyor; girerse ürünün bütün sözü düşer</span><span class="v no">asla</span></div>
     <div class="row"><span class="k">Kapsam</span><span class="d">Chimichurri, kebap, şavarma iki katmanda da yok — bu bir veri ortaklığı</span><span class="v no">veri işi</span></div>
-    <div class="row"><span class="k">Fotoğraftan porsiyon</span><span class="d">Tartılmış gerçek yokken, ölçmek istediğinden daha hatalı etiketlerle eğitmek olur</span><span class="v no">önce veri</span></div>
+    <div class="row"><span class="k">Fotoğraftan porsiyon</span><span class="d">Tartılmış referans yokken, ölçmek istediğinden daha hatalı etiketlerle eğitmiş olursun</span><span class="v no">önce veri</span></div>
   </div>
 
   <p>
-    Ve engel veri değil, <strong>ölçüm</strong>: eval seti doygun, bir fine-tune'un
-    işe yaradığını bugün <em>kanıtlayamayız.</em> Doğru sıra bağımsız held-out
+    Ve önümüzdeki engel veri değil, <strong>ölçüm</strong>: eval seti doyduğu için
+    bir fine-tune'un işe yaradığını bugün <em>gösteremeyiz.</em> Doğru sıra bağımsız held-out
     set → temel ölçüm → fine-tune.
   </p>
   <div class="notes">
@@ -1148,14 +1151,14 @@ nutrition  1 kcal/100g × 110 g / 100 → <span class="a">0,88</span> · <span c
     <div class="row"><span class="k">1 · Doğrulayıcıyı tek tura indir</span><span class="d">Fotoğraf gecikmesinin kritik yolu</span><span class="v">1–2 gün</span></div>
     <div class="row"><span class="k">2 · Doğrulayıcı çağrılarını topla</span><span class="d">p95 ve maliyet</span><span class="v">~2 gün</span></div>
     <div class="row"><span class="k">3 · Takma ad terfi kuyruğu</span><span class="d">Model çağrısını kalıcı olarak siler — mekanizma yazılı</span><span class="v">birkaç gün</span></div>
-    <div class="row"><span class="k">4 · Bağımsız held-out set</span><span class="d">Her türlü ölçümü açar, kalibrasyonu açar</span><span class="v">1–2 hafta</span></div>
+    <div class="row"><span class="k">4 · Bağımsız held-out set</span><span class="d">Her ölçümün ve kalibrasyonun önünü açar</span><span class="v">1–2 hafta</span></div>
     <div class="row"><span class="k">5 · Tartılmış fotoğraf seti</span><span class="d">Porsiyon çalışmasının tamamının önkoşulu</span><span class="v">haftalar</span></div>
-    <div class="row"><span class="k">6 · Fine-tune</span><span class="d">4 ve gerçek trafik olmadan ölçülemez harcama</span><span class="v">sonra</span></div>
+    <div class="row"><span class="k">6 · Fine-tune</span><span class="d">4. madde ve gerçek trafik olmadan sonucu ölçülemez</span><span class="v">sonra</span></div>
   </div>
   <p>
     İlk üçü toplam bir haftadan az ve hiçbiri model gerektirmiyor.
-    <strong>Dördüncüsü olmadan altıncısını yapmak, sonucu göremeyeceğin bir
-    yatırım.</strong>
+    <strong>Dördüncüsü olmadan altıncısını yapmak, sonucunu göremeyeceğin bir
+    harcama.</strong>
   </p>
   <div class="notes">
     <b>Konuşmacı notu</b>
@@ -1168,13 +1171,13 @@ nutrition  1 kcal/100g × 110 g / 100 → <span class="a">0,88</span> · <span c
 <!-- ══════════ 23 ══════════ -->
 <section class="slide" data-sec="Kapanış">
   <p class="eyebrow">kapanış</p>
-  <h2>Bu kod tabanının farkı<br>kullandığı model değil</h2>
+  <h2>Bu projeyi ayıran şey<br>seçtiği model değil</h2>
   <p class="pull" style="border-color:var(--accent);font-size:clamp(22px,3.6vw,34px)">
-    <em>Modele ne yaptırmadığı.</em>
+    <em>Modele neyi yaptırmadığı.</em>
   </p>
   <p class="lede">
-    Sekiz basamaklı bir kimlik merdiveni, yedi basamaklı bir porsiyon merdiveni,
-    ve ikisinin de sonunda duran aynı cümle: <strong>bilmiyorsan sor.</strong>
+    Sekiz basamaklı bir kimlik merdiveni, yedi basamaklı bir porsiyon merdiveni;
+    ikisinin de en altında aynı cümle duruyor: <strong>bilmiyorsan sor.</strong>
   </p>
   <div class="stat-row">
     <div class="stat hi"><b>%0</b><span>uydurulmuş besin değeri</span></div>
