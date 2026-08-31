@@ -1,0 +1,1157 @@
+<title>mise Çağrı Zinciri</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap">
+
+<style>
+:root{
+  --ground:#EEF1F1;
+  --paper:#F7F9F9;
+  --raise:#FFFFFF;
+  --ink:#131719;
+  --ink-mid:#465055;
+  --ink-soft:#717C82;
+  --line:#D3D9DA;
+  --line-soft:#E1E6E7;
+  --accent:#0A6E7E;
+  --accent-ink:#075866;
+  --accent-wash:#DCECEF;
+  --pure:#2E6B45;
+  --pure-wash:#DCEBE1;
+  --io:#8F5F12;
+  --io-wash:#F2E7D1;
+  --stop:#A33B38;
+  --stop-wash:#F4E0DF;
+  --shadow:0 1px 2px rgba(19,23,25,.05);
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --ground:#0D1113;
+    --paper:#141A1C;
+    --raise:#1A2124;
+    --ink:#E3E9EA;
+    --ink-mid:#A2AEB2;
+    --ink-soft:#78848A;
+    --line:#283134;
+    --line-soft:#1F282A;
+    --accent:#56BACB;
+    --accent-ink:#7CD0DE;
+    --accent-wash:#0F2C33;
+    --pure:#6BBE90;
+    --pure-wash:#152720;
+    --io:#DBA455;
+    --io-wash:#2B2314;
+    --stop:#E08A84;
+    --stop-wash:#2D1B1A;
+    --shadow:0 1px 2px rgba(0,0,0,.45);
+  }
+}
+:root[data-theme="dark"]{
+  --ground:#0D1113;
+  --paper:#141A1C;
+  --raise:#1A2124;
+  --ink:#E3E9EA;
+  --ink-mid:#A2AEB2;
+  --ink-soft:#78848A;
+  --line:#283134;
+  --line-soft:#1F282A;
+  --accent:#56BACB;
+  --accent-ink:#7CD0DE;
+  --accent-wash:#0F2C33;
+  --pure:#6BBE90;
+  --pure-wash:#152720;
+  --io:#DBA455;
+  --io-wash:#2B2314;
+  --stop:#E08A84;
+  --stop-wash:#2D1B1A;
+  --shadow:0 1px 2px rgba(0,0,0,.45);
+}
+
+*,*::before,*::after{box-sizing:border-box}
+
+body{
+  background:var(--ground);
+  color:var(--ink);
+  font-family:"IBM Plex Sans","Helvetica Neue",Arial,sans-serif;
+  font-size:16.5px;
+  line-height:1.62;
+  margin:0;
+  -webkit-font-smoothing:antialiased;
+  -webkit-text-size-adjust:100%;
+}
+h1,h2,h3,.mono,code,.sig,.where,.badge,.n{
+  font-family:"IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+  font-variant-numeric:tabular-nums;
+}
+a{color:var(--accent-ink)}
+:focus-visible{outline:2px solid var(--accent);outline-offset:3px;border-radius:3px}
+
+.page{max-width:720px;margin:0 auto;padding:0 18px 72px}
+@media(min-width:760px){.page{padding:0 32px 96px}}
+
+/* hero */
+.hero{padding:52px 0 30px;border-bottom:2px solid var(--ink)}
+.kicker{
+  font-size:11px;letter-spacing:.16em;text-transform:uppercase;
+  color:var(--accent);margin:0 0 14px;font-weight:500;
+}
+h1{
+  font-size:clamp(27px,6.6vw,40px);font-weight:600;line-height:1.1;
+  margin:0 0 16px;letter-spacing:-.02em;
+}
+.hero p{margin:0;color:var(--ink-mid);font-size:17px}
+.hero p+p{margin-top:12px}
+.hero strong{color:var(--ink);font-weight:600}
+
+/* sections */
+section{padding:40px 0 4px;border-top:1px solid var(--line);margin-top:36px}
+section:first-of-type{border-top:0;margin-top:0}
+h2{
+  font-size:clamp(19px,4.6vw,24px);font-weight:600;line-height:1.2;
+  margin:0 0 6px;letter-spacing:-.01em;
+}
+h2 .h{color:var(--accent);font-weight:500}
+h3{font-size:15px;font-weight:600;margin:30px 0 10px;color:var(--ink)}
+section > p{margin:0 0 16px;color:var(--ink-mid);max-width:62ch}
+section > p strong{color:var(--ink);font-weight:600}
+
+/* legend */
+.legend{
+  display:flex;flex-wrap:wrap;gap:8px;margin:20px 0 0;
+}
+.badge{
+  font-size:10.5px;letter-spacing:.05em;text-transform:uppercase;font-weight:500;
+  padding:3px 7px;border-radius:3px;white-space:nowrap;
+}
+.b-pure{background:var(--pure-wash);color:var(--pure)}
+.b-io{background:var(--io-wash);color:var(--io)}
+.b-stop{background:var(--stop-wash);color:var(--stop)}
+.b-acc{background:var(--accent-wash);color:var(--accent-ink)}
+
+/* the trace */
+.trace{list-style:none;margin:22px 0;padding:0 0 0 30px;position:relative}
+.trace::before{
+  content:"";position:absolute;left:9px;top:12px;bottom:20px;
+  width:1px;background:var(--line);
+}
+.step{position:relative;margin-bottom:22px}
+.step::before{
+  content:"";position:absolute;left:-30px;top:8px;
+  width:9px;height:9px;border-radius:50%;
+  background:var(--ground);border:2px solid var(--accent);
+}
+.step.pass::before{border-color:var(--line)}
+.step.halt::before{border-color:var(--stop);background:var(--stop)}
+
+.sig{
+  font-size:14px;font-weight:600;line-height:1.45;
+  display:block;margin-bottom:3px;word-break:break-word;
+}
+.sig .fn{color:var(--accent-ink)}
+.sig .ret{color:var(--ink-soft);font-weight:400}
+.where{
+  font-size:11.5px;color:var(--ink-soft);display:block;margin-bottom:7px;
+}
+.step p{margin:0 0 7px;font-size:16px;color:var(--ink-mid)}
+.step p:last-child{margin-bottom:0}
+.step p strong{color:var(--ink);font-weight:600}
+.tags{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 7px}
+
+/* cards / rows */
+.rows{
+  display:flex;flex-direction:column;gap:1px;background:var(--line);
+  border:1px solid var(--line);border-radius:4px;overflow:hidden;margin:20px 0;
+}
+.row{background:var(--paper);padding:13px 15px}
+.row .rh{display:flex;flex-wrap:wrap;align-items:baseline;gap:8px;margin-bottom:4px}
+.row .rk{font-family:"IBM Plex Mono",monospace;font-size:13.5px;font-weight:600}
+.row .rv{
+  font-family:"IBM Plex Mono",monospace;font-size:12px;color:var(--ink-soft);margin-left:auto;
+}
+.row p{margin:0;font-size:15.5px;color:var(--ink-mid);line-height:1.5}
+
+.note{
+  border-left:3px solid var(--accent);background:var(--accent-wash);
+  padding:14px 16px;border-radius:0 4px 4px 0;margin:20px 0;
+}
+.note .t{
+  font-family:"IBM Plex Mono",monospace;font-size:12.5px;font-weight:600;
+  color:var(--accent-ink);margin:0 0 6px;text-transform:uppercase;letter-spacing:.05em;
+}
+.note p{margin:0;font-size:15.5px;color:var(--ink-mid)}
+.note p+p{margin-top:8px}
+
+.alarm{
+  border-left:3px solid var(--stop);background:var(--stop-wash);
+  padding:14px 16px;border-radius:0 4px 4px 0;margin:20px 0;
+}
+.alarm .t{
+  font-family:"IBM Plex Mono",monospace;font-size:12.5px;font-weight:600;
+  color:var(--stop);margin:0 0 6px;text-transform:uppercase;letter-spacing:.05em;
+}
+.alarm p{margin:0;font-size:15.5px;color:var(--ink-mid)}
+
+pre{
+  background:var(--raise);border:1px solid var(--line);border-radius:4px;
+  padding:13px 14px;overflow-x:auto;margin:16px 0;
+  font-family:"IBM Plex Mono",monospace;font-size:12.5px;line-height:1.65;color:var(--ink);
+}
+pre .c{color:var(--ink-soft)}
+pre .k{color:var(--accent-ink);font-weight:500}
+pre .g{color:var(--pure)}
+code{
+  font-size:.88em;background:var(--paper);border:1px solid var(--line-soft);
+  border-radius:3px;padding:1px 4px;
+}
+
+ul.plain{margin:14px 0;padding-left:1.15em;color:var(--ink-mid)}
+ul.plain li{margin-bottom:9px}
+ul.plain li::marker{color:var(--accent)}
+ul.plain strong{color:var(--ink);font-weight:600}
+
+details.more{border:1px dashed var(--line);border-radius:4px;margin:20px 0;background:var(--raise)}
+details.more>summary{
+  font-family:"IBM Plex Mono",monospace;font-size:12.5px;font-weight:500;
+  color:var(--ink-soft);cursor:pointer;list-style:none;padding:13px 15px;
+  display:flex;justify-content:space-between;gap:10px;align-items:center;
+}
+details.more>summary::-webkit-details-marker{display:none}
+details.more>summary::after{content:"+";color:var(--accent);font-size:15px}
+details.more[open]>summary::after{content:"−"}
+details.more[open]>summary{border-bottom:1px dashed var(--line)}
+.more-body{padding:2px 15px}
+
+footer{
+  margin-top:48px;padding-top:24px;border-top:1px solid var(--line);
+  font-family:"IBM Plex Mono",monospace;font-size:11.5px;line-height:1.7;color:var(--ink-soft);
+}
+</style>
+
+<div class="page">
+
+<header class="hero">
+  <p class="kicker">packages/api · çağrı zinciri</p>
+  <h1>mise Çağrı Zinciri</h1>
+  <p>
+    Bir isteğin girdiği andan cevabın döndüğü ana kadar <strong>hangi dosyada
+    hangi fonksiyon çalışıyor, ne alıyor, ne döndürüyor.</strong> Satır
+    numaraları bu commit'teki hâliyle.
+  </p>
+  <p>
+    Rozetler önemli — özellikle son bölümdeki asenkron tartışması için:
+  </p>
+  <div class="legend">
+    <span class="badge b-pure">saf</span>
+    <span class="badge b-io">ağ / I/O</span>
+    <span class="badge b-acc">await</span>
+    <span class="badge b-stop">durdurur</span>
+  </div>
+</header>
+
+<main>
+
+<!-- ───────────── 0 boot ───────────── -->
+<section id="boot">
+  <h2><span class="h">0 ·</span> Önyükleme</h2>
+  <p>
+    Süreç ayakta kalırken bir kez çalışır. Buradaki her şey <strong>bellekte
+    kurulan tekil nesneler</strong> — asenkron sorusunun cevabı büyük ölçüde bu
+    listede saklı.
+  </p>
+
+  <ul class="trace">
+    <li class="step">
+      <span class="sig"><span class="fn">main()</span> <span class="ret">→ createApp()</span></span>
+      <span class="where">index.ts:7</span>
+      <p>Tek giriş noktası. <code>createApp()</code>'i çağırıp <code>app.listen</code> eder.</p>
+    </li>
+    <li class="step">
+      <span class="sig"><span class="fn">createApp()</span> <span class="ret">→ Promise&lt;FastifyInstance&gt;</span></span>
+      <span class="where">http/server.ts:800</span>
+      <p>
+        Bütün bağımlılıkları sırayla kurup <code>buildServer()</code>'a verir.
+        Aşağıdaki dokuz çağrı hep bu fonksiyonun gövdesinde.
+      </p>
+    </li>
+    <li class="step pass">
+      <span class="sig"><span class="fn">loadFoodDb()</span> <span class="ret">→ FoodDb</span></span>
+      <span class="where">data/foodDb.ts:36 · çağrı 809</span>
+      <p>
+        <code>data/foods/seed.json</code>'ı okur, Zod'la doğrular. <strong>Hızlı ve
+        sert başarısız olur:</strong> yinelenen id, sarkan <code>composedOf</code>,
+        takma ad çakışması → süreç açılmaz.
+      </p>
+      <p>Verdiği arayüz: <code>byId</code>, <code>byAlias</code>, <code>measureFor</code>, <code>defaultMeasure</code>, <code>all</code>, <code>surfaces</code>.</p>
+    </li>
+    <li class="step pass">
+      <span class="sig"><span class="fn">buildLexicalIndex(db)</span> <span class="ret">→ LexicalIndex</span></span>
+      <span class="where">resolve/lexical.ts:60 · çağrı 810</span>
+      <p>
+        Kapanış içinde IDF tablosu + trigram kümeleri kurar, geriye tek metotlu
+        bir nesne döner: <code>search(phrase, limit) → FoodCandidate[]</code>.
+      </p>
+      <p>
+        <strong>Aldığı tip <code>Indexable</code>, <code>FoodDb</code> değil</strong>
+        (satır 55) — bu yüzden aynı fonksiyon hem 87 satırlık tohumu hem
+        korpusu indeksliyor.
+      </p>
+    </li>
+    <li class="step pass">
+      <span class="sig"><span class="fn">loadFoodCorpus(seedIds)</span> <span class="ret">→ FoodCorpus</span></span>
+      <span class="where">data/corpus.ts:123 · çağrı 813</span>
+      <p>
+        USDA korpusunu yükler ve <strong>tohumdaki id'leri gölgeler</strong> —
+        küratörsüz kopya küratörlü satırı yenemesin diye. Sonra 814'te bunun
+        için ikinci bir <code>buildLexicalIndex</code> kurulur.
+      </p>
+    </li>
+    <li class="step">
+      <span class="sig"><span class="fn">await buildVectorIndex(db)</span> <span class="ret">→ VectorIndex</span></span>
+      <span class="where">resolve/vector.ts:55 · çağrı 818</span>
+      <div class="tags"><span class="badge b-acc">await</span></div>
+      <p>
+        <code>multilingual-e5-small</code>'ü yerelde yükler, ~200 yüzeyin
+        gömüsünü çıkarır, <code>.cache/surfaces-&lt;sha&gt;.json</code>'a yazar.
+        Yüklenemezse <code>available:false</code> döner ve yönlendirici sessizce
+        sadece sözcüksel moda düşer.
+      </p>
+    </li>
+    <li class="step pass">
+      <span class="sig"><span class="fn">createAliasStore(GLOBAL_ALIAS_SEED)</span> <span class="ret">→ AliasStore</span></span>
+      <span class="where">resolve/aliasStore.ts:52 · çağrı 819</span>
+      <p>
+        İki <code>Map</code>: kullanıcı kapsamı ve küresel kapsam. Anahtar
+        <code>userId   normalizeText(phrase)</code> (satır 70).
+      </p>
+      <p>Metotlar: <code>lookup</code>, <code>record</code>, <code>promotionCandidates</code>, <code>forget</code>, <code>size</code>.</p>
+    </li>
+    <li class="step">
+      <span class="sig"><span class="fn">await createExtractor(id)</span> <span class="ret">→ Extractor</span></span>
+      <span class="where">extract/registry.ts:18 · çağrı 822</span>
+      <div class="tags"><span class="badge b-io">ağ</span></div>
+      <p>
+        <code>bestAvailableExtractor()</code> (61) anahtarlara bakıp
+        <code>gemini → openai → anthropic → rules</code> sırasından birini seçer.
+        Tembel <code>import()</code> — kullanılmayan SDK yüklenmez.
+      </p>
+      <p>
+        823'te <code>withRuleFallback(primary)</code> ile sarılır
+        (<code>extract/fallback.ts:36</code>): model çökerse kural katmanına düşer
+        ve sonuca <code>DEGRADED_CEILING = 0.6</code> tavanı uygulanır.
+      </p>
+    </li>
+    <li class="step pass">
+      <span class="sig"><span class="fn">createGeminiReranker()</span> <span class="ret">→ Reranker | undefined</span></span>
+      <span class="where">resolve/reranker.ts:77 · çağrı 827</span>
+      <p>
+        Anahtar yoksa <code>undefined</code>. Bu tek satır merdivenin 5. ve 6.
+        basamağının davranışını komple değiştiriyor — aşağıda.
+      </p>
+    </li>
+    <li class="step pass">
+      <span class="sig"><span class="fn">createGapLedger()</span> <span class="ret">→ GapLedger</span></span>
+      <span class="where">gaps/ledger.ts:125 · çağrı 866</span>
+      <p><code>GAPS=off</code> ise <code>enabled:false</code> döner ve pipeline'a hiç bağlanmaz (872).</p>
+    </li>
+    <li class="step pass">
+      <span class="sig"><span class="fn">createPipeline(deps)</span> <span class="ret">→ Pipeline</span></span>
+      <span class="where">pipeline/index.ts:58 · çağrı 868</span>
+      <p>
+        Sadece bir kapanış kurar: içeride <code>namesOneFood</code> (70) tanımlanır
+        ve tek metotlu nesne döner — <code>process(input, opts)</code>.
+      </p>
+    </li>
+    <li class="step pass">
+      <span class="sig"><span class="fn">buildServer(deps)</span> <span class="ret">→ FastifyInstance</span></span>
+      <span class="where">http/server.ts:199 · çağrı 886</span>
+      <p>
+        Fastify örneği + <code>createMealStore()</code> (154) +
+        <code>createIdempotencyStore()</code> (idempotency.ts:62) + hook'lar +
+        <code>setErrorHandler</code> (248) + rotalar.
+      </p>
+    </li>
+  </ul>
+
+  <div class="alarm">
+    <p class="t">Burada saklı olan şey</p>
+    <p>
+      <code>createMealStore()</code>, <code>createIdempotencyStore()</code> ve
+      <code>createAliasStore()</code> <strong>süreç belleğinde birer Map.</strong>
+      Yani şu an tek bir Node süreci var ve durumun tamamı onun içinde. İkinci
+      bir kopya açtığın anda öğünler, idempotency anahtarları ve takma adlar
+      ikiye bölünür — asenkron/worker sorusunun asıl kilidi bu, Redis'e ihtiyaç
+      olup olmaması değil.
+    </p>
+  </div>
+</section>
+
+<!-- ───────────── 1 request ───────────── -->
+<section id="istek">
+  <h2><span class="h">1 ·</span> İstek: POST /v1/meals</h2>
+  <p>
+    Telefondan gelen gövde: <code>{ text?, imageBase64?, barcode?, reference? }</code>.
+    Rotanın kendi adımları (<code>http/server.ts:433–477</code>):
+  </p>
+
+  <ul class="trace">
+    <li class="step pass">
+      <span class="sig"><span class="fn">CreateMealBody.parse(req.body)</span> <span class="ret">→ MealInput</span></span>
+      <span class="where">server.ts:434</span>
+      <p>Zod. Hata atarsa <code>setErrorHandler</code> 400 + alan listesi döndürür (256).</p>
+    </li>
+    <li class="step pass">
+      <span class="sig"><span class="fn">userIdOf(req.headers)</span> <span class="ret">→ string</span></span>
+      <span class="where">server.ts:221 · çağrı 435</span>
+      <p><code>x-user-id</code> başlığı, yoksa <code>'anonymous'</code>. Gerçek auth yok.</p>
+    </li>
+    <li class="step halt">
+      <span class="sig">vizyon kapısı <span class="ret">→ 422</span></span>
+      <span class="where">server.ts:442–452</span>
+      <div class="tags"><span class="badge b-stop">durdurur</span></div>
+      <p>
+        Fotoğraf var ama <code>deps.supportsVision</code> false → <strong>422 ile
+        reddeder.</strong> Eskiden burada "confirmed / 0 kcal" dönüyordu.
+      </p>
+    </li>
+    <li class="step halt">
+      <span class="sig"><span class="fn">idempotency.get(key, req.body)</span> <span class="ret">→ MealLog | undefined</span></span>
+      <span class="where">idempotency.ts:62 · çağrı 455</span>
+      <div class="tags"><span class="badge b-stop">durdurur</span></div>
+      <p>
+        Aynı <code>Idempotency-Key</code> + aynı gövde özeti → kayıtlı sonucu
+        <code>Idempotent-Replay: true</code> başlığıyla döndürür, pipeline hiç
+        çalışmaz.
+      </p>
+      <p>
+        <strong>Gövde özeti anahtar kadar önemli</strong> (satır 46): aynı
+        anahtar farklı gövdeyle gelirse <code>IdempotencyConflict</code> → 409.
+        <code>stableStringify</code> (52) anahtar sırasının özeti değiştirmemesini
+        sağlar.
+      </p>
+    </li>
+    <li class="step">
+      <span class="sig"><span class="fn">await lookupBarcode(code)</span> <span class="ret">→ { food, facts }</span></span>
+      <span class="where">data/openFoodFacts.ts · çağrı 465</span>
+      <div class="tags"><span class="badge b-io">ağ</span><span class="badge b-acc">await</span></div>
+      <p>
+        Sadece <code>body.barcode</code> varsa. <strong>Kasten pipeline'ın
+        dışında</strong> (yorum 462): ağ I/O'su kendi hata modlarıyla burada
+        kalsın, pipeline eline verilen veri üzerinde saf bir dönüşüm olarak
+        dursun diye.
+      </p>
+    </li>
+    <li class="step">
+      <span class="sig"><span class="fn">await deps.pipeline.process(body, opts)</span> <span class="ret">→ MealLog</span></span>
+      <span class="where">server.ts:467</span>
+      <div class="tags"><span class="badge b-acc">await</span></div>
+      <p>İşin tamamı burada. Bölüm 2.</p>
+    </li>
+    <li class="step pass">
+      <span class="sig"><span class="fn">meals.put(log, userId)</span> · <span class="fn">idempotency.put(...)</span></span>
+      <span class="where">server.ts:472, 474</span>
+      <p>Map'lere yazar, <code>201</code> ile <code>MealLog</code> döner.</p>
+    </li>
+  </ul>
+
+  <details class="more">
+    <summary>Diğer rotalar ve hangi fonksiyona bağlandıkları</summary>
+    <div class="more-body">
+      <div class="rows">
+        <div class="row">
+          <div class="rh"><span class="rk">GET /healthz</span><span class="rv">317</span></div>
+          <p>Telefon bunu okuyup <em>zaman aşımı bütçesini</em> seçiyor: <code>visionAvailable</code>, <code>vectorRetrieval</code>, <code>curatedFoods</code>, <code>referenceFoods</code>.</p>
+        </div>
+        <div class="row">
+          <div class="rh"><span class="rk">GET /v1/foods/search</span><span class="rv">345</span></div>
+          <p><code>deps.foodSearch</code> → <code>createApp</code> içinde tanımlı (834): küratörlü + korpus indekslerini birleştirip <code>FOOD_SEARCH_FLOOR</code> altını atar, küratörlü olanı eşitlikte öne alır.</p>
+        </div>
+        <div class="row">
+          <div class="rh"><span class="rk">POST …/corrections</span><span class="rv">507</span></div>
+          <p><code>applyCorrection()</code> + <code>aliases.record()</code>. Bölüm 6.</p>
+        </div>
+        <div class="row">
+          <div class="rh"><span class="rk">POST …/items</span><span class="rv">602</span></div>
+          <p><code>addItem()</code> (correct.ts:155). Hiç çıkarılmamış bir yiyeceği aynı öğüne ekler.</p>
+        </div>
+        <div class="row">
+          <div class="rh"><span class="rk">GET …/trace</span><span class="rv">761</span></div>
+          <p>Saklanan <code>MealLog</code>'u okuyup her kalem için <code>arithmetic</code> dizesini kurar (787): <code>kcal/100g x g / 100 = kcal</code>. Yeni hesap yapmaz, kayıtlı olanı gösterir.</p>
+        </div>
+        <div class="row">
+          <div class="rh"><span class="rk">DELETE /v1/me</span><span class="rv">701</span></div>
+          <p>Dört depo: <code>meals.forget</code> · idempotency · <code>aliases.forget</code> · <code>gaps</code>. Kalem kalem makbuz döner.</p>
+        </div>
+      </div>
+    </div>
+  </details>
+</section>
+
+<!-- ───────────── 2 pipeline ───────────── -->
+<section id="pipeline">
+  <h2><span class="h">2 ·</span> pipeline.process()</h2>
+  <p>
+    <code>pipeline/index.ts:77–273</code>. Yorumlardaki aşama numaraları kodda
+    gerçekten yazıyor.
+  </p>
+
+  <ul class="trace">
+    <li class="step halt">
+      <span class="sig">aşama 0 — <span class="fn">barcodeLog(...)</span> <span class="ret">→ MealLog</span></span>
+      <span class="where">index.ts:83 → tanım 285</span>
+      <div class="tags"><span class="badge b-stop">durdurur</span></div>
+      <p>
+        <code>opts.barcode</code> varsa boru hattının geri kalanı
+        <strong>hiç çalışmaz.</strong> Ayrı bir fonksiyon olması kasten
+        (yorum 277): bu, içinde hiçbir çıkarım olmayan tek yol.
+      </p>
+      <p>Kendi içinde yine <code>estimatePortion → computeNutrition → scoreConfidence</code> çağırır.</p>
+    </li>
+    <li class="step">
+      <span class="sig">aşama 1 — <span class="fn">await timed('extract', extractor.extract(input))</span></span>
+      <span class="where">index.ts:88</span>
+      <div class="tags"><span class="badge b-io">ağ</span><span class="badge b-acc">await</span></div>
+      <p>
+        <strong>Modelin bir şey yazdığı tek aşama.</strong> Dönen tip
+        <code>ExtractionResult { items, notFood, note }</code> — içinde kalori
+        alanı yok, foodId alanı yok.
+      </p>
+      <p>
+        <code>timed()</code> (obs/metrics.ts:103) sadece süreyi
+        <code>stage_latency_ms{stage=extract}</code>'e yazan bir sarmalayıcı.
+      </p>
+    </li>
+    <li class="step halt">
+      <span class="sig">boş sonuç → <span class="fn">emptyLog(...)</span></span>
+      <span class="where">index.ts:90–107 → tanım 356</span>
+      <div class="tags"><span class="badge b-stop">durdurur</span></div>
+      <p>
+        <code>notFood</code> ya da sıfır kalem. Metin yazılmışsa önce
+        <code>gaps.record({kind:'no_food_found'})</code> — çünkü bu ya doğru bir
+        ret ya da çıkarıcının en kötü hatası, ve ikisini sadece insan ayırabilir.
+      </p>
+    </li>
+    <li class="step pass">
+      <span class="sig">aşama 2a — <span class="fn">mergeModifierCompounds(items, text, namesOneFood)</span></span>
+      <span class="where">extract/compound.ts:46 · çağrı 112</span>
+      <div class="tags"><span class="badge b-pure">saf</span></div>
+      <p>
+        Ham metni kelimelere böler, <code>-lı/-li/-lu/-lü</code> ve
+        <code>-sız/…</code> eklerini arar (<code>modifierStem</code>, 98), sonra
+        sorar: <em>bu bileşiğin tamamı tek bir satırı adlandırıyor mu?</em>
+      </p>
+      <p>
+        Bu soruyu <code>namesOneFood</code> cevaplıyor — <code>index.ts:70</code>'te
+        tanımlı, <strong>kasten parametre olarak geçiliyor</strong> ki
+        <code>extract/</code> katmanı veritabanını hiç görmesin.
+      </p>
+      <p>
+        Bitişiklik şartı (satır 78): <code>Math.abs(modifierAt - headAt) !== 1</code>
+        → atla. "yumurtalı noodle ve 1 yumurta" ikinci yumurtayı yutmasın diye.
+      </p>
+      <p>Her birleştirme <code>gaps.record({kind:'split_compound'})</code> olarak yazılır (119).</p>
+    </li>
+    <li class="step pass">
+      <span class="sig">aşama 2b — <span class="fn">expandComposites(joined)</span></span>
+      <span class="where">composite.ts:71 · çağrı 130</span>
+      <div class="tags"><span class="badge b-pure">saf</span></div>
+      <p>
+        <code>TEMPLATES</code> listesinde eşleşme ararsa parçalara açar
+        ("tost" → 2 dilim ekmek + 2 dilim kaşar). <code>item.quantity</code>
+        çarpan olarak uygulanır, güven <code>× 0.85</code> düşürülür — tarif bir
+        varsayılan, gözlem değil.
+      </p>
+    </li>
+    <li class="step">
+      <span class="sig">aşama 3 — <span class="fn">await Promise.all(expanded.map(resolvePhrase))</span></span>
+      <span class="where">index.ts:146–158</span>
+      <div class="tags"><span class="badge b-acc">await</span><span class="badge b-io">ağ olabilir</span></div>
+      <p>
+        <strong>Boru hattındaki tek eşzamanlılık noktası.</strong> Kalemler
+        birbirine bağlı değil, her biri kendi merdivenini iner.
+      </p>
+      <p>
+        Kodun kendi gerekçesi (yorum 133–144): seri çalışırken doğrulayıcıya
+        uğrayan beş yiyecekli bir fotoğraf <strong>20–65 saniye</strong> ölçülmüş.
+        <code>Promise.all</code> sırayı koruduğu için çıktı bayt bayt aynı kalıyor.
+      </p>
+    </li>
+    <li class="step pass">
+      <span class="sig">döngü: <span class="fn">db.byId(id) ?? deps.corpusFood?.(id)</span></span>
+      <span class="where">index.ts:167</span>
+      <p>
+        Sıra önemli: küratörlü her zaman kazanır. Korpus yükleyicisi tohumdaki
+        id'leri zaten attığı için ikisi çelişemez.
+      </p>
+      <p><strong>Food bulunamazsa</strong> (171): kalem <code>foodId:null</code> ile eklenir, porsiyon hiç hesaplanmaz.</p>
+    </li>
+    <li class="step pass">
+      <span class="sig"><span class="fn">estimatePortion(ctx)</span> <span class="ret">→ PortionEstimate</span></span>
+      <span class="where">portion/index.ts → ladder.ts:358 <code>runLadder</code> · çağrı 186</span>
+      <div class="tags"><span class="badge b-pure">saf</span></div>
+      <p>
+        <code>portion/index.ts</code> sadece bir <code>export { runLadder as estimatePortion }</code>.
+        Bölüm 4.
+      </p>
+    </li>
+    <li class="step pass">
+      <span class="sig"><span class="fn">computeNutrition(food, portion)</span> <span class="ret">→ NutritionInterval</span></span>
+      <span class="where">nutrition.ts:36 · çağrı 198</span>
+      <div class="tags"><span class="badge b-pure">saf</span></div>
+      <p>
+        <code>scale(per100g, grams)</code>'ı üç kez çağırır: min, likely, max.
+        Besin doğrusal olduğu için aralık doğrudan geçiyor — örnekleme yok,
+        Monte Carlo yok.
+      </p>
+    </li>
+    <li class="step halt">
+      <span class="sig"><span class="fn">verifyTraceable(food, portion, nutrition)</span> <span class="ret">→ {ok} | {ok:false, reason}</span></span>
+      <span class="where">nutrition.ts:73 · çağrı 204</span>
+      <div class="tags"><span class="badge b-pure">saf</span><span class="badge b-stop">düşürür</span></div>
+      <p>
+        Gösterilecek kaloriyi <strong>yeniden hesaplayıp</strong> karşılaştırır
+        (tolerans 0,05 kcal) ve <code>min ≤ likely ≤ max</code> sırasını kontrol eder.
+      </p>
+      <p>
+        Tutmazsa: <code>metrics.inc('nutrition_untraceable_total')</code>,
+        <code>log.error('E11: untraceable nutrition')</code>, ve kalem
+        <code>method:'unresolved'</code>'a düşürülür — <strong>sayı gösterilmez</strong> (205–216).
+      </p>
+    </li>
+    <li class="step pass">
+      <span class="sig">aşama 4 — <span class="fn">mergeByFood(resolved, db, corpusFood)</span></span>
+      <span class="where">index.ts:429 · çağrı 233</span>
+      <div class="tags"><span class="badge b-pure">saf</span></div>
+      <p>
+        Aynı <code>foodId</code>'ye çözülen satırların gramlarını toplar,
+        <code>computeNutrition</code>'ı yeniden çağırır. İki incelik:
+        <code>fromVision = a || b</code> (459) ve
+        <code>confidence = ikisinin zayıfı</code> (468).
+      </p>
+    </li>
+    <li class="step pass">
+      <span class="sig"><span class="fn">sumIntervals</span> · <span class="fn">buildQuestions</span> · <span class="fn">dispositionFor</span></span>
+      <span class="where">index.ts:235, 239, 242</span>
+      <div class="tags"><span class="badge b-pure">saf</span></div>
+      <p>
+        Sırasıyla toplamlar, sorular ve öğün seviyesi durum
+        (<code>confirmed</code> / <code>needs_review</code> / <code>needs_input</code>).
+        Sonra metrikler yazılıp <code>MealLog</code> döner.
+      </p>
+    </li>
+  </ul>
+</section>
+
+<!-- ───────────── 3 resolve ───────────── -->
+<section id="resolve">
+  <h2><span class="h">3 ·</span> resolvePhrase() — kimlik merdiveni</h2>
+  <p>
+    <code>resolve/router.ts:230–374</code>. İmza:
+  </p>
+  <pre><span class="k">async function</span> resolvePhrase(
+  deps: ResolveDeps,          <span class="c">// db, lexical, vector, aliases, reranker?, corpus?, gaps?</span>
+  phrase: string,
+  opts: ResolveOptions,       <span class="c">// userId, context?, preparation?</span>
+): Promise&lt;Resolution&gt;        <span class="c">// { method, foodId, candidates, margin }</span></pre>
+  <p>
+    Fonksiyonun ilk satırı <code>foodPhraseOnly(phrase)</code> (236) — miktar ve
+    ölçü sözcüklerini atar. Her çıkış <code>done()</code> yerel yardımcısından
+    geçer (238), o da <code>metrics.recordResolution(method)</code> çağırır.
+  </p>
+
+  <ul class="trace">
+    <li class="step pass">
+      <span class="sig">1 · <span class="fn">aliases.lookup(userId, clean)</span> → scope <code>'user'</code></span>
+      <span class="where">router.ts:249–254</span>
+      <div class="tags"><span class="badge b-pure">saf</span></div>
+      <p><code>done('user_alias', …, margin 1)</code>. Map araması, tek satır.</p>
+    </li>
+    <li class="step pass">
+      <span class="sig">2 · aynı lookup → scope <code>'global'</code></span>
+      <span class="where">router.ts:260–264</span>
+      <div class="tags"><span class="badge b-pure">saf</span></div>
+      <p>
+        Ama önce <code>stateConflicts(db, foodId, opts.preparation)</code> (177).
+        Çıplak "yumurta"nın varsayılanı çiğ satır; <em>"haşlanmış yumurta"</em>
+        o yiyecek değil, o yüzden takma ad kısayolu açık bir ifadeyi geçemez.
+      </p>
+    </li>
+    <li class="step pass">
+      <span class="sig">3 · <span class="fn">db.byAlias(normalizeText(clean))</span></span>
+      <span class="where">router.ts:267–272</span>
+      <div class="tags"><span class="badge b-pure">saf</span></div>
+      <p>Birebir yüzey eşleşmesi, aynı <code>stateConflicts</code> kapısıyla.</p>
+    </li>
+    <li class="step pass">
+      <span class="sig">4a · <span class="fn">lexical.search(clean)</span> → <span class="fn">applyPreparation(...)</span></span>
+      <span class="where">router.ts:275–281 · applyPreparation 190</span>
+      <div class="tags"><span class="badge b-pure">saf</span></div>
+      <p>
+        Eşik: <code>score ≥ SELF_EVIDENT_SCORE (0.72)</code> <strong>ve</strong>
+        <code>margin ≥ DECISIVE_MARGIN (0.18)</code>. İkisi birden.
+      </p>
+      <p>
+        <code>applyPreparation</code> formülü toplamsal:
+        <code>score + (1 - score) * 0.4</code>. Çarpımsal olan 0,72 üstündeki her
+        şeyi 1,0'a sabitleyip margin'i sıfırlıyordu (yorum 206–216).
+      </p>
+    </li>
+    <li class="step pass">
+      <span class="sig">4b · <span class="fn">await vector.search(clean)</span> → <span class="fn">fuse(lex, vec)</span></span>
+      <span class="where">router.ts:283–290 · fuse 100</span>
+      <div class="tags"><span class="badge b-acc">await</span></div>
+      <p>
+        Yerel model, ağ yok. <code>vector.available</code> false ise hiç
+        çağrılmaz, dizi boş geçer.
+      </p>
+      <pre>score = min(1, max(lex, vec) + <span class="k">0.15</span> * min(lex, vec))</pre>
+      <p>Aynı iki eşik yeniden denenir; geçerse <code>done('vector'|'lexical')</code>.</p>
+    </li>
+    <li class="step">
+      <span class="sig">5 · <span class="fn">await reranker.choose({phrase, context, candidates})</span></span>
+      <span class="where">router.ts:294–340 · arayüz 54</span>
+      <div class="tags"><span class="badge b-io">ağ</span><span class="badge b-acc">await</span></div>
+      <p>
+        <code>shortlist = fused.slice(0, 5)</code>. Çağrı <code>try/catch</code>
+        içinde (303): patlarsa <code>reranker_error_total</code> artar ve
+        <code>picked = {foodId:null}</code> olur — <strong>bir kalemin
+        doğrulaması kaybolur, öğün değil.</strong>
+      </p>
+      <p>
+        Sonra <strong>güven sınırı</strong> (317):
+        <code>shortlist.some(c =&gt; c.foodId === picked.foodId)</code>. Listede
+        olmayan bir id "düzeltilmez", atılır. Halüsinasyon burada yasak değil,
+        <em>imkânsız</em>.
+      </p>
+      <p>Geçerse <code>gaps.record({kind:'contested_food'})</code> + <code>done('llm_rerank')</code>.</p>
+    </li>
+    <li class="step pass">
+      <span class="sig">6 · doğrulayıcı yoksa gevşek kabul</span>
+      <span class="where">router.ts:346–348</span>
+      <p>
+        <code>!reranker && score ≥ MIN_RESOLVABLE_SCORE (0.35) && margin ≥ 0.18</code>
+        → kabul. Anahtarsız kurulumda sistemin eski davranışı.
+      </p>
+    </li>
+    <li class="step">
+      <span class="sig">7 · <span class="fn">await resolveFromCorpus(deps, clean, opts, done)</span></span>
+      <span class="where">router.ts:357 → tanım 397</span>
+      <div class="tags"><span class="badge b-io">ağ</span><span class="badge b-acc">await</span></div>
+      <p>
+        <strong>Her iki yoldan da buraya düşülüyor</strong> (yorum 350–356) —
+        bilinmeyen bir yiyeceğin en yaygın hâli çekişen bir liste değil,
+        <em>boş</em> bir liste.
+      </p>
+      <p>
+        İçeride: <code>CORPUS_QUERY_ALIASES[clean] ?? clean</code> (406) →
+        <code>corpus.search()</code> → <code>≥ 0.35</code> filtresi → ilk 5.
+      </p>
+      <p>
+        Sonra <strong>üç ayrı yol da aynı yere çıkıyor</strong> —
+        <code>waitForUser(reason)</code> (412): doğrulayıcı yok (429),
+        doğrulayıcı patladı (440), doğrulayıcı çekimser kaldı ya da listede
+        olmayan bir id döndürdü (445). Üçü de <code>done('unresolved', null, shortlist)</code>.
+      </p>
+      <p>
+        Sadece geçerli bir seçim <code>done('corpus', picked.foodId, …)</code>
+        döndürür ve <code>gaps.record({kind:'uncurated_food'})</code> yazar.
+      </p>
+    </li>
+    <li class="step halt">
+      <span class="sig">8 · <span class="fn">gaps.record({kind:'unknown_food'})</span> → <code>done('unresolved')</code></span>
+      <span class="where">router.ts:366–373</span>
+      <div class="tags"><span class="badge b-stop">çekimser</span></div>
+      <p>
+        En yakın 3 aday da kaydedilir — genelde satırın ne olması gerektiğini
+        görmeye yetiyor.
+      </p>
+    </li>
+  </ul>
+
+  <div class="note">
+    <p class="t">Tek cümlelik kural</p>
+    <p>
+      <strong>Doğrulayıcı yoksa otomatik korpus eşleşmesi de yok.</strong>
+      Ulaşılamayan bir doğrulayıcı asla onaylayıcıya dönüşmüyor — kodda üç ayrı
+      hata yolunun da <code>waitForUser</code>'a çıkması bunun uygulanışı.
+    </p>
+  </div>
+</section>
+
+<!-- ───────────── 4 portion ───────────── -->
+<section id="portion">
+  <h2><span class="h">4 ·</span> runLadder() — porsiyon merdiveni</h2>
+  <p>
+    <code>portion/ladder.ts</code>. Burada tasarım farklı: merdiven bir
+    <code>if/else</code> zinciri değil, <strong>bir dizi</strong>.
+  </p>
+
+  <pre><span class="c">// ladder.ts:348</span>
+<span class="k">export const</span> PORTION_LADDER: PortionStrategy[] = [
+  statedMass,        <span class="c">// 171  ±2%</span>
+  statedVolume,      <span class="c">// 187  ±5%</span>
+  barcodeLabel,      <span class="c">// 212  ±8%</span>
+  userMemory,        <span class="c">// 236  ±10%</span>
+  referenceScaled,   <span class="c">// 267  ±18%</span>
+  householdMeasure,  <span class="c">// 286  yiyeceğin kendi yayılımı</span>
+  modelEstimate,     <span class="c">// 310  ±40%</span>
+];</pre>
+
+  <p>
+    Her eleman tek metotlu bir nesne:
+    <code>estimate(ctx: PortionContext) → PortionEstimate | null</code>.
+    <strong><code>null</code> "tahmin etmem, alttakine sor" demek</strong> —
+    sözleşme <code>portion/types.ts:62</code>'de yazılı.
+  </p>
+
+  <ul class="trace">
+    <li class="step pass">
+      <span class="sig"><span class="fn">runLadder(ctx)</span> <span class="ret">→ PortionEstimate</span></span>
+      <span class="where">ladder.ts:358</span>
+      <div class="tags"><span class="badge b-pure">saf</span></div>
+      <p>
+        Diziyi sırayla gezer, ilk <code>null</code> olmayanı alır. Sonra
+        <strong>makullük kapısı</strong> (366): <code>method !== 'stated_mass'</code>
+        ve <code>gramsLikely > 1200</code> ise cevabı atıp varsayılan ölçüye döner.
+      </p>
+      <p>
+        Son satır bir <code>throw</code> (380) — <code>modelEstimate</code> asla
+        <code>null</code> dönmediği için ulaşılamaz, ama sözleşmeyi derleyiciye
+        anlatıyor.
+      </p>
+    </li>
+    <li class="step pass">
+      <span class="sig">ortak okuma — <span class="fn">read(ctx)</span> <span class="ret">→ Reading</span></span>
+      <span class="where">ladder.ts:89</span>
+      <p>
+        <code>parseQuantity(phrase)</code> (normalize.ts:129) +
+        <code>canonicalUnit(item.unit)</code> ya da
+        <code>unitTokenIn(ctx, phrase)</code> (105).
+      </p>
+      <p>
+        <code>unitTokenIn</code> önemli: <strong>sadece o yiyeceğin gerçekten
+        tanımladığı birimler sayılır</strong>, böylece "1 bardak çay" jenerik 240
+        ml'ye değil çayın kendi bardak satırına düşüyor.
+      </p>
+    </li>
+    <li class="step pass">
+      <span class="sig">ortak dönüşüm — <span class="fn">gramsFromWords(ctx, reading)</span></span>
+      <span class="where">ladder.ts:115</span>
+      <p>Üç deneme, sırayla:</p>
+      <ul class="plain">
+        <li><code>db.measureFor(food, reading.unit)</code> — birim adı eşleşti</li>
+        <li><code>detectSize(phrase)</code> → <code>measureFor(food, size)</code> — "büyük boy"</li>
+        <li><code>db.defaultMeasure(food)</code> — yiyeceğin varsayılanı</li>
+      </ul>
+      <p>
+        Üçüncüde iki koruma var (152, 156): kullanıcı <em>bilinmeyen</em> bir
+        birim söylediyse sayı düşürülür (<code>null</code>), ve sonuç 1.200 g'ı
+        aşarsa yine <code>null</code>. "17 adet" × bardak = 2,4 kg buradan
+        çıkmıştı.
+      </p>
+    </li>
+    <li class="step pass">
+      <span class="sig"><span class="fn">interval(grams, spread, basis, method, assumption, fromVision)</span></span>
+      <span class="where">ladder.ts:61</span>
+      <div class="tags"><span class="badge b-pure">saf</span></div>
+      <p>
+        Bütün basamakların ortak çıkış fonksiyonu.
+        <code>min = g × (1-spread)</code>, <code>max = g × (1+spread)</code>.
+        Spread değerleri <code>SPREAD</code> tablosunda (16–45).
+      </p>
+    </li>
+    <li class="step">
+      <span class="sig"><span class="fn">userSetPortion(grams, fromVision)</span> — merdivenin dışında</span>
+      <span class="where">ladder.ts:390</span>
+      <p>
+        <code>PORTION_LADDER</code> dizisinde <strong>yok.</strong> Ayrı bir
+        export, sadece <code>correct.ts</code> çağırıyor. Gerekçe yorum 383–389:
+        merdiven "elimizdekinden ne çıkarabiliriz"i cevaplıyor, bu ise "kişi bizi
+        düzeltti"yi — hiçbir kanıt sıralaması bunu üretemez.
+      </p>
+    </li>
+  </ul>
+</section>
+
+<!-- ───────────── 5 confidence ───────────── -->
+<section id="confidence">
+  <h2><span class="h">5 ·</span> scoreConfidence() ve buildQuestions()</h2>
+
+  <ul class="trace">
+    <li class="step pass">
+      <span class="sig"><span class="fn">scoreConfidence({extracted, resolution, portion})</span> <span class="ret">→ Confidence</span></span>
+      <span class="where">confidence.ts:107</span>
+      <div class="tags"><span class="badge b-pure">saf</span></div>
+      <p>Üç alt fonksiyon çağırır:</p>
+      <ul class="plain">
+        <li><code>extracted.confidence</code> — doğrudan, 0–1 arasına kırpılmış</li>
+        <li><code>resolutionConfidence(resolution)</code> (87) = <code>METHOD_CEILING[method] × min(1, 0.55 + margin×2.2)</code></li>
+        <li><code>portionConfidence(portion)</code> (72) — <code>basis</code>'e göre switch, <code>fromVision</code> ise 0,5 tavanı</li>
+      </ul>
+      <p>
+        Birleşim <strong>ağırlıklı geometrik ortalama</strong> (120):
+        <code>e^0.25 × r^0.40 × p^0.35</code>. Herhangi biri 0 ise erken
+        <code>0</code> döner (121) — aritmetik ortalama bunu gizlerdi.
+      </p>
+      <p>
+        <code>weakest</code> (136) üç aşamanın en düşüğünü seçer. Bu alan bir
+        sonraki fonksiyonun yol ayrımı.
+      </p>
+    </li>
+    <li class="step pass">
+      <span class="sig"><span class="fn">buildQuestions(items, db)</span> <span class="ret">→ ClarificationQuestion[]</span></span>
+      <span class="where">questions.ts:61</span>
+      <div class="tags"><span class="badge b-pure">saf</span></div>
+      <pre><span class="k">if</span> (band === <span class="g">'high'</span>) <span class="k">continue</span>;                      <span class="c">// soru yok</span>
+<span class="k">if</span> (weakest === <span class="g">'resolution'</span> || !foodId)
+    identityQuestion(item, db)    <span class="c">// 101 — "hangi yiyecek"</span>
+<span class="k">if</span> (weakest === <span class="g">'portion'</span>)
+    amountQuestion(item, food)    <span class="c">// 208 — "ne kadar"</span></pre>
+      <p>
+        Son satır: <code>.sort((a,b) =&gt; b.expectedKcalSwing - a.expectedKcalSwing).slice(0, 2)</code>.
+        Kullanıcının dikkati bir bütçe, en getirili soruya harcanıyor.
+      </p>
+      <p>
+        <code>identityQuestion</code> iki kapı uyguluyor:
+        <code>OFFERABLE_SCORE (= 0.72)</code> ve <code>DECISIVE_MARGIN</code> —
+        liderden bu kadar geride bir aday, çözümleyicinin kendi tanımına göre
+        zaten yarışmıyor.
+      </p>
+    </li>
+    <li class="step pass">
+      <span class="sig"><span class="fn">dispositionFor(bands)</span> <span class="ret">→ 'confirmed'|'needs_review'|'needs_input'</span></span>
+      <span class="where">confidence.ts:150</span>
+      <div class="tags"><span class="badge b-pure">saf</span></div>
+      <p>Tek bir <code>low</code> varsa öğünün tamamı <code>needs_input</code>.</p>
+    </li>
+  </ul>
+</section>
+
+<!-- ───────────── 6 correction ───────────── -->
+<section id="correction">
+  <h2><span class="h">6 ·</span> Düzeltme akışı</h2>
+  <p>
+    İkinci ve tamamen ayrı bir yol: <code>POST /v1/meals/:id/corrections</code>
+    → <code>server.ts:507</code>.
+  </p>
+
+  <ul class="trace">
+    <li class="step pass">
+      <span class="sig">doğrulama zinciri</span>
+      <span class="where">server.ts:512–547</span>
+      <p>
+        <code>meals.get(id)</code> → 404 · kalem bulunamadı → 404 ·
+        <code>foodId = body.foodId ?? item.foodId</code> → yoksa 400 ·
+        <code>db.byId(foodId) ?? corpusFood(foodId)</code> → yoksa 400.
+      </p>
+      <p>
+        Son kapının gerekçesi yorumda (538): <strong>zehirli bir takma ad, hiç
+        takma addan kötüdür</strong> — çünkü sessiz ve hızlıdır.
+      </p>
+    </li>
+    <li class="step pass">
+      <span class="sig"><span class="fn">applyCorrection({log, itemId, food, grams?, db, foodById, aliases, userId})</span></span>
+      <span class="where">correct.ts:61 · çağrı 549</span>
+      <div class="tags"><span class="badge b-pure">saf</span></div>
+      <p>
+        <code>grams</code> verilmişse <code>userSetPortion(grams)</code>, verilmemişse
+        <strong><code>estimatePortion</code> yeniden çalışır</strong> (73).
+      </p>
+      <p>
+        Gerekçe yorum 69–72: kelimeler <em>eski</em> yiyecek hakkındaydı. "2
+        dilim" ekmekte ve peynirde farklı kütlelerdir; eski gramı taşımak bir
+        yiyeceğin ölçü tablosunu sessizce diğerine giydirirdi.
+      </p>
+      <p>
+        Sonra <code>computeNutrition</code> → <strong><code>verifyTraceable</code>
+        yeniden</strong> (88) → <code>method:'user_alias'</code>, <code>margin:1</code>
+        ile yeni <code>Resolution</code> → <code>rebuild(log, items, …)</code> (227).
+      </p>
+      <p>
+        Kalemler <strong>değiştirilir, birleştirilmez</strong> (yorum 111): burada
+        <code>mergeByFood</code> çağırmak, uygulamanın hakkında soru sorduğu
+        satırın id'sini yok ederdi.
+      </p>
+    </li>
+    <li class="step pass">
+      <span class="sig"><span class="fn">aliases.record(userId, item.extracted.phrase, foodId, grams)</span></span>
+      <span class="where">aliasStore.ts · çağrı 567</span>
+      <p>
+        <strong>Anahtar eski ifade.</strong> Bir dahaki sefere aynı cümle
+        merdivenin 1. basamağında, model çağrısı olmadan çözülür — sistemin
+        "öğrenmesi" bu.
+      </p>
+      <p>Çelişen bir düzeltme gelirse <code>hits</code> sayacı sıfırlanır.</p>
+    </li>
+  </ul>
+</section>
+
+<!-- ───────────── 7 worked example ───────────── -->
+<section id="ornek">
+  <h2><span class="h">7 ·</span> Bir isteği baştan sona koştur</h2>
+  <p>
+    Girdi: <code>{ text: "2 dilim beyaz ekmek ve bir bardak çay" }</code>,
+    fotoğraf yok, barkod yok. Sayılar <code>data/foods/seed.json</code>'dan
+    gerçek.
+  </p>
+
+  <pre><span class="c">POST /v1/meals  →  pipeline.process()</span>
+
+<span class="k">extract</span>      → [{phrase:"beyaz ekmek", quantity:2, unit:"dilim"},
+                 {phrase:"çay", quantity:1, unit:"bardak"}]
+<span class="k">2a compound</span>  → değişiklik yok ("beyaz" bir -lı/-sız eki değil)
+<span class="k">2b composite</span> → şablon eşleşmesi yok
+<span class="k">3 resolve</span>    → Promise.all, iki kalem paralel
+
+<span class="c">── kalem 1 ──────────────────────────────</span>
+foodPhraseOnly("beyaz ekmek")  → "beyaz ekmek"
+basamak 1 aliases.lookup       → yok
+basamak 2 global               → yok
+basamak 3 db.byAlias           → <span class="g">fdc:174924</span>  ✓ DURDU
+   Resolution { method:"lexical", margin:1 }
+   <span class="c">// seed'de "beyaz ekmek" birebir bir alias</span>
+
+runLadder:
+  read()            → quantity 2, unit "dilim" → canonicalUnit → "slice"
+  statedMass        → null   (slice kütle birimi değil)
+  statedVolume      → null
+  barcodeLabel      → null   (ctx.barcode yok)
+  userMemory        → null   (kayıt yok)
+  referenceScaled   → null   (fromImage false)
+  householdMeasure  → measureFor(ekmek,"slice") = 28 g, spread 0.1
+                    → <span class="g">2 × 28 = 56 g</span>  ✓ DURDU
+  interval(56, 0.1) → min 50.4 · likely 56.0 · max 61.6
+
+computeNutrition(266 kcal/100g):
+  min 134.06 · <span class="g">likely 148.96</span> · max 163.86 kcal
+
+verifyTraceable   → ok
+scoreConfidence   → resolution 0.92 (lexical tavanı × margin 1)
+                    portion    0.90 (relWidth 0.1 → 1−0.1)
+                    <span class="g">overall ≈ 0.91 → band "high"</span>
+
+<span class="c">── kalem 2 ──────────────────────────────</span>
+basamak 3 db.byAlias("çay")  → <span class="g">fdc:173227</span>  ✓ DURDU
+householdMeasure: measureFor(çay,"glass") = 110 g, spread 0.2
+interval(110, 0.2) → min 88 · likely 110 · max 132
+computeNutrition(1 kcal/100g) → 0.88 · <span class="g">1.1</span> · 1.32 kcal
+
+<span class="c">── birleşim ─────────────────────────────</span>
+mergeByFood     → iki farklı foodId, birleşme yok
+sumIntervals    → <span class="g">134.94 / 150.06 / 165.18 kcal</span>
+buildQuestions  → ikisi de "high" → <span class="g">[]</span>
+dispositionFor  → <span class="g">"confirmed"</span>
+
+<span class="c">// model hiç çağrılmadı. ağ trafiği: sıfır. süre: birkaç ms.</span></pre>
+
+  <div class="note">
+    <p class="t">Bu izin anlattığı şey</p>
+    <p>
+      Tipik bir metin öğünü merdivenin <strong>3. basamağında</strong> bitiyor ve
+      <code>extract</code> dışında hiçbir ağ çağrısı olmuyor. Yayımlanan %96,5
+      rakamı bu — pahalı basamaklar istisna, kural değil.
+    </p>
+  </div>
+</section>
+
+<!-- ───────────── 8 pure/io ───────────── -->
+<section id="saflik">
+  <h2><span class="h">8 ·</span> Nerede ağ var, nerede yok</h2>
+  <p>
+    Bu ayrım sadece akademik değil — bir sonraki bölümdeki asenkron sorusunun
+    cevabı buradan çıkıyor.
+  </p>
+
+  <div class="rows">
+    <div class="row">
+      <div class="rh"><span class="rk">extractor.extract()</span><span class="rv">ağ · 1 çağrı</span></div>
+      <p>Öğün başına bir kez. Gemini p95 ~10 s ölçülmüş; 30 sn zaman aşımı var.</p>
+    </div>
+    <div class="row">
+      <div class="rh"><span class="rk">reranker.choose()</span><span class="rv">ağ · N çağrı</span></div>
+      <p><strong>Kalem başına, en kötü durumda.</strong> Gecikmenin asıl kaynağı bu — <code>Promise.all</code> bu yüzden var.</p>
+    </div>
+    <div class="row">
+      <div class="rh"><span class="rk">lookupBarcode()</span><span class="rv">ağ · 1 çağrı</span></div>
+      <p>Open Food Facts. Pipeline'ın dışında, rotada.</p>
+    </div>
+    <div class="row">
+      <div class="rh"><span class="rk">vector.search()</span><span class="rv">yerel</span></div>
+      <p><code>await</code> ama ağ değil — model süreç içinde. Kaba kuvvet ~200 vektör.</p>
+    </div>
+    <div class="row">
+      <div class="rh"><span class="rk">lexical · normalize · ladder · nutrition · confidence · questions · merge</span><span class="rv">saf</span></div>
+      <p>Hepsi senkron saf fonksiyon. Aynı girdi → aynı çıktı, her zaman. Determinizm testi bunu doğruluyor.</p>
+    </div>
+    <div class="row">
+      <div class="rh"><span class="rk">meals · idempotency · aliases · gaps</span><span class="rv">süreç belleği</span></div>
+      <p>Dört <code>Map</code>. Süreç ölünce gider, ikinci kopyayla paylaşılmaz.</p>
+    </div>
+  </div>
+
+  <details class="more">
+    <summary>Dosya → sorumluluk indeksi</summary>
+    <div class="more-body">
+      <div class="rows">
+        <div class="row">
+          <div class="rh"><span class="rk">pipeline/index.ts</span><span class="rv">474</span></div>
+          <p><code>createPipeline</code> · <code>process</code> · <code>barcodeLog</code> · <code>emptyLog</code> · <code>mergeByFood</code> · <code>recordPortionGaps</code> · <code>namesOneFood</code></p>
+        </div>
+        <div class="row">
+          <div class="rh"><span class="rk">resolve/router.ts</span><span class="rv">466</span></div>
+          <p><code>resolvePhrase</code> · <code>resolveFromCorpus</code> · <code>fuse</code> · <code>applyPreparation</code> · <code>stateConflicts</code> · <code>marginOf</code> · sabitler <code>DECISIVE_MARGIN</code>, <code>SELF_EVIDENT_SCORE</code></p>
+        </div>
+        <div class="row">
+          <div class="rh"><span class="rk">portion/ladder.ts</span><span class="rv">425</span></div>
+          <p><code>runLadder</code> · 7 strateji nesnesi · <code>read</code> · <code>gramsFromWords</code> · <code>unitTokenIn</code> · <code>interval</code> · <code>userSetPortion</code> · <code>METHOD_LABEL</code> · <code>METHOD_ERROR</code></p>
+        </div>
+        <div class="row">
+          <div class="rh"><span class="rk">pipeline/normalize.ts</span><span class="rv">317</span></div>
+          <p><code>normalizeText</code> · <code>turkishStem</code> · <code>stemPhrase</code> · <code>parseQuantity</code> · <code>canonicalUnit</code> · <code>detectSize</code> · <code>toGrams</code> · <code>toMillilitres</code> · <code>foodPhraseOnly</code> · <code>UNIT_ALIASES</code></p>
+        </div>
+        <div class="row">
+          <div class="rh"><span class="rk">pipeline/confidence.ts</span><span class="rv">155</span></div>
+          <p><code>scoreConfidence</code> · <code>resolutionConfidence</code> · <code>portionConfidence</code> · <code>bandFor</code> · <code>dispositionFor</code> · <code>METHOD_CEILING</code> · <code>WEIGHTS</code> · <code>BANDS</code></p>
+        </div>
+        <div class="row">
+          <div class="rh"><span class="rk">pipeline/nutrition.ts</span><span class="rv">93</span></div>
+          <p><code>scale</code> · <code>computeNutrition</code> · <code>addNutrients</code> · <code>sumIntervals</code> · <code>verifyTraceable</code></p>
+        </div>
+        <div class="row">
+          <div class="rh"><span class="rk">pipeline/correct.ts</span><span class="rv">252</span></div>
+          <p><code>applyCorrection</code> · <code>addItem</code> · <code>rebuild</code> · <code>withChosenFirst</code></p>
+        </div>
+        <div class="row">
+          <div class="rh"><span class="rk">pipeline/questions.ts</span><span class="rv">244</span></div>
+          <p><code>buildQuestions</code> · <code>identityQuestion</code> · <code>amountQuestion</code> · <code>currentAsCandidate</code> · <code>MAX_QUESTIONS</code> · <code>SERVING_FLOOR</code></p>
+        </div>
+        <div class="row">
+          <div class="rh"><span class="rk">extract/</span><span class="rv">~500</span></div>
+          <p><code>types.ts</code> arayüz · <code>prompt.ts</code> ortak prompt + <code>parseExtraction</code> · <code>rules/gemini/openai/anthropic.ts</code> · <code>registry.ts</code> seçim · <code>fallback.ts</code> bozulmuş mod · <code>compound.ts</code> birleştirme</p>
+        </div>
+        <div class="row">
+          <div class="rh"><span class="rk">http/server.ts</span><span class="rv">894</span></div>
+          <p><code>createApp</code> kablolama · <code>buildServer</code> rotalar · <code>createMealStore</code> · <code>recordCorrectionGaps</code> · <code>setErrorHandler</code></p>
+        </div>
+        <div class="row">
+          <div class="rh"><span class="rk">util/retry.ts</span><span class="rv">120</span></div>
+          <p><code>withRetry</code> tam jitter · <code>withTimeout</code> · <code>defaultIsRetryable</code> · <code>retryableExceptHang</code> · <code>CallTimeout</code></p>
+        </div>
+        <div class="row">
+          <div class="rh"><span class="rk">obs/</span><span class="rv">~180</span></div>
+          <p><code>logger.ts</code> <code>redact</code> · <code>metrics.ts</code> <code>Metrics</code>, <code>timed</code>, <code>recordResolution</code>, <code>snapshot</code></p>
+        </div>
+      </div>
+    </div>
+  </details>
+</section>
+
+</main>
+
+<footer>
+  mise · packages/api 11.297 satır<br>
+  pipeline v1.5.0 · prompt extract-2026-08-25.b<br>
+  satır numaraları commit a2ce6ad
+</footer>
+
+</div>
