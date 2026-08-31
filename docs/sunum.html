@@ -86,6 +86,9 @@ code{font-size:.88em;background:var(--paper);border:1px solid var(--line-soft);b
   max-width:1040px;margin:0 auto;
   border-bottom:1px solid var(--line);
 }
+/* .slide display:flex, tarayıcının [hidden]{display:none} kuralını ezer —
+   gizleme bu satır olmadan hiç çalışmıyor. */
+.slide[hidden]{display:none}
 .deck.js .slide{border-bottom:0}
 @media(min-width:800px){.slide{padding:56px 48px 96px}}
 
@@ -296,6 +299,47 @@ figcaption{
 .gcard .gs{font-family:"IBM Plex Mono",monospace;font-size:10px;color:var(--ink-soft);margin-top:auto}
 
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
+/* Kısa ekranlarda (ör. 1366x768 projeksiyon) 13 slayt taşıyordu: başlık ve gövde
+   ölçüleri yalnızca genişliğe (vw) bağlıydı, yükseklik hesaba girmiyordu. */
+@media (max-height:820px){
+  body{line-height:1.5}
+  .slide{padding:24px 24px 60px}
+  h2{font-size:clamp(23px,3.4vw,33px);margin-bottom:13px}
+  h3{margin:16px 0 8px}
+  .lede{font-size:clamp(16px,2.1vw,19px);margin-bottom:13px}
+  .slide p{margin-bottom:9px}
+  .stat-row{margin:13px 0}
+  .stat{padding:12px}
+  .stat b{font-size:clamp(24px,4vw,34px)}
+  .stat span{margin-top:6px}
+  .rows{margin:12px 0}
+  .row{padding:9px 15px}
+  .row .k{font-size:15px}
+  .row .d{font-size:14.5px}
+  .row .v{font-size:14px}
+  .term{margin:12px 0}
+  .term pre{font-size:clamp(9.5px,1.15vw,11.5px);line-height:1.5;padding:11px 13px}
+  pre.code{margin:11px 0;padding:11px 13px;line-height:1.5}
+  figure{margin:12px 0}
+  figcaption{font-size:13px;margin-top:8px}
+  ul.plain{margin:11px 0}
+  ul.plain li{margin-bottom:8px}
+}
+@media (min-width:800px) and (max-height:820px){ .slide{padding:24px 48px 60px} }
+
+/* Şemalar genişlikle ölçekleniyor; alçak ekranda yüksekliği de sınırla. */
+@media (max-height:820px){ .dg{max-height:56vh} }
+@media (max-height:780px){
+  .slide{padding:20px 24px 58px}
+  h2{font-size:clamp(22px,3.1vw,30px);margin-bottom:11px}
+  .lede{margin-bottom:11px}
+  .dg{max-height:52vh}
+  .row{padding:7px 15px}
+  .rows{margin:10px 0}
+  .term pre{font-size:clamp(9px,1.05vw,10.5px);line-height:1.45}
+  figcaption{font-size:12.5px;margin-top:6px}
+}
+@media (min-width:800px) and (max-height:780px){ .slide{padding:20px 44px 58px} }
 </style>
 
 <div class="deck" id="deck">
@@ -340,17 +384,17 @@ figcaption{
     <div class="row"><span class="k">Bilmediğini bilmek</span><span class="d">Ve fark edince kendinden emin bir sayı basmamak</span><span class="v no">çözülmemiş</span></div>
   </div>
   <p>
-    Kamera bunlardan ikincisini <strong>yapısal olarak</strong> çözemiyor:
+    Kamera bu dördünden <strong>"ne kadar?"</strong> sorusunu yapısal olarak çözemiyor:
     tavadaki yağı, sostaki şekeri, kâsenin derinliğini göremez.
   </p>
   <div class="notes">
     <b>Konuşmacı notu</b>
     Buradaki mesaj "zor bir problem" değil — <em>dört ayrı problem</em>.
     Literatür de her birinde ayrı ayrı kötü: genel amaçlı görsel modeller yiyecek
-    tanımada ~%60 isabet; önde gelen bir model kaymağı süt okuyup 380 kalorilik
-    hata yapmış olarak belgelenmiş. 180 öğünlük bağımsız bir doğrulama, elle
-    giriş + barkod akışlarının sadece-fotoğraf uygulamalarını bir sınıf olarak
-    yendiğini bulmuş.
+    tanımada ~%60 isabet (JFB kıyaslaması); önde gelen bir model kaymağı süt
+    okuyup 380 kalorilik hata yapmış olarak belgelenmiş. Altı uygulamayı 180 öğün
+    üzerinde karşılaştıran bağımsız DAI doğrulaması ise elle giriş + barkod
+    akışlarının, sadece-fotoğraf uygulamalarının tamamını geçtiğini bulmuş.
   </div>
 </section>
 
@@ -367,16 +411,21 @@ figcaption{
     sahip olmadığı bir kesinliği iddia ediyor demektir.
   </p>
   <div class="stat-row">
-    <div class="stat"><b>9,5%</b><span>gram başına kalori hatası</span></div>
-    <div class="stat hi"><b>26,1%</b><span>toplam kalori hatası · aynı model</span></div>
-    <div class="stat"><b>41%</b><span>diyetisyen, gözle</span></div>
+    <div class="stat"><b>9,5%</b><span>model · gram başına kalori hatası</span></div>
+    <div class="stat hi"><b>26,1%</b><span>aynı model · toplam kalori hatası</span></div>
+    <div class="stat"><b>41%</b><span>insan · diyetisyen, gözle</span></div>
   </div>
   <p>
-    Aynı model, üç kat kötü — ve aradaki farkın tamamı <strong>porsiyon.</strong>
-    Yani "bu ne?" büyük ölçüde çözülmüş, "ne kadar?" çözülmemiş.
+    İlk ikisi aynı modelin iki ayrı ölçümü, üçü de Nutrition5k'dan.
+    <strong>Aradaki farkın tamamı porsiyon:</strong> "bu ne?" büyük ölçüde
+    çözülmüş, "ne kadar?" çözülmemiş.
   </p>
   <div class="notes">
     <b>Konuşmacı notu</b>
+    Sayıların mekanizması — sorulursa: <span class="mono">toplam = gram × gram
+    başına kalori</span>. Model 1 gramın kaç kalori olduğunu %9,5 hatayla biliyor;
+    kaç gram olduğunu bilmediği için hata toplamda %26,1'e çıkıyor. Porsiyon
+    hatası sonuca çarpım olarak giriyor, o yüzden büyüyor.
     Bu slayt sunumun temeli. Buradan çıkan karar: tek sayı yazmayacağız.
     Ve mimarideki en büyük yatırımın (porsiyon merdiveni) neden orada olduğunu
     bu iki sayı açıklıyor. Kendi ölçümüm de aynı yeri gösterdi: bir fotoğrafı
@@ -402,7 +451,7 @@ figcaption{
       <text x="243" y="44" text-anchor="middle" class="mo">736</text>
       <text x="512" y="44" text-anchor="middle" class="mo">865</text>
       <line x1="249" y1="72" x2="506" y2="72" class="lnr dash" marker-end="url(#a1)"/>
-      <text x="377" y="90" text-anchor="middle" class="sm">129 kcal kaydı, ekranda bunu açıklayan hiçbir şey yok</text>
+      <text x="377" y="90" text-anchor="middle" class="sm">129 kcal fark — ekranda bunu açıklayan hiçbir şey yok</text>
 
       <line x1="0" y1="112" x2="720" y2="112" class="rule"/>
 
@@ -525,7 +574,7 @@ figcaption{
         <circle cx="120" cy="162" r="7" class="fs"/><text x="140" y="167">4 · sözcüksel + vektör arama</text><text x="712" y="167" text-anchor="end" class="mo">~15 ms</text>
         <circle cx="120" cy="222" r="7" class="fa"/><text x="140" y="227">5 · modele doğrulatma</text><text x="712" y="227" text-anchor="end" class="mo">~800 ms</text>
         <circle cx="120" cy="262" r="7" class="fa"/><text x="140" y="267">6 · geniş referans kütüphanesi</text><text x="712" y="267" text-anchor="end" class="mo">~800 ms</text>
-        <circle cx="120" cy="302" r="7" class="fn"/><text x="140" y="307">7 · seçenekleri göster, kabul etme</text><text x="712" y="307" text-anchor="end" class="mo">~1 ms</text>
+        <circle cx="120" cy="302" r="7" class="fn"/><text x="140" y="307">7 · seçenekleri göster, kullanıcı seçsin</text><text x="712" y="307" text-anchor="end" class="mo">~1 ms</text>
         <circle cx="120" cy="342" r="7" class="fr"/><text x="140" y="347">8 · çekimser kal, soru sor</text><text x="712" y="347" text-anchor="end" class="mo">—</text>
       </g>
 
@@ -537,7 +586,7 @@ figcaption{
     </svg>
     <figcaption>
       Aşağı indikçe maliyet artıyor, kesinlik azalıyor. Tipik bir metin öğünü
-      3. basamakta çıkıyor — <strong>modelin altındaki dört basamak trafiğin
+      3. basamakta çıkıyor — <strong>modelin üstündeki dört basamak trafiğin
       %96,5'ini karşılıyor.</strong>
     </figcaption>
   </figure>
@@ -562,8 +611,8 @@ figcaption{
     <div class="row"><span class="k">2 · Hacim yazmış</span><span class="d">Yiyeceğin kendi yoğunluğu üzerinden</span><span class="v ok">±5%</span></div>
     <div class="row"><span class="k">3 · Barkod etiketi</span><span class="d">"Bir porsiyon yedim" bir gerçek değil, bir iddia</span><span class="v ok">±8%</span></div>
     <div class="row"><span class="k">4 · Bu kişinin geçmişi</span><span class="d">Daha önce onayladığı porsiyon</span><span class="v">±10%</span></div>
-    <div class="row"><span class="k">5 · Karedeki referans</span><span class="d">Kart ya da madenî para — %34'ten %18'e</span><span class="v">±18%</span></div>
-    <div class="row"><span class="k">6 · Ev ölçüsü</span><span class="d">Ekmek dilimi kâseden çok daha az oynar</span><span class="v">±5–50%</span></div>
+    <div class="row"><span class="k">5 · Karedeki referans</span><span class="d">Kart ya da madenî para — 2B fotoğraf porsiyon hatası %34'ten %18'e</span><span class="v">±18%</span></div>
+    <div class="row"><span class="k">6 · Ev ölçüsü</span><span class="d">Sıranın tek istisnası: ekmek dilimi ±%5, kâse ±%50</span><span class="v">±5–50%</span></div>
     <div class="row"><span class="k">7 · Model tahmini</span><span class="d">Referans yok, miktar yok — en zor durum</span><span class="v no">±40%</span></div>
   </div>
   <p>
@@ -691,16 +740,17 @@ basamak 2  global           → yok
 basamak 3  db.byAlias       → <span class="g">fdc:174924</span>   <span class="a">✓ DURDU</span>
 
 runLadder  statedMass       → null   <span class="c">(dilim kütle birimi değil)</span>
-           statedVolume     → null
-           barcodeLabel     → null
-           userMemory       → null
-           referenceScaled  → null   <span class="c">(fotoğraf yok)</span>
+           statedVolume · barcodeLabel · userMemory · referenceScaled → null
            householdMeasure → <span class="g">2 × 28 g = 56 g</span>   <span class="a">✓ DURDU</span>
 
 nutrition  266 kcal/100g × 56 g / 100
            → min <span class="a">134,06</span>  ·  likely <span class="a">148,96</span>  ·  max <span class="a">163,86</span>
 verify     → ok
 confidence → 0,91  → band <span class="g">"high"</span>  → soru yok
+
+<span class="c">── kalem 2 ─────────────────────────────────</span>
+basamak 2  global           → <span class="g">fdc:173175</span>   <span class="a">✓ DURDU</span>   <span class="c">(başka basamak)</span>
+nutrition  1 kcal/100g × 110 g / 100 → <span class="a">0,88</span> · <span class="a">1,10</span> · <span class="a">1,32</span>   <span class="c">(1 bardak = 110 g, ±%20)</span>
 
 <span class="c">── toplam ──────────────────────────────────</span>
 <span class="a">134,94  /  150,06  /  165,18 kcal</span>       durum: <span class="g">confirmed</span>
@@ -817,7 +867,7 @@ confidence → 0,91  → band <span class="g">"high"</span>  → soru yok
     <li><strong>Kontaminasyon.</strong> Veritabanı takma adlarını da test vakalarını da ben yazdım.</li>
     <li><strong>Fotoğraf porsiyonu ölçülmemiş.</strong> Tartılmış gerçek yok — ve gözle etiketleyen insan %41 hata yapıyor, yani ölçmeye çalıştığımız büyüklükten daha büyük.</li>
     <li><strong>ECE 0,2066, her kova eksik güvenli.</strong> Sistem iddia ettiğinden daha sık haklı. Kullanıcıya maliyeti: gereksiz sorulan soru.</li>
-    <li><strong>Kapsam 121 satır.</strong> Arkasında 13.339 USDA satırı var ama chimichurri, kebap, şavurma ikisinde de yok.</li>
+    <li><strong>Kapsam 121 satır.</strong> Arkasında 13.339 USDA satırı var ama chimichurri, kebap, şavarma ikisinde de yok.</li>
   </ul>
 
   <p class="pull">Sorulmadan söylenen zayıflık, <em>geri kalan her iddiayı güçlendirir.</em></p>
@@ -855,10 +905,12 @@ confidence → 0,91  → band <span class="g">"high"</span>  → soru yok
   <p class="pull">Kullanıcı için birkaç saniyeden pahalı olan şey, <em>gereksiz sorulan sorudur.</em></p>
   <div class="notes">
     <b>Konuşmacı notu</b>
-    Buradaki ince nokta: ECE eksik güvenli olduğu için otomatik kayıt %43,5'te
-    kalıyor. Yani kullanıcının en çok hissettiği maliyet gecikme değil,
-    gereksiz kesinti. Model katmanıyla otomatik kayıt %97,8'e çıkıyor — yani
-    modelin satın aldığı şey doğruluk değil, <em>kendine güven</em>.
+    Buradaki ince nokta: ECE eksik güvenli olduğu için sistem haklı olduğu
+    öğünlerde bile soruyor — ana koşuda otomatik kayıt %43,5'te kalıyor. Yani
+    kullanıcının en çok hissettiği maliyet gecikme değil, gereksiz kesinti.
+    Karşılaştırmayı ayrı bir koşu yanıtlıyor (v1.3.0 bake-off, iki satır da aynı
+    koşudan): kural katmanı %39,1, model katmanı %97,8. Yani modelin satın aldığı
+    şey doğruluk değil, <em>kendine güven</em>.
   </div>
 </section>
 
@@ -925,9 +977,10 @@ confidence → 0,91  → band <span class="g">"high"</span>  → soru yok
   </figure>
 
   <p>
-    Korunması gereken iki şey: küratölü katmanın önceliği ve korpusun
-    <span class="mono">0,60</span> güven tavanı — seçilen adayın etiketine
-    bakarak uygulanır. <strong>~1–2 günlük iş.</strong>
+    Korunması gereken iki şey var: küratörlü katman korpusun önünde kalmalı, ve
+    korpustan gelen bir cevap <span class="mono">0,60</span> güven tavanını
+    aşmamalı. İkisi de, seçilen adayın katman etiketine bakılarak uygulanıyor.
+    <strong>~1–2 günlük iş.</strong>
   </p>
   <div class="notes">
     <b>Konuşmacı notu</b>
@@ -1012,7 +1065,7 @@ confidence → 0,91  → band <span class="g">"high"</span>  → soru yok
 
   <h3>Eder</h3>
   <div class="rows">
-    <div class="row"><span class="k">Küçük modele damıtma</span><span class="d">Kural katmanı %39,1 otomatik kayıt, Gemini %97,8 — ama 5.000× gecikme. Doğrulukta beraberler.</span><span class="v ok">gecikme + maliyet</span></div>
+    <div class="row"><span class="k">Küçük modele damıtma</span><span class="d">Aynı bake-off koşusu: kural %39,1 otomatik kayıt, Gemini %97,8 — ama 5.000× gecikme. Doğrulukta beraberler.</span><span class="v ok">gecikme + maliyet</span></div>
     <div class="row"><span class="k">Çıkarıcı, Türkçe için</span><span class="d">Bileşik yemekler, ek ayrıştırma, porsiyon sözcükleri — ikisi otomatik etiketli</span><span class="v ok">gerçek hata</span></div>
     <div class="row"><span class="k">Doğrulayıcı</span><span class="d">5 seçenekli kapalı küme — açık üretimden çok daha kolay bir görev</span><span class="v ok">en büyük kazanç</span></div>
   </div>
@@ -1020,8 +1073,8 @@ confidence → 0,91  → band <span class="g">"high"</span>  → soru yok
   <h3>Etmez</h3>
   <div class="rows">
     <div class="row"><span class="k">Besin değerleri</span><span class="d">Şema yasaklıyor; girerse ürünün ana iddiası düşer</span><span class="v no">asla</span></div>
-    <div class="row"><span class="k">Kapsam</span><span class="d">Chimichurri, kebap, şavurma iki katmanda da yok — bu bir veri ortaklığı</span><span class="v no">veri işi</span></div>
-    <div class="row"><span class="k">Fotoğraftan porsiyon</span><span class="d">Tartılmış gerçek olmadan, ölçtüğünden hatalı etiketlere eğitmek</span><span class="v no">önce veri</span></div>
+    <div class="row"><span class="k">Kapsam</span><span class="d">Chimichurri, kebap, şavarma iki katmanda da yok — bu bir veri ortaklığı</span><span class="v no">veri işi</span></div>
+    <div class="row"><span class="k">Fotoğraftan porsiyon</span><span class="d">Tartılmış gerçek yokken, ölçmek istediğinden daha hatalı etiketlerle eğitmek olur</span><span class="v no">önce veri</span></div>
   </div>
 
   <p>
